@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run All Integration Tests",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath} -m pytest tests/integration -s",
+            "options": {
+                "cwd": "${workspaceFolder}/open-data-mesh-cli"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run CLI Integration Tests",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath} -m pytest tests/integration/cli -s",
+            "options": {
+                "cwd": "${workspaceFolder}/open-data-mesh-cli"
+            },
+            "group": {
+                "kind": "test"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run WS Integration Tests",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath} -m pytest tests/integration/ws -s",
+            "options": {
+                "cwd": "${workspaceFolder}/open-data-mesh-cli"
+            },
+            "group": {
+                "kind": "test"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

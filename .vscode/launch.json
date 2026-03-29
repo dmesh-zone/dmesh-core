@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug Current Test File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${config:python.defaultInterpreterPath}",
+            "args": [
+                "-m",
+                "pytest",
+                "${file}",
+                "-s"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/open-data-mesh-cli",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/open-data-mesh-cli;${workspaceFolder}/open-data-mesh-sdk/src"
+            },
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Debug All Integration Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/integration",
+                "-s"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/open-data-mesh-cli",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/open-data-mesh-cli;${workspaceFolder}/open-data-mesh-sdk/src"
+            },
+            "justMyCode": false
+        }
+    ]
+}

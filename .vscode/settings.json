@@ -1,0 +1,24 @@
+{
+    "kiroAgent.configureMCP": "Disabled",
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}",
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.pytestEnvVars": {
+        "PYTHONPATH": "${workspaceFolder}/open-data-mesh-sdk/src:${workspaceFolder}/open-data-mesh-cli"
+    },
+    "python.testing.debugJustMyCode": false,
+    "python.defaultInterpreterPath": "${workspaceFolder}/open-data-mesh-cli/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/open-data-mesh-sdk/src",
+        "${workspaceFolder}/open-data-mesh-cli",
+        "${workspaceFolder}/open-data-mesh-cli/dm/docker/open-data-mesh-ws"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/open-data-mesh-sdk/src",
+        "${workspaceFolder}/open-data-mesh-cli",
+        "${workspaceFolder}/open-data-mesh-cli/dm/docker/open-data-mesh-ws"
+    ]
+}

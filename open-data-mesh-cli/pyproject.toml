@@ -1,0 +1,42 @@
+[project]
+name = "open-data-mesh-cli"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "docker>=7.1.0",
+    "httpx>=0.28.1",
+    "hypothesis>=6.151.9",
+    "open-data-mesh-sdk",
+    "pyyaml>=6.0.3",
+    "typer>=0.24.1",
+]
+
+[project.scripts]
+dm = "dm.main:app"
+odm = "dm.main:app"
+
+[tool.setuptools.package-data]
+"dm.docker.open-data-mesh-db" = ["Dockerfile", "*.sql"]
+"dm.docker.open-data-mesh-ws" = ["Dockerfile", "requirements.txt", "app/**/*"]
+
+[tool.pytest.ini_options]
+addopts = "--tb=short -s"
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+open-data-mesh-sdk = { path = "../open-data-mesh-sdk", editable = true }
+
+[dependency-groups]
+dev = [
+    "fastapi>=0.135.2",
+    "httpx>=0.28.1",
+    "jsonschema>=4.26.0",
+    "psycopg2-binary>=2.9.11",
+    "pytest>=9.0.2",
+    "requests>=2.32.5",
+    "testcontainers>=4.14.2",
+]
