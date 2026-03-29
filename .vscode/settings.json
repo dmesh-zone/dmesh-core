@@ -7,18 +7,18 @@
         "."
     ],
     "python.testing.pytestEnvVars": {
-        "PYTHONPATH": "${workspaceFolder}/open-data-mesh-sdk/src:${workspaceFolder}/open-data-mesh-cli"
+        "PYTHONPATH": "${workspaceFolder}/sdk/src:${workspaceFolder}/cli:${workspaceFolder}/cli/dm/docker/open-data-mesh-ws"
     },
     "python.testing.debugJustMyCode": false,
-    "python.defaultInterpreterPath": "${workspaceFolder}/open-data-mesh-cli/.venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/cli/.venv/bin/python",
     "python.analysis.extraPaths": [
-        "${workspaceFolder}/open-data-mesh-sdk/src",
-        "${workspaceFolder}/open-data-mesh-cli",
-        "${workspaceFolder}/open-data-mesh-cli/dm/docker/open-data-mesh-ws"
+        "${workspaceFolder}/sdk/src",
+        "${workspaceFolder}/cli",
+        "${workspaceFolder}/cli/dm/docker/open-data-mesh-ws"
     ],
     "python.autoComplete.extraPaths": [
-        "${workspaceFolder}/open-data-mesh-sdk/src",
-        "${workspaceFolder}/open-data-mesh-cli",
-        "${workspaceFolder}/open-data-mesh-cli/dm/docker/open-data-mesh-ws"
+        "${workspaceFolder}/sdk/src",
+        "${workspaceFolder}/cli",
+        "${workspaceFolder}/cli/dm/docker/open-data-mesh-ws"
     ]
 }

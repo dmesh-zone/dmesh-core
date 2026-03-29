@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./open-data-mesh-sdk/src/open_data_mesh_sdk/persistency/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./sdk/src/open_data_mesh_sdk/persistency/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -20,7 +20,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: open-data-mesh-api/Dockerfile
+      dockerfile: rest/Dockerfile
     environment:
       DB_TYPE: postgres
       DB_HOST: db
@@ -41,5 +41,5 @@ services:
       - .:/app
     working_dir: /app
     environment:
-      PYTHONPATH: /app/open-data-mesh-sdk/src:/app/open-data-mesh-cli/src
+      PYTHONPATH: /app/sdk/src:/app/cli
     command: tail -f /dev/null

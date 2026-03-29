@@ -28,7 +28,7 @@ addopts = "--tb=short -s"
 package = true
 
 [tool.uv.sources]
-open-data-mesh-sdk = { path = "../open-data-mesh-sdk", editable = true }
+open-data-mesh-sdk = { path = "../sdk", editable = true }
 
 [dependency-groups]
 dev = [

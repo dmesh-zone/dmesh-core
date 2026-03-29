@@ -17,4 +17,4 @@ dependencies = [
 addopts = "--tb=short -s"
 
 [tool.uv.sources]
-open-data-mesh-sdk = { path = "../open-data-mesh-sdk" }
+open-data-mesh-sdk = { path = "../sdk" }
