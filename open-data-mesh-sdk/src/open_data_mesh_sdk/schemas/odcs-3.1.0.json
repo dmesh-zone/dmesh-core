@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Open Data Contract Specification v3.1.0",
+  "type": "object",
+  "required": ["apiVersion", "kind", "status", "version"],
+  "additionalProperties": true,
+  "properties": {
+    "apiVersion": { "type": "string" },
+    "kind": { "const": "DataContract" },
+    "status": { "type": "string" },
+    "version": { "type": "string" },
+    "id": { "type": "string" },
+    "info": { "type": "object" },
+    "specification": { "type": "object" }
+  }
+}

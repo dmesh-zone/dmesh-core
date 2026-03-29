@@ -48,7 +48,15 @@ class DataMeshService:
         # Generate DC ID
         dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
         
-        enriched_dc = {**spec, "id": dc_id}
+        # Merge ID and apply defaults for validation
+        enriched_dc = {
+            "apiVersion": "v3.1.0",
+            "kind": "DataContract",
+            "version": "v1.0.0",
+            "status": "draft",
+            **spec,
+            "id": dc_id
+        }
         validate_spec(enriched_dc)
 
         dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
@@ -65,8 +73,13 @@ class DataMeshService:
         if not existing:
             raise ValueError(f"Data contract {dc_id} not found")
         
-        # Merge ID to ensure it's preserved
-        enriched_dc = {**spec, "id": dc_id}
+        # Merge ID and apply defaults for validation
+        enriched_dc = {
+            "apiVersion": "v3.1.0",
+            "kind": "DataContract",
+            **spec,
+            "id": dc_id
+        }
         validate_spec(enriched_dc)
         dc = DataContract(id=dc_id, data_product_id=existing.data_product_id, specification=enriched_dc)
         return self.repository.update_data_contract(dc)

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Open Data Product Specification v1.0.0",
+  "type": "object",
+  "required": ["apiVersion", "kind", "domain", "name", "version", "status"],
+  "additionalProperties": true,
+  "properties": {
+    "apiVersion": { "type": "string" },
+    "kind": { "const": "DataProduct" },
+    "domain": { "type": "string" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "id": { "type": "string" },
+    "status": { "type": "string" },
+    "description": { "type": "string" }
+  }
+}

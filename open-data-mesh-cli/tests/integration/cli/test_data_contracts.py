@@ -32,6 +32,21 @@ class TestDataContractCLICRUD:
         assert len(rows) == 1
         assert str(rows[0]["data_product_id"]) == finance_dp
 
+
+    def test_put_dc_with_dp_id(self, cli, db, tmp_path, finance_dp):
+        p = dc_yaml(tmp_path)
+        result = run(cli, "put", "dc", str(p), "--dp", finance_dp)
+        print(f"[DC ID] {result.output.strip()}")
+
+        assert result.exit_code == 0
+        dc_id = result.output.strip()
+        assert len(dc_id) == 36
+
+        rows = db_query(db, "SELECT id, data_product_id FROM data_contracts")
+        print(f"[DB] {rows}")
+        assert len(rows) == 1
+        assert str(rows[0]["data_product_id"]) == finance_dp
+
     def test_put_dc_with_dp_yaml(self, cli, db, tmp_path, finance_dp):
         dp_p = dp_yaml(tmp_path, spec={"apiVersion": "v1.0.0", "domain": "finance", "name": "transactions"})
         dc_p = dc_yaml(tmp_path, "dc2")
