@@ -3,7 +3,7 @@
   "title": "Open Data Contract Specification v3.1.0",
   "type": "object",
   "required": ["apiVersion", "kind", "status", "version"],
-  "additionalProperties": true,
+  "additionalProperties": false,
   "properties": {
     "apiVersion": { "type": "string" },
     "kind": { "const": "DataContract" },

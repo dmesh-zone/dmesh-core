@@ -3,7 +3,7 @@
   "title": "Open Data Product Specification v1.0.0",
   "type": "object",
   "required": ["apiVersion", "kind", "domain", "name", "version", "status"],
-  "additionalProperties": true,
+  "additionalProperties": false,
   "properties": {
     "apiVersion": { "type": "string" },
     "kind": { "const": "DataProduct" },

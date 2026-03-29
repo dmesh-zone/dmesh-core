@@ -100,3 +100,54 @@ def test_service_data_contract_crud(service):
     # 5. Delete DC
     service.delete_data_contract(dc_id)
     assert service.get_data_contract(dc_id) is None
+
+def test_service_put_rejects_invalid_spec_property_on_create(service):
+    from jsonschema import ValidationError
+    bad_spec = {"domain": "finance", "name": "transactions", "invalid": "prop"}
+    with pytest.raises(ValidationError) as exc:
+        service.put_data_product(bad_spec)
+    assert "additional properties are not allowed" in str(exc.value).lower()
+
+def test_service_put_rejects_invalid_spec_property_on_update(service):
+    from jsonschema import ValidationError
+    spec = {"apiVersion": "v1.0.0", "domain": "finance", "name": "transactions", "version": "v1.0.0", "status": "draft"}
+    dp = service.put_data_product(spec)
+    dp_id = dp.id
+
+    # Try to update with invalid property
+    bad_spec = {"id": dp_id, "apiVersion": "v1.0.0", "kind": "DataProduct",
+               "domain": "finance", "name": "transactions", "version": "v1.0.0",
+               "status": "draft", "invalid": "prop"}
+    
+    with pytest.raises(ValidationError) as exc:
+        service.put_data_product(bad_spec)
+    
+    assert "additional properties are not allowed" in str(exc.value).lower()
+
+def test_service_put_dc_rejects_invalid_spec_property_on_create(service):
+    from jsonschema import ValidationError
+    dp = service.put_data_product({"domain": "finance", "name": "transactions"})
+    bad_spec = {"invalid": "prop"}
+    with pytest.raises(ValidationError) as exc:
+        service.put_data_contract(dp.id, bad_spec)
+    assert "additional properties are not allowed" in str(exc.value).lower()
+
+def test_service_put_dc_rejects_invalid_spec_property_on_update(service):
+    from jsonschema import ValidationError
+    # 1. Create parent DP
+    dp = service.put_data_product({"domain": "finance", "name": "transactions"})
+    
+    # 2. Create valid DC 
+    dc_spec = {}
+    dc = service.put_data_contract(dp.id, dc_spec)
+    dc_id = dc.id
+
+    # 3. Try to update with invalid property
+    bad_spec = {"id": dc_id, "apiVersion": "v3.1.0", "kind": "DataContract",
+               "status": "draft", "version": "v1.0.0", "invalid": "prop"}
+    
+    with pytest.raises(ValidationError) as exc:
+        service.put_data_contract(dp.id, bad_spec)
+    
+    assert "additional properties are not allowed" in str(exc.value).lower()
+

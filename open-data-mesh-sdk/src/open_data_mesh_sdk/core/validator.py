@@ -61,16 +61,21 @@ def validate_spec(spec: dict[str, Any]) -> None:
         if schema_file.is_file():
             with schema_file.open("r", encoding="utf-8") as f:
                 schema = json.load(f)
-                # If we're using a local fallback but the spec is missing its 'kind', 
-                # we don't want to fail validation just because of that if the schema passes.
-                # However, Bitol schemas usually require 'kind'.
-                jsonschema.validate(spec, schema)
-                return
+                # Successful local schema load
+                try:
+                    jsonschema.validate(spec, schema)
+                    return
+                except jsonschema.ValidationError:
+                    # If it's a validation error against a local schema, we STOP here.
+                    # This is the strict Source of Truth.
+                    raise
+    except jsonschema.ValidationError:
+        raise
     except Exception:
-        # Fallback to remote if local fails or is missing
+        # Only fallback if the file itself was missing or malformed
         pass
 
-    # 2. Try remote lookup
+    # 2. Try remote lookup (fallback)
     template = SCHEMA_URLS.get(kind, SCHEMA_URLS["DataProduct"])
     versions_to_try = [api_version, clean_version]
     if not api_version.startswith("v"):

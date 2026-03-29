@@ -89,6 +89,23 @@ class DataMeshService:
 
     def put_data_contract(self, dp_id: Optional[str], spec: dict[str, Any]) -> DataContract:
         dc_id = spec.get("id")
+
+        # if dc_id not provided, create an id for dc
+        if not dc_id:
+            dp = self.repository.get_data_product(dp_id)
+            if not dp:
+                raise ValueError(f"Parent Data Product {dp_id} not found")
+            existing_dcs = self.repository.list_data_contracts(dp_id=dp_id)
+            dc_index = len(existing_dcs)
+            dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
+            spec["id"] = dc_id
+
+        # ensure defaults are added if not provided
+        enriched = {"apiVersion": "v3.1.0", "kind": "DataContract", "version": "v1.0.0", "status": "draft", **spec}
+           
+        # validate spec upfront (enrich with minimal defaults)
+        validate_spec(enriched)
+
         if dc_id and self.repository.get_data_contract(dc_id):
             return self.update_data_contract(dc_id, spec)
         else:
@@ -106,6 +123,11 @@ class DataMeshService:
                 if results:
                     dp_id = results[0].id
 
+        # validate spec against schema and raise ValidationError exception if invalid
+        # We enrich first to ensure defaults like apiVersion and kind are present
+        enriched = enrich_spec({**spec, "id": dp_id} if dp_id else spec)
+        validate_spec(enriched)
+        
         if dp_id:
             return self.update_data_product(dp_id, spec)
         else:
