@@ -77,6 +77,8 @@ class DataMeshService:
         enriched_dc = {
             "apiVersion": "v3.1.0",
             "kind": "DataContract",
+            "version": "v1.0.0",
+            "status": "draft",
             **spec,
             "id": dc_id
         }

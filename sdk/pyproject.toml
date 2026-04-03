@@ -15,6 +15,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
 addopts = "--tb=short -s"
+python_functions = "test_* *_test"
 
 [dependency-groups]
 dev = [
