@@ -9,81 +9,120 @@ class OpenDataMesh:
         self._svc = DataMeshService(repository)
 
     # Data Product Methods
-    def create_dp(self, spec: dict[str, Any], domain: Optional[str] = None, name: Optional[str] = None) -> DataProduct:
+    def create_dp(self, spec: dict[str, Any], domain: Optional[str] = None, name: Optional[str] = None, include_metadata: Optional[bool] = False) -> DataProduct:
         """Create a new data product. Domain and name can be provided in the spec or overriden as args."""
         merged_spec = {**spec}
         if domain: merged_spec["domain"] = domain
         if name: merged_spec["name"] = name
-        return self._svc.create_data_product(merged_spec)
+        return self._svc.create_data_product(merged_spec).specification if not include_metadata else self._svc.create_data_product(merged_spec)
 
-    def update_dp(self, spec: dict[str, Any]) -> DataProduct:
+    def update_dp(self, spec: dict[str, Any], include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> DataProduct:
         """Update or patch an existing data product. Requires id in the spec."""
         dp_id = spec.get("id")
         if not dp_id:
             raise ValueError("Data product id is required for update")
-        return self._svc.update_data_product(dp_id, spec)
+        return self._svc.update_data_product(dp_id, spec).specification if not include_metadata_in_response else self._svc.update_data_product(dp_id, spec)
 
-    def get_dp(self, id: Optional[str] = None, domain: Optional[str] = None, name: Optional[str] = None) -> Optional[DataProduct]:
+    def get_dp(self, id: Optional[str] = None, domain: Optional[str] = None, name: Optional[str] = None, include_metadata: bool = False) -> Optional[DataProduct]:
         """Fetch a single data product by ID or by domain/name."""
         if id:
-            return self._svc.get_data_product(id)
+            if not include_metadata:
+                dp = self._svc.get_data_product(id)
+                return dp.specification if dp else None
+            else:
+                return self._svc.get_data_product(id)
         if domain and name:
             results = self._svc.list_data_products(domain=domain, name=name)
-            return results[0] if results else None
+            if results:
+                if not include_metadata:
+                    return [dp.specification for dp in results]
+                else:
+                    return results[0]
+            else:
+                return None
         return None
 
-    def list_dps(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
+    def list_dps(self, domain: Optional[str] = None, name: Optional[str] = None, include_metadata: Optional[bool] = False) -> List[DataProduct]:
         """List data products with optional filtering by domain and name."""
-        return self._svc.list_data_products(domain=domain, name=name)
+        if not include_metadata:
+            return [dp.specification for dp in self._svc.list_data_products(domain=domain, name=name)]
+        else:
+            return self._svc.list_data_products(domain=domain, name=name)
 
     def delete_dp(self, id: str) -> bool:
         """Delete a data product by ID."""
         return self._svc.delete_data_product(id)
 
     # Data Contract Methods
-    def create_dc(self, spec: dict[str, Any], dp_id: str) -> DataContract:
+    def create_dc(self, spec: dict[str, Any], dp_id: str, include_metadata: Optional[bool] = False) -> DataContract:
         """Create a data contract for a given data product."""
-        return self._svc.create_data_contract(dp_id, spec)
+        return self._svc.create_data_contract(dp_id, spec).specification if not include_metadata else self._svc.create_data_contract(dp_id, spec)
 
-    def update_dc(self, spec: dict[str, Any]) -> DataContract:
+    def update_dc(self, spec: dict[str, Any], include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> DataContract:
         """Update an existing data contract. Requires id in the spec."""
         dc_id = spec.get("id")
         if not dc_id:
             raise ValueError("Data contract id is required for update")
-        return self._svc.update_data_contract(dc_id, spec)
+        return self._svc.update_data_contract(dc_id, spec).specification if not include_metadata_in_response else self._svc.update_data_contract(dc_id, spec)
 
-    def get_dc(self, id: str) -> Optional[DataContract]:
+    def get_dc(self, id: str, include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> Optional[DataContract]:
         """Fetch a single data contract by ID."""
-        return self._svc.get_data_contract(id)
+        if include_metadata:
+            return self._svc.get_data_contract(id)
+        else:
+            dc = self._svc.get_data_contract(id)
+            if dc:
+                return dc.specification
+            else:
+                return None
 
-    def list_dcs(self, domain: Optional[str] = None, dp_name: Optional[str] = None) -> List[DataContract]:
+    def list_dcs(self, domain: Optional[str] = None, dp_name: Optional[str] = None, include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> List[DataContract]:
         """List data contracts, optionally filtering by parent data product domain/name."""
         if domain or dp_name:
             dps = self._svc.list_data_products(domain=domain, name=dp_name)
             all_dcs = []
             for dp in dps:
-                all_dcs.extend(self._svc.list_data_contracts(dp_id=dp.id))
+                if not include_metadata:
+                    all_dcs.extend([dc.specification for dc in self._svc.list_data_contracts(dp_id=dp.id)])
+                else:
+                    all_dcs.extend(self._svc.list_data_contracts(dp_id=dp.id))
             return all_dcs
-        return self._svc.list_data_contracts()
+        else:
+            if not include_metadata:
+                return [dc.specification for dc in self._svc.list_data_contracts()]
+            else:
+                return self._svc.list_data_contracts()
 
     def delete_dc(self, id: str) -> bool:
         """Delete a data contract by ID."""
         return self._svc.delete_data_contract(id)
 
     # Discovery Methods
-    def discover(self, dp_id: Optional[str] = None, domain: Optional[str] = None, name: Optional[str] = None) -> List[Union[DataProduct, DataContract]]:
+    def discover(self, dp_id: Optional[str] = None, domain: Optional[str] = None, name: Optional[str] = None, include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> List[Union[DataProduct, DataContract]]:
         """Discovery by ID OR by domain and name. Returns a flat list of DataProduct and DataContract objects."""
         results = []
         dps = []
         if dp_id:
             dp = self._svc.get_data_product(dp_id)
-            if dp: dps = [dp]
+            if dp is not None:
+                if not include_metadata_in_response:
+                    dps.append(dp.specification)
+                else:
+                    dps.append(dp)
         elif domain and name:
-            dps = self._svc.list_data_products(domain=domain, name=name)
+            if not include_metadata:
+                dps = [dp.specification for dp in self._svc.list_data_products(domain=domain, name=name)]
+            else:
+                dps = self._svc.list_data_products(domain=domain, name=name)
         
         for dp in dps:
             results.append(dp)
-            dcs = self._svc.list_data_contracts(dp_id=dp.id)
+            if not include_metadata:
+                dcs = []
+                for dc in self._svc.list_data_contracts(dp_id=dp["id"]):
+                    dcs.append(dc.specification)
+            else:
+                dcs = self._svc.list_data_contracts(dp_id=dp["id"])
             results.extend(dcs)
         return results
 
