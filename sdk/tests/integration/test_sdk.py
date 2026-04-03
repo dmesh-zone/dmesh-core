@@ -151,19 +151,65 @@ def odm_create_dc_valid_minimum_input_test(odm):
 
 def odm_update_dc_valid_more_input_test(odm):
     dp = odm.create_dp({"domain": "d", "name": "n"})
-    dc = odm.create_dc({"info": {"title": "c"}}, dp_id=dp["id"])
+    dc = odm.create_dc({"dataProduct": "n"}, dp_id=dp["id"])
     assert dc["id"] == 'c9ca57c1-8c75-512d-8c4f-debcc082003f'
     
     # get dp
     updated_spec = odm.get_dc(dc["id"])
-    updated_spec["info"]["title"] = "updated"
+    updated_spec["dataProduct"] = "m"
     updated = odm.update_dc(updated_spec)
     
-    assert updated["info"]["title"] == "updated"
+    assert updated["dataProduct"] == "m"
     
     # Assert persistency state
     persisted = odm._svc.repository.get_data_contract(dc["id"])
-    assert persisted.specification["info"]["title"] == "updated"
+    assert persisted.specification["dataProduct"] == "m"
+
+def odm_update_dc_valid_removes_dropped_properties_test(odm):
+    dp = odm.create_dp({"domain": "d", "name": "n"})
+    dc = odm.create_dc({"dataProduct": "n"}, dp_id=dp["id"])
+    assert dc["id"] == 'c9ca57c1-8c75-512d-8c4f-debcc082003f'
+    
+    # get dp
+    updated_spec = odm.get_dc(dc["id"])
+    updated_spec["status"] = "active"
+    del updated_spec["dataProduct"]
+    updated = odm.update_dc(updated_spec)
+    
+    assert "dataProduct" not in updated
+    
+    # Assert persistency state
+    persisted = odm._svc.repository.get_data_contract(dc["id"])
+    assert persisted.specification["status"] == "active"
+    assert "dataProduct" not in persisted.specification
+    
+def odm_patch_dc_valid_patching_schema_test(odm):
+    dp = odm.create_dp({"domain": "d", "name": "n"})
+    custom_property_1 = {"property": "p1", "value": "v1"}
+    custom_property_2 = {"property": "p2", "value": "v2"}
+    dc = odm.create_dc({"dataProduct": "n", "status": "proposed",
+                        "customProperties": [custom_property_1]}, dp_id=dp["id"])
+    assert dc["id"] == 'c9ca57c1-8c75-512d-8c4f-debcc082003f'
+    assert dc["status"] == "proposed"
+    assert dc["dataProduct"] == "n"
+    assert dc["customProperties"] == [custom_property_1]
+
+    schema_array = [{"name": "table", "properties": [{"name": "id", "logicalType": "string"}, {"name": "age", "logicalType": "integer"}]}]
+    patching_input = {"id": dc["id"], "status": "active", "schema": schema_array, "customProperties": [custom_property_2]}
+    patched = odm.patch_dc(patching_input)
+    
+    assert patched["status"] == "active"
+    assert patched["schema"] == schema_array
+    assert patched["customProperties"][0] == custom_property_1
+    assert patched["customProperties"][1] == custom_property_2
+
+    # Assert persistency state
+    persisted = odm._svc.repository.get_data_contract(dc["id"])
+    assert persisted.specification["status"] == "active"
+    assert persisted.specification["schema"] == schema_array
+    assert persisted.specification["dataProduct"] == "n"
+    assert persisted.specification["customProperties"][0] == custom_property_1
+    assert persisted.specification["customProperties"][1] == custom_property_2
 
 def odm_get_dc_valid_test(odm):
     dp = odm.create_dp({"domain": "d", "name": "n", "version": "v"})
@@ -179,8 +225,8 @@ def odm_get_dc_valid_test(odm):
 
 def odm_list_dcs_by_domain_name_test(odm):
     dp = odm.create_dp({"domain": "finance", "name": "ledger", "version": "v1"})
-    odm.create_dc({"info": {"title": "c1"}}, dp_id=dp["id"])
-    odm.create_dc({"info": {"title": "c2"}}, dp_id=dp["id"])
+    odm.create_dc({"dataProduct": "ledger"}, dp_id=dp["id"])
+    odm.create_dc({"dataProduct": "ledger"}, dp_id=dp["id"])
     
     dcs = odm.list_dcs(domain="finance", dp_name="ledger")
     assert len(dcs) == 2

@@ -65,6 +65,31 @@ class OpenDataMesh:
             raise ValueError("Data contract id is required for update")
         return self._svc.update_data_contract(dc_id, spec).specification if not include_metadata_in_response else self._svc.update_data_contract(dc_id, spec)
 
+    def patch_dc(self, spec: dict[str, Any], include_metadata: Optional[bool] = False) -> DataContract:
+        """Patch an existing data contract. Supports partial updates and appends to customProperties."""
+        dc_id = spec.get("id")
+        if not dc_id:
+            raise ValueError("Data contract id is required for patch")
+        
+        # 1. Fetch current
+        current_full = self._svc.get_data_contract(dc_id)
+        if not current_full:
+            raise ValueError(f"Data contract {dc_id} not found")
+        
+        current_spec = current_full.specification.copy()
+
+        # 2. Merge logic
+        spec_to_update = current_spec.copy()
+        for key, value in spec.items():
+            if key == "customProperties" and key in spec_to_update:
+                # When patching, customProperties should be appended instead of replaced
+                spec_to_update[key] = spec_to_update[key] + value
+            else:
+                spec_to_update[key] = value
+        
+        # 3. Update
+        return self.update_dc(spec_to_update, include_metadata=include_metadata)
+
     def get_dc(self, id: str, include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> Optional[DataContract]:
         """Fetch a single data contract by ID."""
         if include_metadata:
