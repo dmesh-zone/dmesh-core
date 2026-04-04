@@ -1,8 +1,10 @@
+import jsonschema
 import pytest
 import os
 from open_data_mesh_sdk import OpenDataMesh
 from open_data_mesh_sdk.persistency.sqlite import SQLiteRepository
 from open_data_mesh_sdk.core.models import DataProduct, DataContract
+from open_data_mesh_sdk.core.exceptions import DataProductValidationError, DataContractValidationError
 
 @pytest.fixture
 def odm(tmp_path):
@@ -62,6 +64,12 @@ def odm_create_dp_valid_more_input_test(odm):
     assert persisted.specification["status"] == "draft"
     assert persisted.specification["version"] == "v1.0.0"
 
+def odm_create_dp_invalid_property_test(odm):
+    spec = {"domain": "finance", "name": "ledger", "invalid": "property"}
+    with pytest.raises(DataProductValidationError) as exc:
+        odm.create_dp(spec)
+    assert "Invalid Data Product specification: Additional properties are not allowed ('invalid' was unexpected)" in str(exc.value)
+    
 def odm_update_dp_valid_test(odm):
     spec = {"domain": "finance", "name": "ledger"}
     dp = odm.create_dp(spec)
@@ -148,6 +156,13 @@ def odm_create_dc_valid_minimum_input_test(odm):
     persisted = odm._svc.repository.get_data_contract(dc["id"])
     assert persisted is not None
     assert persisted.data_product_id == dp["id"]
+
+def odm_create_dc_invalid_property_test(odm):
+    dp = odm.create_dp({"domain": "d", "name": "n"})
+    spec = {"invalid": "property"}
+    with pytest.raises(DataContractValidationError) as exc:
+        odm.create_dc(spec, dp_id=dp["id"])
+    assert "Invalid Data Contract specification: Additional properties are not allowed ('invalid' was unexpected)" in str(exc.value)
 
 def odm_update_dc_valid_more_input_test(odm):
     dp = odm.create_dp({"domain": "d", "name": "n"})

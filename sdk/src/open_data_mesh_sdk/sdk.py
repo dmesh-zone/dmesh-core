@@ -1,7 +1,9 @@
 from typing import Any, List, Optional, Union
+import jsonschema.exceptions
 from open_data_mesh_sdk.core.service import DataMeshService
 from open_data_mesh_sdk.core.repository import DataMeshRepository
 from open_data_mesh_sdk.core.models import DataProduct, DataContract
+from open_data_mesh_sdk.core.exceptions import DataProductValidationError, DataContractValidationError
 
 class OpenDataMesh:
     """The python interface for the Open Data Mesh SDK."""
@@ -9,19 +11,46 @@ class OpenDataMesh:
         self._svc = DataMeshService(repository)
 
     # Data Product Methods
-    def create_dp(self, spec: dict[str, Any], domain: Optional[str] = None, name: Optional[str] = None, include_metadata: Optional[bool] = False) -> DataProduct:
-        """Create a new data product. Domain and name can be provided in the spec or overriden as args."""
-        merged_spec = {**spec}
-        if domain: merged_spec["domain"] = domain
-        if name: merged_spec["name"] = name
-        return self._svc.create_data_product(merged_spec).specification if not include_metadata else self._svc.create_data_product(merged_spec)
+    def create_dp(self, spec: dict[str, Any], domain: Optional[str] = None, name: Optional[str] = None, include_metadata: Optional[bool] = False) -> Union[dict, DataProduct]:
+        """Create a new data product.
+        
+        Args:
+            spec: The data product specification dictionary.
+            domain: Optional override for the domain field.
+            name: Optional override for the name field.
+            include_metadata: If False (default), returns just the specification dictionary.
+                              If True, returns a DataProduct object with metadata. 
+        
+        Raises:
+            DataProductValidationError: If the specification is invalid.
+        """
+        try:
+            merged_spec = {**spec}
+            if domain: merged_spec["domain"] = domain
+            if name: merged_spec["name"] = name
+            return self._svc.create_data_product(merged_spec).specification if not include_metadata else self._svc.create_data_product(merged_spec)
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataProductValidationError(f"Invalid Data Product specification: {e.message}") from e
 
-    def update_dp(self, spec: dict[str, Any], include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> DataProduct:
-        """Update or patch an existing data product. Requires id in the spec."""
-        dp_id = spec.get("id")
-        if not dp_id:
-            raise ValueError("Data product id is required for update")
-        return self._svc.update_data_product(dp_id, spec).specification if not include_metadata_in_response else self._svc.update_data_product(dp_id, spec)
+    def update_dp(self, spec: dict[str, Any], include_metadata: Optional[bool] = False) -> Union[dict, DataProduct]:
+        """Update an existing data product.
+        
+        Args:
+            spec: The data product specification. Must contain 'id'.
+            include_metadata: If False (default), returns just the specification dictionary.
+                              If True, returns a DataProduct object with metadata.
+        
+        Raises:
+            ValueError: If 'id' is missing.
+            DataProductValidationError: If the specification is invalid.
+        """
+        try:
+            dp_id = spec.get("id")
+            if not dp_id:
+                raise ValueError("Data product id is required for update")
+            return self._svc.update_data_product(dp_id, spec).specification if not include_metadata else self._svc.update_data_product(dp_id, spec)
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataProductValidationError(f"Invalid Data Product specification: {e.message}") from e
 
     def get_dp(self, id: Optional[str] = None, domain: Optional[str] = None, name: Optional[str] = None, include_metadata: bool = False) -> Optional[DataProduct]:
         """Fetch a single data product by ID or by domain/name."""
@@ -54,41 +83,83 @@ class OpenDataMesh:
         return self._svc.delete_data_product(id)
 
     # Data Contract Methods
-    def create_dc(self, spec: dict[str, Any], dp_id: str, include_metadata: Optional[bool] = False) -> DataContract:
-        """Create a data contract for a given data product."""
-        return self._svc.create_data_contract(dp_id, spec).specification if not include_metadata else self._svc.create_data_contract(dp_id, spec)
-
-    def update_dc(self, spec: dict[str, Any], include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> DataContract:
-        """Update an existing data contract. Requires id in the spec."""
-        dc_id = spec.get("id")
-        if not dc_id:
-            raise ValueError("Data contract id is required for update")
-        return self._svc.update_data_contract(dc_id, spec).specification if not include_metadata_in_response else self._svc.update_data_contract(dc_id, spec)
-
-    def patch_dc(self, spec: dict[str, Any], include_metadata: Optional[bool] = False) -> DataContract:
-        """Patch an existing data contract. Supports partial updates and appends to customProperties."""
-        dc_id = spec.get("id")
-        if not dc_id:
-            raise ValueError("Data contract id is required for patch")
+    def create_dc(self, spec: dict[str, Any], dp_id: str, include_metadata: Optional[bool] = False) -> Union[dict, DataContract]:
+        """Create a data contract for a given data product.
         
-        # 1. Fetch current
-        current_full = self._svc.get_data_contract(dc_id)
-        if not current_full:
-            raise ValueError(f"Data contract {dc_id} not found")
+        Args:
+            spec: The data contract specification.
+            dp_id: The ID of the parent data product.
+            include_metadata: If False (default), returns just the specification dictionary.
+                              If True, returns a DataContract object with metadata.
         
-        current_spec = current_full.specification.copy()
+        Raises:
+            DataContractValidationError: If the specification is invalid.
+        """
+        try:
+            return self._svc.create_data_contract(dp_id, spec).specification if not include_metadata else self._svc.create_data_contract(dp_id, spec)
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataContractValidationError(f"Invalid Data Contract specification: {e.message}") from e
 
-        # 2. Merge logic
-        spec_to_update = current_spec.copy()
-        for key, value in spec.items():
-            if key == "customProperties" and key in spec_to_update:
-                # When patching, customProperties should be appended instead of replaced
-                spec_to_update[key] = spec_to_update[key] + value
-            else:
-                spec_to_update[key] = value
+    def update_dc(self, spec: dict[str, Any], include_metadata: Optional[bool] = False) -> Union[dict, DataContract]:
+        """Update an existing data contract.
         
-        # 3. Update
-        return self.update_dc(spec_to_update, include_metadata=include_metadata)
+        Args:
+            spec: The data contract specification. Must contain 'id'.
+            include_metadata: If False (default), returns just the specification dictionary.
+                              If True, returns a DataContract object with metadata.
+        
+        Raises:
+            ValueError: If 'id' is missing.
+            DataContractValidationError: If the specification is invalid.
+        """
+        try:
+            dc_id = spec.get("id")
+            if not dc_id:
+                raise ValueError("Data contract id is required for update")
+            return self._svc.update_data_contract(dc_id, spec).specification if not include_metadata else self._svc.update_data_contract(dc_id, spec)
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataContractValidationError(f"Invalid Data Contract specification: {e.message}") from e
+
+    def patch_dc(self, spec: dict[str, Any], include_metadata: Optional[bool] = False) -> Union[dict, DataContract]:
+        """Patch an existing data contract.
+        
+        Supports partial updates. Special handling for 'customProperties':
+        new properties are appended to the existing list instead of replacing it.
+        
+        Args:
+            spec: Partial data contract specification. Must contain 'id'.
+            include_metadata: If False (default), returns just the specification dictionary.
+                              If True, returns a DataContract object with metadata.
+        
+        Raises:
+            ValueError: If 'id' is missing or contract not found.
+            DataContractValidationError: If the resulting specification is invalid.
+        """
+        try:
+            dc_id = spec.get("id")
+            if not dc_id:
+                raise ValueError("Data contract id is required for patch")
+            
+            # 1. Fetch current
+            current_full = self._svc.get_data_contract(dc_id)
+            if not current_full:
+                raise ValueError(f"Data contract {dc_id} not found")
+            
+            current_spec = current_full.specification.copy()
+
+            # 2. Merge logic
+            spec_to_update = current_spec.copy()
+            for key, value in spec.items():
+                if key == "customProperties" and key in spec_to_update:
+                    # When patching, customProperties should be appended instead of replaced
+                    spec_to_update[key] = spec_to_update[key] + value
+                else:
+                    spec_to_update[key] = value
+            
+            # 3. Update
+            return self.update_dc(spec_to_update, include_metadata=include_metadata)
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataContractValidationError(f"Invalid Data Contract specification: {e.message}") from e
 
     def get_dc(self, id: str, include_metadata: Optional[bool] = False, include_metadata_in_response: Optional[bool] = False) -> Optional[DataContract]:
         """Fetch a single data contract by ID."""
