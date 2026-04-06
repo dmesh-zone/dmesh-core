@@ -84,6 +84,48 @@ results = sdk.discover(domain="sales", name="annual-revenue")
 for item in results:
     print(f"Found {item.get('kind')}: {item.get('id')}")
 ```
+## Test production-like setup
+
+To test the SDK with a production-like environment using an external PostgreSQL database, you can use the Docker configuration provided in the root of the repository:
+
+1. **Start the PostgreSQL container**:
+   From the repository root, run:
+   ```bash
+   docker compose up -d db
+   ```
+
+2. **Install dependencies**:
+   Ensure you have the `psycopg2` client for Python installed:
+   ```bash
+   pip install psycopg2-binary
+   ```
+
+3. **Configure the SDK**:
+   Initialize the SDK using `PostgresRepository` with a connection pool pointing to the Docker instance:
+
+   ```python
+   from psycopg2.pool import SimpleConnectionPool
+   from open_data_mesh_sdk import OpenDataMesh, PostgresRepository
+
+   # Configure the connection pool
+   # Matching values with the default Docker configuration
+   pool = SimpleConnectionPool(
+       minconn=1,
+       maxconn=10,
+       host="localhost",
+       port=5432,
+       user="postgres",
+       password="postgres",
+       database="postgres"
+   )
+
+   # Initialize repository and SDK
+   repository = PostgresRepository(pool)
+   sdk = OpenDataMesh(repository)
+
+   # You can now use the SDK as usual
+   # Resources will be persisted in the external PostgreSQL database
+   ```
 
 ## Documentation
 
