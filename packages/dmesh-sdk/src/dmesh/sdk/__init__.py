@@ -13,7 +13,6 @@ from .operations.utils import flush
 # Legacy support
 from .core.service import DataMeshService
 from .persistency.sqlite import SQLiteRepository
-from .persistency.postgres import PostgresRepository
 from .persistency.in_memory import InMemoryRepository
 
 __all__ = [
@@ -37,6 +36,5 @@ __all__ = [
     "flush",
     "DataMeshService",
     "SQLiteRepository",
-    "PostgresRepository",
     "InMemoryRepository",
 ]

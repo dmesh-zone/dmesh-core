@@ -2,7 +2,7 @@ import os
 from fastapi import Request
 from psycopg_pool import AsyncConnectionPool
 from dmesh.sdk.ports.repository import DataProductRepository, DataContractRepository
-from dmesh.sdk.adapters.psycopg import PostgresDataProductRepository, PostgresDataContractRepository
+from dmesh.sdk.persistency.postgres import PostgresDataProductRepository, PostgresDataContractRepository
 
 # Global pool instance
 _pool = None

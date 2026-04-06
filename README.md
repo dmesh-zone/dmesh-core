@@ -50,7 +50,7 @@ Leverages a high-performance PostgreSQL backend with connection pooling.
 ```python
 import asyncio
 from dmesh.sdk import create_dp
-from dmesh.sdk.adapters.psycopg import PostgresDataProductRepository
+from dmesh.sdk.persistency.postgres import PostgresDataProductRepository
 from psycopg_pool import AsyncConnectionPool
 
 async def main():
