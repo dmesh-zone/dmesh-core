@@ -130,7 +130,7 @@ def dc(
         if dc_id is None:
             entry = last_dc()
             if not entry:
-                typer.echo("Error: No history found. Provide a DC_ID or run 'odm put dc' first.", err=True)
+                typer.echo("Error: No history found. Provide a DC_ID or run 'dmesh put dc' first.", err=True)
                 raise typer.Exit(code=1)
             dc_id = entry["id"]
 

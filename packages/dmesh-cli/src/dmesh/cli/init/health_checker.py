@@ -31,5 +31,5 @@ class HealthChecker:
             time.sleep(1)
         raise HealthCheckTimeoutError(
             "The WS service did not become healthy within 30 seconds. "
-            "Run 'docker logs open-data-mesh-ws' for details."
+            "Run 'docker logs dmesh-ws' for details."
         )

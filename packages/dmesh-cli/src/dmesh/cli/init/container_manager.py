@@ -6,25 +6,25 @@ import docker.errors
 from dmesh.cli.init.errors import ContainerStartError, ImageBuildError, ImagePullError
 from dmesh.cli.init.feedback import Feedback
 
-DB_IMAGE = "open-data-mesh-db:latest"
-DB_CONTAINER = "open-data-mesh-db"
+DB_IMAGE = "dmesh-db:latest"
+DB_CONTAINER = "dmesh-db"
 DB_PORT = 5432
 
-WS_IMAGE = "open-data-mesh-ws:latest"
-WS_CONTAINER = "open-data-mesh-ws"
+WS_IMAGE = "dmesh-ws:latest"
+WS_CONTAINER = "dmesh-ws"
 WS_PORT = 8000
 
-NETWORK_NAME = "open-data-mesh-net"
+NETWORK_NAME = "dmesh-net"
 DB_ENVIRONMENT = {
     "POSTGRES_USER": "postgres",
     "POSTGRES_PASSWORD": "postgres",
     "POSTGRES_DB": "postgres",
 }
 import os
-WS_BASE_PATH = os.environ.get("WS_BASE_PATH", "odm").strip("/")  # default base path — configurable via WS_BASE_PATH env var
+WS_BASE_PATH = os.environ.get("WS_BASE_PATH", "dmesh").strip("/")  # default base path — configurable via WS_BASE_PATH env var
 
 WS_ENVIRONMENT = {
-    "DB_HOST": "open-data-mesh-db",
+    "DB_HOST": "dmesh-db",
     "DB_PORT": "5432",
     "DB_USER": "postgres",
     "DB_PASSWORD": "postgres",

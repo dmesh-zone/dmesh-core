@@ -13,7 +13,7 @@ class DeinitOrchestrator:
         """Execute the deinitialisation sequence."""
         self._feedback.step("Removing local data mesh environment...")
         
-        db_path = CONFIG_PATH.parent / "odm.db"
+        db_path = CONFIG_PATH.parent / "dmesh.db"
         
         if db_path.exists():
             self._feedback.step(f"Removing SQLite database at {db_path}...")

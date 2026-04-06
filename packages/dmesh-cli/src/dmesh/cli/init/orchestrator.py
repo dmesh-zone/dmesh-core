@@ -18,7 +18,7 @@ class InitOrchestrator:
         # Ensure config directory exists
         CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
         
-        db_path = CONFIG_PATH.parent / "odm.db"
+        db_path = CONFIG_PATH.parent / "dmesh.db"
         
         # Initialize SQLite repository (this creates the tables)
         self._feedback.step(f"Initializing SQLite database at {db_path}...")

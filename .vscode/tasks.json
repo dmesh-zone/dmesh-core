@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "${config:python.defaultInterpreterPath} -m pytest tests/integration -s",
             "options": {
-                "cwd": "${workspaceFolder}/open-data-mesh-cli"
+                "cwd": "${workspaceFolder}/dmesh-cli"
             },
             "group": {
                 "kind": "test",
@@ -22,7 +22,7 @@
             "type": "shell",
             "command": "${config:python.defaultInterpreterPath} -m pytest tests/integration/cli -s",
             "options": {
-                "cwd": "${workspaceFolder}/open-data-mesh-cli"
+                "cwd": "${workspaceFolder}/dmesh-cli"
             },
             "group": {
                 "kind": "test"
@@ -37,7 +37,7 @@
             "type": "shell",
             "command": "${config:python.defaultInterpreterPath} -m pytest tests/integration/ws -s",
             "options": {
-                "cwd": "${workspaceFolder}/open-data-mesh-cli"
+                "cwd": "${workspaceFolder}/dmesh-cli"
             },
             "group": {
                 "kind": "test"

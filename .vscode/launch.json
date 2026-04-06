@@ -13,9 +13,9 @@
                 "-s"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/open-data-mesh-cli",
+            "cwd": "${workspaceFolder}/dmesh-cli",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/open-data-mesh-cli;${workspaceFolder}/open-data-mesh-sdk/src"
+                "PYTHONPATH": "${workspaceFolder}/dmesh-cli;${workspaceFolder}/dmesh-sdk/src"
             },
             "justMyCode": false
         },
@@ -29,9 +29,9 @@
                 "-s"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/open-data-mesh-cli",
+            "cwd": "${workspaceFolder}/dmesh-cli",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/open-data-mesh-cli;${workspaceFolder}/open-data-mesh-sdk/src"
+                "PYTHONPATH": "${workspaceFolder}/dmesh-cli;${workspaceFolder}/dmesh-sdk/src"
             },
             "justMyCode": false
         }

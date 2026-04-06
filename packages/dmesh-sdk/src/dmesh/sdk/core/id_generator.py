@@ -2,7 +2,7 @@
 import os
 import uuid
 
-# Fixed namespace for all open-data-mesh IDs
+# Fixed namespace for all dmesh IDs
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # NAMESPACE_DNS
 
 DEFAULT_DP_SCHEME = "DataProduct/{domain}/{name}/{version}"
