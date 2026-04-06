@@ -1,0 +1,23 @@
+[project]
+name = "dmesh-api"
+version = "0.1.0"
+description = "dmesh API"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dmesh-sdk",
+    "fastapi",
+    "uvicorn",
+    "mangum",
+    "psycopg[binary,pool]",
+]
+
+[tool.uv.sources]
+dmesh-sdk = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dmesh"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

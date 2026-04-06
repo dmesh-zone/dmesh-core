@@ -1,0 +1,4 @@
+apiVersion: v3.1.0
+kind: DataContract
+version: v1.0.0
+status: draft

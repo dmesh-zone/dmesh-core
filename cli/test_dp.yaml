@@ -1,5 +1,0 @@
-
-apiVersion: v1.0.0
-domain: test-cli
-name: my-product
-version: 1.0.0

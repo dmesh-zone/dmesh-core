@@ -1,0 +1,31 @@
+import typer
+from dmesh.cli.commands.init import init
+from dmesh.cli.commands.deinit import deinit
+from dmesh.cli.commands.reset import reset
+from dmesh.cli.commands.put import app as put_app
+from dmesh.cli.commands.get import app as get_app
+from dmesh.cli.commands.list import app as list_app
+from dmesh.cli.commands.delete import app as delete_app
+
+import os
+CLI_NAME = os.environ.get("ODM_CLI_NAME", "odm")
+app = typer.Typer(name=CLI_NAME, no_args_is_help=True)
+app.command("init")(init)
+app.command("deinit")(deinit)
+app.command("reset")(reset)
+app.add_typer(put_app, name="put")
+app.add_typer(get_app, name="get")
+app.add_typer(list_app, name="list")
+app.add_typer(delete_app, name="delete")
+
+
+@app.command("version")
+def version() -> None:
+    """Show the CLI version."""
+    import importlib.metadata
+    v = importlib.metadata.version("dmesh-cli")
+    typer.echo(v)
+
+
+if __name__ == "__main__":
+    app()

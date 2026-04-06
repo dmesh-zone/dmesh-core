@@ -1,0 +1,47 @@
+[project]
+name = "dmesh-core"
+version = "0.1.0"
+description = "dmesh core workspace"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.135.3",
+    "httpx>=0.28.1",
+    "jsonschema>=4.26.0",
+    "mangum>=0.21.0",
+    "psycopg[binary,pool]>=3.3.3",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pyyaml>=6.0.3",
+    "requests>=2.33.1",
+    "rich>=14.3.3",
+    "typer>=0.24.1",
+    "uvicorn>=0.43.0",
+    "dmesh-sdk",
+    "dmesh-cli",
+    "dmesh-api",
+]
+
+[tool.uv]
+managed = true
+
+[tool.uv.workspace]
+members = [
+    "packages/dmesh-sdk",
+    "packages/dmesh-cli",
+    "packages/dmesh-api",
+]
+
+[tool.uv.sources]
+dmesh-sdk = { workspace = true }
+dmesh-cli = { workspace = true }
+dmesh-api = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+    "packages/dmesh-sdk/src",
+    "packages/dmesh-api/src",
+    "packages/dmesh-cli/src"
+]
+asyncio_mode = "auto"
