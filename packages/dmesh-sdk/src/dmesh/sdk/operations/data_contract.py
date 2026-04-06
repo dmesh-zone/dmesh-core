@@ -4,6 +4,7 @@ import jsonschema.exceptions
 
 from dmesh.sdk.models import DataContract, DataContractValidationError
 from dmesh.sdk.ports.repository import DataContractRepository, DataProductRepository
+from dmesh.sdk.core.enricher import enrich_dc_spec
 from dmesh.sdk.core.validator import validate_spec
 from dmesh.sdk.core.id_generator import make_dc_id
 
@@ -24,15 +25,7 @@ async def create_dc(
         dc_index = len(existing_dcs)
         
         dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
-        
-        enriched_dc = {
-            "apiVersion": "v3.1.0",
-            "kind": "DataContract",
-            "version": "v1.0.0",
-            "status": "draft",
-            **spec,
-            "id": dc_id
-        }
+        enriched_dc = enrich_dc_spec({**spec, "id": dc_id}, dp_spec=dp.specification)
         validate_spec(enriched_dc)
         
         dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
@@ -57,14 +50,7 @@ async def update_dc(
         if not existing:
             raise ValueError(f"Data contract {dc_id} not found")
         
-        enriched_dc = {
-            "apiVersion": "v3.1.0",
-            "kind": "DataContract",
-            "version": "v1.0.0",
-            "status": "draft",
-            **spec,
-            "id": dc_id
-        }
+        enriched_dc = enrich_dc_spec({**spec, "id": dc_id})
         validate_spec(enriched_dc)
         dc = DataContract(id=dc_id, data_product_id=existing.data_product_id, specification=enriched_dc)
         await repo.save(dc)

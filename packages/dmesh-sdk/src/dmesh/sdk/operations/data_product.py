@@ -4,7 +4,7 @@ import jsonschema.exceptions
 
 from dmesh.sdk.models import DataProduct, DataProductValidationError
 from dmesh.sdk.ports.repository import DataProductRepository
-from dmesh.sdk.core.enricher import enrich_spec
+from dmesh.sdk.core.enricher import enrich_dp_spec
 from dmesh.sdk.core.validator import validate_spec
 
 async def create_dp(
@@ -20,7 +20,7 @@ async def create_dp(
         if domain: merged_spec["domain"] = domain
         if name: merged_spec["name"] = name
         
-        enriched = enrich_spec(merged_spec)
+        enriched = enrich_dp_spec(merged_spec)
         validate_spec(enriched)
         
         dp = DataProduct(id=enriched["id"], specification=enriched)
@@ -41,7 +41,7 @@ async def update_dp(
         if not dp_id:
             raise ValueError("Data product id is required for update")
         
-        enriched = enrich_spec(spec)
+        enriched = enrich_dp_spec(spec)
         validate_spec(enriched)
         
         dp = DataProduct(id=dp_id, specification=enriched)

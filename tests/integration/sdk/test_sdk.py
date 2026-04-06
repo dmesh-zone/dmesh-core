@@ -173,6 +173,8 @@ async def test_create_dc_valid_minimum_input(repos):
     assert dc["apiVersion"] == "v3.1.0"
     assert dc["status"] == "draft"
     assert dc["version"] == "v1.0.0"
+    assert dc["domain"] == "d"
+    assert dc["dataProduct"] == "n"
     
     # Assert persistency state
     persisted = await dc_repo.get(UUID(dc["id"]))

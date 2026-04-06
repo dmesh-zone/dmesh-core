@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from dmesh.sdk.core.enricher import enrich_spec
+from dmesh.sdk.core.enricher import enrich_dp_spec, enrich_dc_spec
 from dmesh.sdk.models import DataProduct, DataContract
 from dmesh.sdk.ports.repository import DataMeshRepository
 from dmesh.sdk.core.validator import validate_spec
@@ -12,7 +12,7 @@ class DataMeshService:
         self.repository = repository
 
     def create_data_product(self, spec: dict[str, Any]) -> DataProduct:
-        enriched = enrich_spec(spec)
+        enriched = enrich_dp_spec(spec)
         validate_spec(enriched)
         dp = DataProduct(id=enriched["id"], specification=enriched)
         return self.repository.create_data_product(dp)
@@ -26,7 +26,7 @@ class DataMeshService:
     def update_data_product(self, dp_id: str, spec: dict[str, Any]) -> DataProduct:
         # Merge ID to ensure it's preserved
         spec_with_id = {**spec, "id": dp_id}
-        enriched = enrich_spec(spec_with_id)
+        enriched = enrich_dp_spec(spec_with_id)
         validate_spec(enriched)
         dp = DataProduct(id=dp_id, specification=enriched)
         return self.repository.update_data_product(dp)
@@ -49,14 +49,7 @@ class DataMeshService:
         dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
         
         # Merge ID and apply defaults for validation
-        enriched_dc = {
-            "apiVersion": "v3.1.0",
-            "kind": "DataContract",
-            "version": "v1.0.0",
-            "status": "draft",
-            **spec,
-            "id": dc_id
-        }
+        enriched_dc = enrich_dc_spec({**spec, "id": dc_id}, dp_spec=dp.specification)
         validate_spec(enriched_dc)
 
         dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
@@ -74,14 +67,7 @@ class DataMeshService:
             raise ValueError(f"Data contract {dc_id} not found")
         
         # Merge ID and apply defaults for validation
-        enriched_dc = {
-            "apiVersion": "v3.1.0",
-            "kind": "DataContract",
-            "version": "v1.0.0",
-            "status": "draft",
-            **spec,
-            "id": dc_id
-        }
+        enriched_dc = enrich_dc_spec({**spec, "id": dc_id})
         validate_spec(enriched_dc)
         dc = DataContract(id=dc_id, data_product_id=existing.data_product_id, specification=enriched_dc)
         return self.repository.update_data_contract(dc)
@@ -127,7 +113,7 @@ class DataMeshService:
 
         # validate spec against schema and raise ValidationError exception if invalid
         # We enrich first to ensure defaults like apiVersion and kind are present
-        enriched = enrich_spec({**spec, "id": dp_id} if dp_id else spec)
+        enriched = enrich_dp_spec({**spec, "id": dp_id} if dp_id else spec)
         validate_spec(enriched)
         
         if dp_id:
