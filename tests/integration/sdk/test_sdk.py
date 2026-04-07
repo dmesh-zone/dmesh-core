@@ -8,7 +8,7 @@ from dmesh.sdk import (
     create_dc, update_dc, patch_dc, get_dc, list_dcs, delete_dc,
     discover, DataProductValidationError, DataContractValidationError
 )
-from dmesh.sdk.persistency.factory import create_repository_factory
+from dmesh.sdk.persistency.factory import RepositoryFactory
 
 @pytest.fixture(scope="session")
 def postgres_container():
@@ -61,7 +61,7 @@ async def clean_database(postgres_container, setup_schema):
 @pytest.fixture
 async def repos(postgres_container, setup_schema):
     """Create repositories using the test postgres container."""
-    factory = create_repository_factory(
+    factory = RepositoryFactory().create(
         db_type="postgres",
         pg_host=postgres_container.get_container_host_ip(),
         pg_port=postgres_container.get_exposed_port(5432),
@@ -71,7 +71,7 @@ async def repos(postgres_container, setup_schema):
     )
     await factory.open()
     try:
-        yield factory.create_data_product_repository(), factory.create_data_contract_repository()
+        yield factory.get_data_product_repository(), factory.get_data_contract_repository()
     finally:
         await factory.close()
 

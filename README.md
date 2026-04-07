@@ -23,12 +23,12 @@ Perfect for unit tests and isolated development without external dependencies.
 ```python
 import asyncio
 from dmesh.sdk import create_dp
-from dmesh.sdk.persistency.factory import create_repository_factory
+from dmesh.sdk.persistency.factory import RepositoryFactory
 
 async def main():
     # Create an in-memory repository factory
-    factory = create_repository_factory("memory")
-    repo = factory.create_data_product_repository()
+    factory = RepositoryFactory().create("memory")
+    repo = factory.get_data_product_repository()
     
     # Create a Data Product specification
     spec = {
@@ -52,11 +52,11 @@ Leverages a high-performance PostgreSQL backend with connection pooling.
 ```python
 import asyncio
 from dmesh.sdk import create_dp
-from dmesh.sdk.persistency.factory import create_repository_factory
+from dmesh.sdk.persistency.factory import RepositoryFactory
 
 async def main():
     # Create a PostgreSQL repository factory
-    factory = create_repository_factory(
+    factory = RepositoryFactory().create(
         "postgres",
         pg_host="localhost",
         pg_port=5432,
@@ -64,7 +64,7 @@ async def main():
         pg_password="postgres",
         pg_db="postgres"
     )
-    repo = factory.create_data_product_repository()
+    repo = factory.get_data_product_repository()
     
     # Create Data Product
     dp = await create_dp(repo, {"domain": "marketing", "name": "analytics"})
