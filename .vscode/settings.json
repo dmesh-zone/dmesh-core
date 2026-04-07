@@ -1,5 +1,6 @@
 {
     "kiroAgent.configureMCP": "Disabled",
+    "python.testing.pytestPath": "uv run pytest",
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.promptToConfigure": false,
@@ -7,7 +8,9 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
-    "python.testing.pytestEnvVars": {},
+    "python.testing.pytestEnvVars": {
+        "VIRTUAL_ENV": "${workspaceFolder}/.venv"
+    },
     "python.testing.debugJustMyCode": false,
     "python.analysis.extraPaths": [
         "${workspaceFolder}/packages/dmesh-sdk/src",
