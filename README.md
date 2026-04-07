@@ -163,3 +163,18 @@ uv run pytest tests/integration/sdk/test_sdk.py
 # Run integration tests (requires docker-compose up -d)
 uv run pytest tests/integration
 ```
+
+### VSCode Setup
+
+The project includes VSCode configuration (`.vscode/settings.json`) that automatically detects uv's virtual environment:
+
+- **Linux/macOS**: Uses `.venv/bin/python`
+- **Windows**: VSCode auto-detects `.venv\Scripts\python.exe`
+
+**For Windows users**: If VSCode doesn't automatically detect the correct interpreter, update `.vscode/settings.json`:
+```json
+"python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+"python.testing.pytestPath": "${workspaceFolder}/.venv/Scripts/pytest.exe"
+```
+
+VSCode will automatically discover and run tests from the Testing panel once the workspace is opened.
