@@ -16,7 +16,7 @@ class MemoryDataProductRepository:
         # Compatibility: model uses str id, repo uses UUID
         self.products[UUID(product.id)] = product
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_create_dp_smoke():
     repo = MemoryDataProductRepository()
     spec = {
@@ -38,7 +38,7 @@ async def test_create_dp_smoke():
     assert persisted.domain == "test-domain"
     assert persisted.specification["id"] == dp_id
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_create_dp_with_metadata_smoke():
     repo = MemoryDataProductRepository()
     spec = {"domain": "hr", "name": "employees"}
@@ -49,7 +49,7 @@ async def test_create_dp_with_metadata_smoke():
     assert dp.domain == "hr"
     assert dp.name == "employees"
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_create_dp_validation_smoke():
     repo = MemoryDataProductRepository()
     # Missing domain is usually invalid in many schemas

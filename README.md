@@ -6,7 +6,7 @@ A modern, high-performance toolkit for managing **Open Data Mesh** specification
 
 The project is structured as a modular Python workspace with a clear separation of concerns:
 
--   **`dmesh-sdk`**: The core logic layer. Supporting CRUD operations for Open Data Product and Open Data Contract specifications
+-   **`dmesh-sdk`**: The core logic layer. Provides CRUD operations for Open Data Product and Open Data Contract specifications through a repository factory pattern that supports in-memory (for testing) and PostgreSQL (for production) persistency.
 -   **`dmesh-cli`**: A Typer-powered command-line interface for local-first development. It allows users to initialize a local environment, manage specifications, and interact with PostgreSQL backend.
 -   **`dmesh-api`**: A FastAPI backend. It provides a RESTful interface for external integrations. It uses `psycopg3` for robust, async PostgreSQL persistence.
 
@@ -14,19 +14,21 @@ The project is structured as a modular Python workspace with a clear separation 
 
 ## 🛠️ SDK Usage
 
-The `dmesh-sdk` is designed for flexibility, supporting multiple persistence modes via the repository pattern.
+The `dmesh-sdk` uses a repository factory pattern for flexible persistency configuration, supporting in-memory storage for testing and PostgreSQL for production.
 
-### 1. Local Persistency Mode (SQLite)
+### 1. In-Memory Persistency Mode (Testing)
 
-Perfect for local development or testing without external dependencies.
+Perfect for unit tests and isolated development without external dependencies.
 
 ```python
 import asyncio
-from dmesh.sdk import create_dp, SQLiteRepository
+from dmesh.sdk import create_dp
+from dmesh.sdk.persistency.factory import create_repository_factory
 
 async def main():
-    # Initialize a local SQLite repository
-    repo = SQLiteRepository("dmesh.db")
+    # Create an in-memory repository factory
+    factory = create_repository_factory("memory")
+    repo = factory.create_data_product_repository()
     
     # Create a Data Product specification
     spec = {
@@ -43,26 +45,30 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-### 2. Production-Like Persistency Mode (Docker/Postgres)
+### 2. Production PostgreSQL Persistency Mode
 
 Leverages a high-performance PostgreSQL backend with connection pooling.
 
 ```python
 import asyncio
 from dmesh.sdk import create_dp
-from dmesh.sdk.persistency.postgres import PostgresDataProductRepository
-from psycopg_pool import AsyncConnectionPool
+from dmesh.sdk.persistency.factory import create_repository_factory
 
 async def main():
-    # Configure an asynchronous connection pool
-    conn_str = "host=localhost port=5432 user=postgres password=postgres dbname=postgres"
-    async with AsyncConnectionPool(conninfo=conn_str) as pool:
-        # Initialize the Postgres repository adapter
-        repo = PostgresDataProductRepository(pool)
-        
-        # Create Data Product
-        dp = await create_dp(repo, {"domain": "marketing", "name": "analytics"})
-        print(f"Persisted to Postgres: {dp.id}")
+    # Create a PostgreSQL repository factory
+    factory = create_repository_factory(
+        "postgres",
+        pg_host="localhost",
+        pg_port=5432,
+        pg_user="postgres",
+        pg_password="postgres",
+        pg_db="postgres"
+    )
+    repo = factory.create_data_product_repository()
+    
+    # Create Data Product
+    dp = await create_dp(repo, {"domain": "marketing", "name": "analytics"})
+    print(f"Persisted to Postgres: {dp.id}")
 
 if __name__ == "__main__":
     asyncio.run(main())

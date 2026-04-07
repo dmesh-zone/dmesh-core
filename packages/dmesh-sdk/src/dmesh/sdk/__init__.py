@@ -12,7 +12,6 @@ from .operations.utils import flush
 
 # Legacy support
 from .core.service import DataMeshService
-from .persistency.sqlite import SQLiteRepository
 from .persistency.in_memory import InMemoryRepository
 
 __all__ = [
@@ -35,6 +34,5 @@ __all__ = [
     "discover",
     "flush",
     "DataMeshService",
-    "SQLiteRepository",
     "InMemoryRepository",
 ]

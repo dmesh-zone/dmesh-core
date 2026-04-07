@@ -22,16 +22,14 @@ class ConfigReader:
             raise ConfigMalformedError("Config is malformed.")
 
         base_url = raw.get("ws", {}).get("base_url")
-        sqlite_path = raw.get("sqlite", {}).get("path")
         pg = raw.get("postgres", {})
         
-        if not base_url and not sqlite_path and not pg:
+        if not base_url and not pg:
             raise ConfigMalformedError(
                 "Config is malformed: no repository configured. Run `dm init` to reconfigure."
             )
         return DmConfig(
             ws_base_url=base_url, 
-            sqlite_path=sqlite_path,
             pg_host=pg.get("host"),
             pg_port=pg.get("port"),
             pg_user=pg.get("user"),

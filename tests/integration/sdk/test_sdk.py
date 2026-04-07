@@ -1,59 +1,79 @@
 import pytest
 from uuid import UUID
 from typing import List, Optional
+from testcontainers.postgres import PostgresContainer
 from dmesh.sdk.models import DataProduct, DataContract
 from dmesh.sdk import (
     create_dp, update_dp, get_dp, list_dps, delete_dp,
     create_dc, update_dc, patch_dc, get_dc, list_dcs, delete_dc,
     discover, DataProductValidationError, DataContractValidationError
 )
+from dmesh.sdk.persistency.factory import create_repository_factory
 
-class AsyncMemoryDataProductRepository:
-    def __init__(self):
-        self.products = {}
+@pytest.fixture(scope="session")
+def postgres_container():
+    """Start a PostgreSQL container for integration tests."""
+    with PostgresContainer("postgres:15-alpine") as postgres:
+        yield postgres
 
-    async def get(self, id: UUID) -> Optional[DataProduct]:
-        return self.products.get(id)
+@pytest.fixture(scope="session", autouse=True)
+async def setup_schema(postgres_container):
+    """Create the database schema for tests."""
+    import psycopg
+    conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname}"
+    async with await psycopg.AsyncConnection.connect(conn_string) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS data_products (
+                    id          UUID        PRIMARY KEY,
+                    specification JSONB,
+                    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    dp_domain   TEXT        GENERATED ALWAYS AS (specification->>'domain')  STORED,
+                    dp_name     TEXT        GENERATED ALWAYS AS (specification->>'name')    STORED,
+                    dp_version  TEXT        GENERATED ALWAYS AS (specification->>'version') STORED
+                );
 
-    async def save(self, product: DataProduct) -> None:
-        self.products[UUID(product.id)] = product
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_data_products_domain_name_version
+                    ON data_products (dp_domain, dp_name, dp_version);
 
-    async def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
-        results = list(self.products.values())
-        if domain: results = [p for p in results if p.domain == domain]
-        if name: results = [p for p in results if p.name == name]
-        return results
+                CREATE TABLE IF NOT EXISTS data_contracts (
+                    id              UUID        PRIMARY KEY,
+                    data_product_id UUID        NOT NULL REFERENCES data_products(id) ON DELETE CASCADE,
+                    specification   JSONB,
+                    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+            """)
+        await conn.commit()
 
-    async def delete(self, id: UUID) -> bool:
-        if id in self.products:
-            del self.products[id]
-            return True
-        return False
-
-class AsyncMemoryDataContractRepository:
-    def __init__(self):
-        self.contracts = {}
-
-    async def get(self, id: UUID) -> Optional[DataContract]:
-        return self.contracts.get(id)
-
-    async def save(self, contract: DataContract) -> None:
-        self.contracts[UUID(contract.id)] = contract
-
-    async def list(self, dp_id: Optional[str] = None) -> List[DataContract]:
-        results = list(self.contracts.values())
-        if dp_id: results = [c for c in results if c.data_product_id == dp_id]
-        return results
-
-    async def delete(self, id: UUID) -> bool:
-        if id in self.contracts:
-            del self.contracts[id]
-            return True
-        return False
+@pytest.fixture(autouse=True)
+async def clean_database(postgres_container, setup_schema):
+    """Ensure a clean database state for each integration test."""
+    import psycopg
+    conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname}"
+    async with await psycopg.AsyncConnection.connect(conn_string) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("TRUNCATE TABLE data_contracts, data_products CASCADE;")
+        await conn.commit()
+    yield
 
 @pytest.fixture
-def repos():
-    return AsyncMemoryDataProductRepository(), AsyncMemoryDataContractRepository()
+async def repos(postgres_container, setup_schema):
+    """Create repositories using the test postgres container."""
+    factory = create_repository_factory(
+        db_type="postgres",
+        pg_host=postgres_container.get_container_host_ip(),
+        pg_port=postgres_container.get_exposed_port(5432),
+        pg_user=postgres_container.username,
+        pg_password=postgres_container.password,
+        pg_db=postgres_container.dbname
+    )
+    await factory.open()
+    try:
+        yield factory.create_data_product_repository(), factory.create_data_contract_repository()
+    finally:
+        await factory.close()
 
 # Data Product Tests
 @pytest.mark.asyncio

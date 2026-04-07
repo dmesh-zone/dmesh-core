@@ -15,7 +15,6 @@ CONFIG_PATH = Path.home() / ".dm" / "config.yaml"
 @dataclass
 class DmConfig:
     ws_base_url: Optional[str] = None
-    sqlite_path: Optional[str] = None
     pg_host: Optional[str] = None
     pg_port: Optional[int] = None
     pg_user: Optional[str] = None
@@ -43,10 +42,6 @@ class ConfigWriter:
     def write_ws(self, ws_base_url: str) -> None:
         """Write ws config."""
         self.write({"ws": {"base_url": ws_base_url}})
-
-    def write_sqlite(self, sqlite_path: str) -> None:
-        """Write SQLite config."""
-        self.write({"sqlite": {"path": sqlite_path}})
 
     def write_pg(self, host, port, user, password, dbname) -> None:
         """Write Postgres config."""

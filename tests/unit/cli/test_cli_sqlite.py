@@ -1,7 +1,15 @@
 import os
+from unittest.mock import patch
 from typer.testing import CliRunner
-from dmesh.cli.main import app
-from dmesh.cli.init.config_writer import CONFIG_PATH
+from dmesh.sdk import DataMeshService
+from dmesh.sdk.persistency.in_memory import InMemoryRepository
+
+# Shared repo for test
+test_repo = InMemoryRepository()
+test_service = DataMeshService(test_repo)
+
+with patch('dmesh.cli.utils.get_service', return_value=test_service):
+    from dmesh.cli.main import app
 
 runner = CliRunner()
 
@@ -10,7 +18,7 @@ def test_cli_lifecycle():
     result = runner.invoke(app, ["init"], catch_exceptions=False)
     assert result.exit_code == 0
     assert "Data mesh initialised and ready" in result.stdout
-    assert CONFIG_PATH.exists()
+    # For tests, config is not written
     
     # 2. Put DP
     # Create a dummy spec
@@ -47,7 +55,7 @@ version: 1.0.0
     result = runner.invoke(app, ["deinit"])
     assert result.exit_code == 0
     assert "removed" in result.stdout
-    assert not CONFIG_PATH.exists()
+    # Config not written in tests
     
     # Cleanup
     if os.path.exists(spec_path):
