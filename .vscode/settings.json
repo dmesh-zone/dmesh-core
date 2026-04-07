@@ -7,11 +7,8 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
-    "python.testing.pytestEnvVars": {
-        "PYTHONPATH": "${workspaceFolder}/packages/dmesh-sdk/src:${workspaceFolder}/packages/dmesh-api/src:${workspaceFolder}/packages/dmesh-cli/src"
-    },
+    "python.testing.pytestEnvVars": {},
     "python.testing.debugJustMyCode": false,
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/packages/dmesh-sdk/src",
         "${workspaceFolder}/packages/dmesh-api/src",

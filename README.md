@@ -90,11 +90,16 @@ uv sync
 
 ### Quick start
 
-samples folder provide a quick start script and data product and data contract sample yaml files
+examples folder provide a quick start script and data product and data contract sample yaml files
 
-Execute it to see the CLI in action:
+Execute it to see the CLI in action (Linux/MacOS):
 ```bash
-bash -x ./samples/dmesh-cli-smoke-test.sh
+bash -x ./examples/dmesh-cli-smoke-test.sh
+```
+
+On Windows (PowerShell):
+```powershell
+.\examples\dmesh-cli-smoke-test.ps1
 ```
 
 ### Common Commands

@@ -16,8 +16,16 @@ class PostgresSyncRepository(DataMeshRepository):
             specification=row["specification"]
         )
 
+    def create_data_product(self, dp: DataProduct) -> DataProduct:
+        with self.pool.connection() as conn:
+            conn.execute(
+                "INSERT INTO data_products (id, specification) VALUES (%s, %s)",
+                (dp.id, json.dumps(dp.specification)),
+            )
+        return dp
+
     def get_data_product(self, dp_id: str) -> Optional[DataProduct]:
-        with self.pool.getconn() as conn:
+        with self.pool.connection() as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
                     "SELECT id, specification FROM data_products WHERE id = %s",
@@ -26,11 +34,97 @@ class PostgresSyncRepository(DataMeshRepository):
                 row = cur.fetchone()
                 return self._row_to_dp(row) if row else None
 
-    # Implement other methods similarly for legacy support
-    # ... but for CLI/API, we'll mostly use the new domain repositories
+    def list_data_products(self, domain: str = None, name: str = None, version: str = None) -> List[DataProduct]:
+        with self.pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                filters = []
+                params = []
+                if domain:
+                    filters.append("dp_domain = %s")
+                    params.append(domain)
+                if name:
+                    filters.append("dp_name = %s")
+                    params.append(name)
+                if version:
+                    filters.append("dp_version = %s")
+                    params.append(version)
+                
+                where = f"WHERE {' AND '.join(filters)}" if filters else ""
+                cur.execute(f"SELECT id, specification FROM data_products {where}", params)
+                rows = cur.fetchall()
+                return [self._row_to_dp(row) for row in rows]
+
+    def update_data_product(self, dp: DataProduct) -> DataProduct:
+        with self.pool.connection() as conn:
+            conn.execute(
+                "UPDATE data_products SET specification = %s, updated_at = NOW() WHERE id = %s",
+                (json.dumps(dp.specification), dp.id),
+            )
+        return dp
+
+    def delete_data_product(self, dp_id: str) -> bool:
+        with self.pool.connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM data_products WHERE id = %s RETURNING id", (dp_id,))
+                row = cur.fetchone()
+                return row is not None
+
+    def create_data_contract(self, dc: DataContract) -> DataContract:
+        with self.pool.connection() as conn:
+            conn.execute(
+                "INSERT INTO data_contracts (id, data_product_id, specification) VALUES (%s, %s, %s)",
+                (dc.id, dc.data_product_id, json.dumps(dc.specification)),
+            )
+        return dc
+
+    def get_data_contract(self, dc_id: str) -> Optional[DataContract]:
+        with self.pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    "SELECT id, data_product_id, specification FROM data_contracts WHERE id = %s",
+                    (dc_id,),
+                )
+                row = cur.fetchone()
+                return self._row_to_dc_sync(row) if row else None
+
+    def list_data_contracts(self, dp_id: str = None) -> List[DataContract]:
+        with self.pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                query = "SELECT id, data_product_id, specification FROM data_contracts"
+                params = []
+                if dp_id:
+                    query += " WHERE data_product_id = %s"
+                    params.append(dp_id)
+                cur.execute(query, params)
+                rows = cur.fetchall()
+                return [self._row_to_dc_sync(row) for row in rows]
+
+    def update_data_contract(self, dc: DataContract) -> DataContract:
+        with self.pool.connection() as conn:
+            conn.execute(
+                "UPDATE data_contracts SET specification = %s, updated_at = NOW() WHERE id = %s",
+                (json.dumps(dc.specification), dc.id),
+            )
+        return dc
+
+    def delete_data_contract(self, dc_id: str) -> bool:
+        with self.pool.connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM data_contracts WHERE id = %s RETURNING id", (dc_id,))
+                row = cur.fetchone()
+                return row is not None
+
     def flush(self) -> None:
-        with self.pool.getconn() as conn:
+        with self.pool.connection() as conn:
             conn.execute("DELETE FROM data_products")
+            conn.execute("DELETE FROM data_contracts")
+
+    def _row_to_dc_sync(self, row: dict) -> DataContract:
+        return DataContract(
+            id=str(row["id"]),
+            data_product_id=str(row["data_product_id"]),
+            specification=row["specification"]
+        )
 
 
 class PostgresDataProductRepository(DataProductRepository):
