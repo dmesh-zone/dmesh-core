@@ -2,38 +2,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Debug Current Test File",
+            "name": "Python: Current File (dmesh-sdk-docker)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${config:python.defaultInterpreterPath}",
-            "args": [
-                "-m",
-                "pytest",
-                "${file}",
-                "-s"
-            ],
+            "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/dmesh-cli",
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/dmesh-cli;${workspaceFolder}/dmesh-sdk/src"
-            },
-            "justMyCode": false
+                "PYTHONPATH": "${workspaceFolder}/packages/dmesh-sdk/src;${workspaceFolder}/packages/dmesh-api/src;${workspaceFolder}/packages/dmesh-cli/src",
+                "APP_ENV": "docker"
+            }
         },
         {
-            "name": "Python: Debug All Integration Tests",
+            "name": "Python: Current File (dmesh-sdk-lakebase)",
             "type": "debugpy",
             "request": "launch",
-            "module": "pytest",
-            "args": [
-                "tests/integration",
-                "-s"
-            ],
+            "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/dmesh-cli",
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/dmesh-cli;${workspaceFolder}/dmesh-sdk/src"
-            },
-            "justMyCode": false
+                "PYTHONPATH": "${workspaceFolder}/packages/dmesh-sdk/src;${workspaceFolder}/packages/dmesh-api/src;${workspaceFolder}/packages/dmesh-cli/src",
+                "APP_ENV": "my_lakebase"
+            }
         }
     ]
 }

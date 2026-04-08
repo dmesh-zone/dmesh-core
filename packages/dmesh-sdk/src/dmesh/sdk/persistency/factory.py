@@ -1,4 +1,4 @@
-from typing import Optional, Protocol
+from typing import Any, Optional, Protocol
 from dmesh.sdk.ports.repository import DataProductRepository, DataContractRepository
 from dmesh.sdk.persistency.in_memory import AsyncInMemoryDataProductRepository, AsyncInMemoryDataContractRepository
 
@@ -10,6 +10,18 @@ class InMemoryRepositoryFactory:
     def __init__(self):
         self._dp_repo = AsyncInMemoryDataProductRepository()
         self._dc_repo = AsyncInMemoryDataContractRepository()
+
+    def get_data_product_repository(self) -> DataProductRepository:
+        return self._dp_repo
+
+    def get_data_contract_repository(self) -> DataContractRepository:
+        return self._dc_repo
+
+class SyncInMemoryRepositoryFactory:
+    def __init__(self):
+        from dmesh.sdk.persistency.in_memory import SyncInMemoryDataProductRepository, SyncInMemoryDataContractRepository
+        self._dp_repo = SyncInMemoryDataProductRepository({})
+        self._dc_repo = SyncInMemoryDataContractRepository({})
 
     def get_data_product_repository(self) -> DataProductRepository:
         return self._dp_repo
@@ -50,6 +62,19 @@ class SyncPostgresRepositoryFactory:
         return self._dc_repo
 
 class RepositoryFactory:
+    def create_from_settings(self, settings, db_type: str = "postgres") -> RepositoryFactory:
+        """
+        Creates a repository factory using a Settings object from dmesh.sdk.config.
+        """
+        return self.create(
+            db_type=db_type,
+            pg_host=settings.db.host,
+            pg_port=settings.db.port,
+            pg_user=settings.db.user,
+            pg_password=settings.db.password,
+            pg_db=settings.db.name
+        )
+
     def create(
         self,
         db_type: str = "postgres",
@@ -61,19 +86,21 @@ class RepositoryFactory:
     ) -> RepositoryFactory:
         if db_type == "memory":
             return InMemoryRepositoryFactory()
+        elif db_type == "memory_sync":
+            return SyncInMemoryRepositoryFactory()
         elif db_type == "postgres":
             if not all([pg_host, pg_user, pg_password, pg_db]):
                 raise ValueError("Postgres connection parameters required")
             import psycopg_pool
-            conn_str = f"host={pg_host} port={pg_port or 5432} user={pg_user} password={pg_password} dbname={pg_db}"
+            conn_str = f"host={pg_host} port={pg_port or 5432} user={pg_user} password={pg_password} dbname={pg_db} connect_timeout=10"
             pool = psycopg_pool.AsyncConnectionPool(conninfo=conn_str, open=False)
             return PostgresRepositoryFactory(pool)
         elif db_type == "postgres_sync":
             if not all([pg_host, pg_user, pg_password, pg_db]):
                 raise ValueError("Postgres connection parameters required")
             import psycopg_pool
-            conn_str = f"host={pg_host} port={pg_port or 5432} user={pg_user} password={pg_password} dbname={pg_db}"
-            pool = psycopg_pool.ConnectionPool(conn_str)
+            conn_str = f"host={pg_host} port={pg_port or 5432} user={pg_user} password={pg_password} dbname={pg_db} connect_timeout=10"
+            pool = psycopg_pool.ConnectionPool(conn_str, timeout=30.0)
             return SyncPostgresRepositoryFactory(pool)
         else:
             raise ValueError(f"Unsupported db_type: {db_type}")

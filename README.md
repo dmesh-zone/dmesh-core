@@ -20,58 +20,137 @@ The `dmesh-sdk` uses a repository factory pattern for flexible persistency confi
 
 Perfect for unit tests and isolated development without external dependencies.
 
-```python
-import asyncio
-from dmesh.sdk import create_dp
-from dmesh.sdk.persistency.factory import RepositoryFactory
-
-async def main():
-    # Create an in-memory repository factory
-    factory = RepositoryFactory().create("memory")
-    repo = factory.get_data_product_repository()
-    
-    # Create a Data Product specification
-    spec = {
-        "domain": "finance",
-        "name": "ledger",
-        "version": "1.0.0"
-    }
-    
-    # Execute the operation (fully async)
-    dp = await create_dp(repo, spec)
-    print(f"Created Data Product: {dp.id} ({dp.domain})")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+Sample code below illustrates how to use the SDK in synchronous mode in-memory.
+Run it as using the following command:
+```bash
+uv run python ./examples/sdk_sync_test.py
 ```
 
-### 2. Production PostgreSQL Persistency Mode
-
-Leverages a high-performance PostgreSQL backend with connection pooling.
-
 ```python
-import asyncio
-from dmesh.sdk import create_dp
 from dmesh.sdk.persistency.factory import RepositoryFactory
+from dmesh.sdk.core.service import DMeshService
 
-async def main():
-    # Create a PostgreSQL repository factory
-    factory = RepositoryFactory().create(
-        "postgres",
-        pg_host="localhost",
-        pg_port=5432,
-        pg_user="postgres",
-        pg_password="postgres",
-        pg_db="postgres"
-    )
-    repo = factory.get_data_product_repository()
+def main():
+    # Create repository factory
+    factory = RepositoryFactory().create(db_type="memory_sync")
+    
+    # DataMeshService requires granular repositories (Sync)
+    dp_repo = factory.get_data_product_repository()
+    dc_repo = factory.get_data_contract_repository()
+    service = DMeshService(dp_repo, dc_repo)
+    
+    # Define the Data Product
+    spec = {"domain": "finance", "name": "ledger"}
     
     # Create Data Product
-    dp = await create_dp(repo, {"domain": "marketing", "name": "analytics"})
-    print(f"Persisted to Postgres: {dp.id}")
+    dp = service.put_data_product(spec)
+    print(f"Persisted to In-Memory (Sync): {dp.id}")
+    print(f"Data Product Spec: {dp.specification}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+```
+
+### 2. Production-like PostgreSQL Persistency Mode
+
+Leverages a PostgreSQL backend with automated configuration via `get_settings()`.
+
+Before running it, run the PostgreSQL docker with following command:
+```bash
+docker-compose up -d
+```
+
+Now you can run the sample sdk code as follows:
+```bash
+uv run python ./examples/sdk_sync_test.py --db postgres_sync
+```
+
+```python
+from dmesh.sdk.config import get_settings
+from dmesh.sdk.persistency.factory import RepositoryFactory
+from dmesh.sdk.core.service import DMeshService
+
+def main():
+    # Load settings (only strictly needed for postgres_sync, but good to have)
+    settings = get_settings()
+
+    # Create repository factory
+    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_sync")
+    
+    # DataMeshService requires granular repositories (Sync)
+    dp_repo = factory.get_data_product_repository()
+    dc_repo = factory.get_data_contract_repository()
+    service = DMeshService(dp_repo, dc_repo)
+    
+    # Define the Data Product
+    spec = {"domain": "finance", "name": "ledger"}
+    
+    dp = service.put_data_product(spec)
+    print(f"Persisted to PostgreSQL (Sync): {dp.id}")
+    print(f"Data Product Spec: {dp.specification}")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## ⚙️ Configuration Management
+
+`dmesh-core` uses a hierarchical configuration system powered by `pydantic-settings`. It supports profiles, environment variable overrides, and `.env` files for secrets management.
+
+### 📜 Configuration Directory
+All base and profile-specific configurations reside in the `config/` directory:
+- `config/base.toml`: Shared defaults for all environments.
+- `config/{profile}.toml`: Overrides for a specific profile (e.g., `development.toml`, `docker.toml`).
+
+> see examples/config/base.toml, examples/config/local_docker.toml for examples of config files.
+
+### 🌍 Environment Selection
+The active profile is selected using the `APP_ENV` environment variable:
+```bash
+# Select the 'lakebase' profile (will load config/lakebase.toml)
+export APP_ENV="lakebase"
+```
+
+### 🔐 Secrets and .env Files
+Secrets should be stored in `.env` files at the project root. The system loads them in the following order:
+1. `.env.{APP_ENV}`: Profile-specific secrets (e.g., `.env.production`).
+2. `.env`: Base/local secrets.
+
+> see examples/.env.local_docker for an example of a .env file.
+
+> [!IMPORTANT]
+> `.env` and profile-specific `.env.*` files are gitignored by default to prevent accidental secret leakage, except for `.env.development`.
+
+### 🔝 Priority Stack
+Configuration is resolved using the following priority (highest to lowest):
+1. **CLI Flags / Runtime Args**: Passed directly to the settings constructor.
+2. **Environment Variables**: Prefixed with `DMESH_` (e.g., `DMESH_DB__PORT="5433"`).
+3. **`.env.{profile}` file**
+4. **`.env` file**
+5. **`config/{profile}.toml`**
+6. **`config/base.toml`**
+7. **Code Defaults**
+
+### 🛠️ Overriding via Environment Variables
+You can override any setting using environment variables with the `DMESH_` prefix. For nested settings, use double underscores `__`:
+```bash
+export DMESH_DB__HOST="localhost"
+export DMESH_DB__PORT="5432"
+...
+```
+
+### 🐍 Usage in Code
+The settings are validated at startup. Missing required secrets will cause the application to exit with an error.
+
+```python
+from dmesh.sdk.config import get_settings
+
+# This will validate the full config and exit if secrets are missing
+settings = get_settings()
+
+print(f"Connecting to {settings.db.host}:{settings.db.port}")
 ```
 
 ---

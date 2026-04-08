@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import patch
-from dmesh.sdk.core.service import DataMeshService
+from dmesh.sdk.core.service import DMeshService
 from dmesh.sdk.persistency.in_memory import InMemoryRepository
 
 @pytest.fixture
 def service():
     repo = InMemoryRepository()
-    return DataMeshService(repo)
+    return DMeshService(repo, repo)
 
 @patch("dmesh.sdk.core.service.validate_spec")
 def test_create_data_product(mock_validate, service):

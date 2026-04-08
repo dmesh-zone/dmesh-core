@@ -14,3 +14,15 @@ test_venv/
 sandbox/
 .hypothesis/
 dc_results.txt
+
+# Config files
+config/
+
+# Secrets and environment overrides
+.env
+.env.*
+!.env.development
+
+# Test config scripts
+test_config.py
+test_required_secrets.py

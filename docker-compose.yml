@@ -20,7 +20,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: rest/Dockerfile
+      dockerfile: packages/dmesh-api/Dockerfile
     environment:
       DB_TYPE: postgres
       DB_HOST: db

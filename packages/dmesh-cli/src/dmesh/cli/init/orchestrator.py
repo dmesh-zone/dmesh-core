@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from dmesh.cli.init.config_writer import ConfigWriter, CONFIG_PATH
 from dmesh.cli.init.feedback import Feedback
-from dmesh.sdk import DataMeshService
+from dmesh.sdk import DMeshService
 from dmesh.sdk.persistency.in_memory import InMemoryRepository
 
 
@@ -27,16 +27,23 @@ class InitOrchestrator:
             # Use in-memory for unit tests
             self._feedback.step("Initializing in-memory repository for tests...")
             repository = InMemoryRepository()
-            service = DataMeshService(repository)
+            service = DMeshService(repository, repository)
         else:
             # Use postgres for integration/local dev
-            from dmesh.sdk.persistency.postgres import PostgresSyncRepository
-            import psycopg_pool
+            from dmesh.sdk.persistency.factory import RepositoryFactory
             self._feedback.step("Initializing Postgres database...")
-            conn_str = f"host={os.getenv('DB_HOST', 'localhost')} port={os.getenv('DB_PORT', '5432')} user={os.getenv('DB_USER', 'postgres')} password={os.getenv('DB_PASSWORD', 'postgres')} dbname={os.getenv('DB_NAME', 'postgres')}"
-            pool = psycopg_pool.ConnectionPool(conn_str)
-            repository = PostgresSyncRepository(pool)
-            service = DataMeshService(repository)
+            
+            factory = RepositoryFactory().create(
+                db_type="postgres_sync",
+                pg_host=os.getenv('DB_HOST', 'localhost'),
+                pg_port=int(os.getenv('DB_PORT', '5432')),
+                pg_user=os.getenv('DB_USER', 'postgres'),
+                pg_password=os.getenv('DB_PASSWORD', 'postgres'),
+                pg_db=os.getenv('DB_NAME', 'postgres')
+            )
+            dp_repo = factory.get_data_product_repository()
+            dc_repo = factory.get_data_contract_repository()
+            service = DMeshService(dp_repo, dc_repo)
         
         if flush:
             self._feedback.step("Flushing existing data...")

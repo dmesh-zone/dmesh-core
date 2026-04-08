@@ -11,7 +11,7 @@ from .operations.discover import discover
 from .operations.utils import flush
 
 # Legacy support
-from .core.service import DataMeshService
+from .core.service import DMeshService
 from .persistency.in_memory import InMemoryRepository
 
 __all__ = [

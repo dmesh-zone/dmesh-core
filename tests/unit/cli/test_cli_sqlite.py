@@ -1,12 +1,12 @@
 import os
 from unittest.mock import patch
 from typer.testing import CliRunner
-from dmesh.sdk import DataMeshService
+from dmesh.sdk import DMeshService
 from dmesh.sdk.persistency.in_memory import InMemoryRepository
 
 # Shared repo for test
 test_repo = InMemoryRepository()
-test_service = DataMeshService(test_repo)
+test_service = DMeshService(test_repo, test_repo)
 
 with patch('dmesh.cli.utils.get_service', return_value=test_service):
     from dmesh.cli.main import app

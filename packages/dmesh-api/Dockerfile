@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -6,16 +6,18 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy SDK and API source
-COPY packages/dmesh-sdk /app/dmesh-sdk
-COPY packages/dmesh-api /app/dmesh-api
+COPY packages/dmesh-sdk /app/packages/dmesh-sdk
+COPY packages/dmesh-api /app/packages/dmesh-api
 
-# Install SDK first
-WORKDIR /app/dmesh-sdk
-RUN uv pip install -e . --system
+# Install SDK first (as standalone)
+WORKDIR /app/packages/dmesh-sdk
+RUN uv pip install . --system
 
 # Install API
-WORKDIR /app/dmesh-api
-RUN uv pip install -e . --system
+WORKDIR /app/packages/dmesh-api
+# Change workspace reference to direct path reference for Docker build
+RUN sed -i 's/{ workspace = true }/{ path = "..\/dmesh-sdk" }/g' pyproject.toml
+RUN uv pip install . --system
 
 EXPOSE 8000
 

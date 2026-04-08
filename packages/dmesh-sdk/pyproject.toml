@@ -8,6 +8,8 @@ dependencies = [
     "jsonschema",
     "requests",
     "pyyaml",
+    "pydantic-settings",
+    "pydantic",
 ]
 
 [tool.hatch.build.targets.wheel]
