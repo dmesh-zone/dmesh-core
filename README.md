@@ -7,7 +7,7 @@ A modern, high-performance toolkit for managing **Open Data Mesh** specification
 The project is structured as a modular Python workspace with a clear separation of concerns:
 
 -   **`dmesh-sdk`**: The core logic layer. Provides CRUD operations for Open Data Product and Open Data Contract specifications through a repository factory pattern that supports in-memory (for testing) and PostgreSQL (for production) persistency.
--   **`dmesh-cli`**: A Typer-powered command-line interface for local-first development. It allows users to initialize a local environment, manage specifications, and interact with PostgreSQL backend.
+-   **`dmesh-cli`**: A Typer-powered command-line interface for local-first development. It allows users to setup a local environment, manage specifications, and interact with PostgreSQL backend.
 -   **`dmesh-api`**: A FastAPI backend. It provides a RESTful interface for external integrations. It uses `psycopg3` for robust, async PostgreSQL persistence.
 
 ---
@@ -183,9 +183,19 @@ On Windows (PowerShell):
 
 ### Common Commands
 
-**Initialize the local environment:**
+**Setup the local environment (starts infrastructure):**
 ```bash
-uv run dmesh init --full
+uv run dmesh setup
+```
+
+**Force a clean environment (teardown + setup):**
+```bash
+uv run dmesh reset
+```
+
+**Tear down the environment (stops infrastructure):**
+```bash
+uv run dmesh teardown --full
 ```
 
 **Manage Data Products:**
@@ -239,7 +249,7 @@ uv run pytest tests/unit
 # Run core sdk integration tests
 uv run pytest tests/integration/sdk/test_sdk.py
 
-# Run integration tests (requires docker-compose up -d)
+# Run integration tests (requires uv run dmesh setup)
 uv run pytest tests/integration
 ```
 

@@ -1,7 +1,7 @@
 """Reads ~/.dm/config.yaml and returns a DmConfig."""
 import yaml
 
-from dmesh.cli.init.config_writer import CONFIG_PATH, DmConfig
+from dmesh.cli.setup.config_writer import CONFIG_PATH, DmConfig
 from dmesh.cli.put.errors import ConfigMalformedError, ConfigNotFoundError
 
 
@@ -15,7 +15,7 @@ class ConfigReader:
         """
         if not CONFIG_PATH.exists():
             raise ConfigNotFoundError(
-                "Config file not found. Run `dm init` first."
+                "Config file not found. Run `dm setup` first."
             )
         raw = yaml.safe_load(CONFIG_PATH.read_text())
         if not isinstance(raw, dict):
@@ -26,7 +26,7 @@ class ConfigReader:
         
         if not base_url and not pg:
             raise ConfigMalformedError(
-                "Config is malformed: no repository configured. Run `dm init` to reconfigure."
+                "Config is malformed: no repository configured. Run `dm setup` to reconfigure."
             )
         return DmConfig(
             ws_base_url=base_url, 

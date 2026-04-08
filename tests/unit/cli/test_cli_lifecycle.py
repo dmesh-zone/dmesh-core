@@ -14,8 +14,8 @@ with patch('dmesh.cli.utils.get_service', return_value=test_service):
 runner = CliRunner()
 
 def test_cli_lifecycle():
-    # 1. Init
-    result = runner.invoke(app, ["init"], catch_exceptions=False)
+    # 1. Setup
+    result = runner.invoke(app, ["setup"], catch_exceptions=False)
     assert result.exit_code == 0
     assert "Data mesh initialised and ready" in result.stdout
     # For tests, config is not written
@@ -51,8 +51,8 @@ version: 1.0.0
     assert result.exit_code == 0
     assert f"Data product {dp_id} deleted" in result.stdout
     
-    # 6. Deinit
-    result = runner.invoke(app, ["deinit"])
+    # 6. Teardown
+    result = runner.invoke(app, ["teardown"])
     assert result.exit_code == 0
     assert "removed" in result.stdout
     # Config not written in tests

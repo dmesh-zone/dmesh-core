@@ -1,6 +1,6 @@
 import typer
-from dmesh.cli.commands.init import init
-from dmesh.cli.commands.deinit import deinit
+from dmesh.cli.commands.setup import setup
+from dmesh.cli.commands.teardown import teardown
 from dmesh.cli.commands.reset import reset
 from dmesh.cli.commands.put import app as put_app
 from dmesh.cli.commands.get import app as get_app
@@ -10,8 +10,8 @@ from dmesh.cli.commands.delete import app as delete_app
 import os
 CLI_NAME = os.environ.get("DMESH_CLI_NAME", "dmesh")
 app = typer.Typer(name=CLI_NAME, no_args_is_help=True)
-app.command("init")(init)
-app.command("deinit")(deinit)
+app.command("setup")(setup)
+app.command("teardown")(teardown)
 app.command("reset")(reset)
 app.add_typer(put_app, name="put")
 app.add_typer(get_app, name="get")
