@@ -6,9 +6,9 @@ from dmesh.sdk.persistency.in_memory import InMemoryRepository
 @pytest.fixture
 def service():
     repo = InMemoryRepository()
-    return DMeshService(repo, repo)
+    return DMeshService(repo)
 
-@patch("dmesh.sdk.core.service.validate_spec")
+@patch("dmesh.sdk.sdk.validate_spec")
 def test_create_data_product(mock_validate, service):
     spec = {
         "apiVersion": "v1.0.0",
@@ -23,7 +23,7 @@ def test_create_data_product(mock_validate, service):
     assert dp.version == "1.0.0"
     mock_validate.assert_called_once()
 
-@patch("dmesh.sdk.core.service.validate_spec")
+@patch("dmesh.sdk.sdk.validate_spec")
 def test_put_data_product_idempotent(mock_validate, service):
     # First creation
     spec = {
@@ -55,7 +55,7 @@ def test_create_data_contract_parent_not_found(service):
     with pytest.raises(ValueError, match="Parent Data Product non-existent not found"):
         service.create_data_contract("non-existent", spec)
 
-@patch("dmesh.sdk.core.service.validate_spec")
+@patch("dmesh.sdk.sdk.validate_spec")
 def test_data_contract_generation(mock_validate, service):
     # Setup Data Product
     dp = service.create_data_product({"apiVersion": "v1.0.0", "domain": "d1", "name": "n1"})

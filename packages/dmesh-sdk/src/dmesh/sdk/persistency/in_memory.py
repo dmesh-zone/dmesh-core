@@ -59,6 +59,12 @@ class InMemoryRepository:
         self.dp = SyncInMemoryDataProductRepository(self._data_products)
         self.dc = SyncInMemoryDataContractRepository(self._data_contracts)
 
+    def get_data_product_repository(self) -> DataProductRepository:
+        return self.dp
+
+    def get_data_contract_repository(self) -> DataContractRepository:
+        return self.dc
+
     # Delegate to granular repos
     def create_data_product(self, dp: DataProduct) -> DataProduct:
         self.dp.save(dp); return dp

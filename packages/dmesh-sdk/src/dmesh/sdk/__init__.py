@@ -1,3 +1,4 @@
+from .sdk import AsyncSDK, SyncSDK
 from .models import (
     DataProduct,
     DataContract,
@@ -15,6 +16,8 @@ from .core.service import DMeshService
 from .persistency.in_memory import InMemoryRepository
 
 __all__ = [
+    "AsyncSDK",
+    "SyncSDK",
     "DataProduct",
     "DataContract",
     "OpenDataMeshError",
@@ -33,6 +36,6 @@ __all__ = [
     "delete_dc",
     "discover",
     "flush",
-    "DataMeshService",
+    "DMeshService",
     "InMemoryRepository",
 ]

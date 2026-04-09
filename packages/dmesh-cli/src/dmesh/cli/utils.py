@@ -12,17 +12,14 @@ def get_service() -> DMeshService:
         # If db.host is provided, use Postgres (Sync for CLI)
         if settings.db.host:
             factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_sync")
-            dp_repo = factory.get_data_product_repository()
-            dc_repo = factory.get_data_contract_repository()
-            return DMeshService(dp_repo, dc_repo)
+            return DMeshService(factory)
             
         # Fallback to in-memory
-        from dmesh.sdk.persistency.in_memory import SyncInMemoryDataProductRepository, SyncInMemoryDataContractRepository
-        repo = SyncInMemoryDataProductRepository({})
-        return DMeshService(repo, repo)
+        from dmesh.sdk.persistency.in_memory import InMemoryRepository
+        return DMeshService(InMemoryRepository())
         
     except Exception:
         # Final fallback for misconfigured environments
-        from dmesh.sdk.persistency.in_memory import SyncInMemoryDataProductRepository, SyncInMemoryDataContractRepository
-        repo = SyncInMemoryDataProductRepository({})
-        return DMeshService(repo, repo)
+        from dmesh.sdk.persistency.in_memory import InMemoryRepository
+        return DMeshService(InMemoryRepository())
+

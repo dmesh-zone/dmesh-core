@@ -9,6 +9,7 @@ from dmesh.sdk import (
     discover, DataProductValidationError, DataContractValidationError
 )
 from dmesh.sdk.persistency.factory import RepositoryFactory
+from dmesh.sdk.persistency.postgres import PostgresSchema
 
 @pytest.fixture(scope="session")
 def postgres_container():
@@ -23,28 +24,7 @@ async def setup_schema(postgres_container):
     conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname}"
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:
-            await cur.execute("""
-                CREATE TABLE IF NOT EXISTS data_products (
-                    id          UUID        PRIMARY KEY,
-                    specification JSONB,
-                    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    dp_domain   TEXT        GENERATED ALWAYS AS (specification->>'domain')  STORED,
-                    dp_name     TEXT        GENERATED ALWAYS AS (specification->>'name')    STORED,
-                    dp_version  TEXT        GENERATED ALWAYS AS (specification->>'version') STORED
-                );
-
-                CREATE UNIQUE INDEX IF NOT EXISTS uq_data_products_domain_name_version
-                    ON data_products (dp_domain, dp_name, dp_version);
-
-                CREATE TABLE IF NOT EXISTS data_contracts (
-                    id              UUID        PRIMARY KEY,
-                    data_product_id UUID        NOT NULL REFERENCES data_products(id) ON DELETE CASCADE,
-                    specification   JSONB,
-                    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                );
-            """)
+            await cur.execute(PostgresSchema.CREATE_TABLES)
         await conn.commit()
 
 @pytest.fixture(autouse=True)
@@ -110,6 +90,25 @@ async def test_create_dp_valid_more_input(repos):
     assert dp["name"] == "ledger"
 
 @pytest.mark.asyncio
+async def test_create_dp_with_minimal_output_ports(repos):
+    dp_repo, _ = repos
+    spec = {"domain": "finance", "name": "ledger", "outputPorts": [{"name": "ledger"}, {"name": "transactions"}]}
+    dp = await create_dp(dp_repo, spec)
+    
+    # Assert return value
+    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
+    assert dp["apiVersion"] == "v1.0.0"
+    assert dp["kind"] == "DataProduct"
+    assert dp["status"] == "draft"
+    assert dp["version"] == "v1.0.0"
+    assert dp["domain"] == "finance"
+    assert dp["name"] == "ledger"
+    assert dp["outputPorts"][0]["name"] == "ledger"
+    assert dp["outputPorts"][0]["version"] == "v1"
+    assert dp["outputPorts"][1]["name"] == "transactions"
+    assert dp["outputPorts"][1]["version"] == "v1"
+
+@pytest.mark.asyncio
 async def test_create_dp_invalid_property(repos):
     dp_repo, _ = repos
     spec = {"domain": "finance", "name": "ledger", "invalid": "property"}
@@ -139,6 +138,25 @@ async def test_update_dp_valid(repos):
     # Assert persistency state
     persisted = await dp_repo.get(UUID(dp_id))
     assert persisted.specification["status"] == "active"
+
+@pytest.mark.asyncio
+async def test_update_dp_no_change_does_not_save(repos):
+    dp_repo, _ = repos
+    spec = {"domain": "finance", "name": "ledger", "outputPorts": [{"name": "ledger"}, {"name": "transactions"}]}
+
+    # FIXME: Implement no change no save
+    # dp = await create_dp(dp_repo, spec)
+    # dp_id = dp["id"]
+
+    # # update dp
+    # updated = await update_dp(dp_repo, spec)
+    
+    # # Assert return value
+    # assert updated["status"] == "active"
+    
+    # # Assert persistency state
+    # persisted = await dp_repo.get(UUID(dp_id))
+    # assert persisted.specification["status"] == "active"
 
 @pytest.mark.asyncio
 async def test_get_dp_by_id(repos):

@@ -16,7 +16,7 @@ The project is structured as a modular Python workspace with a clear separation 
 
 The `dmesh-sdk` uses a repository factory pattern for flexible persistency configuration, supporting in-memory storage for testing and PostgreSQL for production.
 
-### 1. In-Memory Persistency Mode (Testing)
+### 1. Synchronous Mode (In-Memory Testing)
 
 Perfect for unit tests and isolated development without external dependencies.
 
@@ -27,31 +27,27 @@ uv run python ./examples/sdk_sync_test.py
 ```
 
 ```python
-from dmesh.sdk.persistency.factory import RepositoryFactory
-from dmesh.sdk.core.service import DMeshService
+from dmesh.sdk import SyncSDK, RepositoryFactory
 
 def main():
     # Create repository factory
     factory = RepositoryFactory().create(db_type="memory_sync")
     
-    # DataMeshService requires granular repositories (Sync)
-    dp_repo = factory.get_data_product_repository()
-    dc_repo = factory.get_data_contract_repository()
-    service = DMeshService(dp_repo, dc_repo)
+    # Use the consistent SDK class with factory init
+    dmesh = SyncSDK(factory)
     
-    # Define the Data Product
-    spec = {"domain": "finance", "name": "ledger"}
+    # Register/Update Data Product (idempotent)
+    spec = {"domain": "finance", "name": "ledger", "version": "v1.0.0"}
+    dp_spec = dmesh.put_data_product(spec)
     
-    # Create Data Product
-    dp = service.put_data_product(spec)
-    print(f"Persisted to In-Memory (Sync): {dp.id}")
-    print(f"Data Product Spec: {dp.specification}")
+    print(f"Data Product Spec: {dp_spec}")
+    print(f"ID (deterministic): {dp_spec['id']}")
 
 if __name__ == "__main__":
     main()
 ```
 
-### 2. Production-like PostgreSQL Persistency Mode
+### 2. Asynchronous Mode (Production-ready PostgreSQL)
 
 Leverages a PostgreSQL backend with automated configuration via `get_settings()`.
 
@@ -66,31 +62,31 @@ uv run python ./examples/sdk_sync_test.py --db postgres_sync
 ```
 
 ```python
-from dmesh.sdk.config import get_settings
-from dmesh.sdk.persistency.factory import RepositoryFactory
-from dmesh.sdk.core.service import DMeshService
+import asyncio
+from dmesh.sdk import AsyncSDK, RepositoryFactory, get_settings
 
-def main():
-    # Load settings (only strictly needed for postgres_sync, but good to have)
+async def main():
+    # Load settings and create async repositories
     settings = get_settings()
-
-    # Create repository factory
-    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_sync")
+    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_async")
     
-    # DataMeshService requires granular repositories (Sync)
-    dp_repo = factory.get_data_product_repository()
-    dc_repo = factory.get_data_contract_repository()
-    service = DMeshService(dp_repo, dc_repo)
+    # Initialize Async SDK with the factory
+    dmesh = AsyncSDK(factory)
     
-    # Define the Data Product
+    # Put Data Product (idempotent)
     spec = {"domain": "finance", "name": "ledger"}
+    dp_spec = await dmesh.put_data_product(spec)
     
-    dp = service.put_data_product(spec)
-    print(f"Persisted to PostgreSQL (Sync): {dp.id}")
-    print(f"Data Product Spec: {dp.specification}")
+    # Put Data Contract for the product
+    dc_spec = await dmesh.put_data_contract(
+        {"name": "balances"}, 
+        dp_id=dp_spec["id"]
+    )
+    
+    print(f"Created Data Contract: {dc_spec['id']}")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
 ```
 
 ---
@@ -213,10 +209,10 @@ uv run dmesh get dp <id>
 **Manage Data Contracts:**
 ```bash
 # Register a Data Contract for a parent Data Product
-uv run dmesh put dc path/to/contract.yaml --dp-id <dp-id>
+uv run dmesh put dc path/to/contract.yaml --dp <dp-id>
 
 # List Data Contracts for a product
-uv run dmesh list dcs --dp-id <dp-id>
+uv run dmesh list dcs --dp <dp-id>
 ```
 
 ### Launching the API

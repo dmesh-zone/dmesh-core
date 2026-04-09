@@ -1,7 +1,7 @@
 import argparse
 from dmesh.sdk.config import get_settings
 from dmesh.sdk.persistency.factory import RepositoryFactory
-from dmesh.sdk.core.service import DMeshService
+from dmesh.sdk import SyncSDK
 
 def main():
     parser = argparse.ArgumentParser(description="Synchronous SDK Test")
@@ -19,20 +19,21 @@ def main():
     # Create repository factory
     factory = RepositoryFactory().create_from_settings(settings, db_type=args.db)
     
-    # DataMeshService requires granular repositories (Sync)
-    dp_repo = factory.get_data_product_repository()
-    dc_repo = factory.get_data_contract_repository()
-    service = DMeshService(dp_repo, dc_repo)
+    # Initialize Sync SDK with factory
+    dmesh = SyncSDK(factory)
     
     # Define the Data Product
-    spec = {"domain": "finance", "name": "ledger"}
+    spec = {"domain": "finance", "name": "ledger", "version": "v1.0.0"}
     
     try:
-        # Create Data Product
-        dp = service.put_data_product(spec)
+        # Register/Update Data Product (idempotent)
+        dp = dmesh.put_data_product(spec, include_metadata=True)
         db_name = "PostgreSQL" if args.db == "postgres_sync" else "In-Memory"
-        print(f"Persisted to {db_name} (Sync): {dp.id}")
-        print(f"Data Product Spec: {dp.specification}")
+        
+        print(f"[{db_name}] Successfully upserted Data Product")
+        print(f"ID: {dp.id}")
+        print(f"Domain: {dp.domain}, Name: {dp.name}")
+        
     except Exception as e:
         if args.db == "postgres_sync":
             print("\nERROR: Failed to connect to PostgreSQL.")

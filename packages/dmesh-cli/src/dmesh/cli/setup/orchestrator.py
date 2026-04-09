@@ -38,7 +38,7 @@ class SetupOrchestrator:
             # Use in-memory for unit tests
             self._feedback.step("Initializing in-memory repository for tests...")
             repository = InMemoryRepository()
-            service = DMeshService(repository, repository)
+            service = DMeshService(repository)
         else:
             # Use postgres for integration/local dev
             from dmesh.sdk.persistency.factory import RepositoryFactory
@@ -52,9 +52,7 @@ class SetupOrchestrator:
                 pg_password=os.getenv('DB_PASSWORD', 'postgres'),
                 pg_db=os.getenv('DB_NAME', 'postgres')
             )
-            dp_repo = factory.get_data_product_repository()
-            dc_repo = factory.get_data_contract_repository()
-            service = DMeshService(dp_repo, dc_repo)
+            service = DMeshService(factory)
         
         if flush:
             self._feedback.step("Flushing existing data...")

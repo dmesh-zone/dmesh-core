@@ -1,0 +1,417 @@
+import jsonschema.exceptions
+from typing import Any, List, Optional, Union
+from uuid import UUID
+from dmesh.sdk.models import (
+    DataProduct, 
+    DataContract, 
+    DataProductValidationError, 
+    DataContractValidationError
+)
+from dmesh.sdk.core.enricher import enrich_dp_spec, enrich_dc_spec
+from dmesh.sdk.core.validator import validate_spec
+from dmesh.sdk.core.id_generator import make_dc_id
+
+
+class BaseSDK:
+    """Base class for shared logic between sync and async SDK implementations."""
+    
+    def _prepare_dp_spec(self, spec: dict[str, Any], dp_id: Optional[str] = None) -> dict[str, Any]:
+        """Enrich and validate data product specification."""
+        try:
+            merged_spec = {**spec}
+            enriched = enrich_dp_spec(merged_spec)
+            if dp_id:
+                enriched["id"] = dp_id
+            validate_spec(enriched)
+            return enriched
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataProductValidationError(f"Invalid Data Product specification: {e.message}") from e
+
+    def _prepare_dc_spec(self, spec: dict[str, Any], dc_id: str, dp_spec: Optional[dict] = None) -> dict[str, Any]:
+        """Enrich and validate data contract specification."""
+        try:
+            enriched_dc = enrich_dc_spec({**spec, "id": dc_id}, dp_spec=dp_spec)
+            validate_spec(enriched_dc)
+            return enriched_dc
+        except jsonschema.exceptions.ValidationError as e:
+            raise DataContractValidationError(f"Invalid Data Contract specification: {e.message}") from e
+
+    def _apply_patch(self, current_spec: dict, patch_spec: dict) -> dict:
+        """Apply patch to specification, merging customProperties."""
+        updated = current_spec.copy()
+        for key, value in patch_spec.items():
+            if key == "customProperties" and key in updated:
+                updated[key] = updated[key] + value
+            else:
+                updated[key] = value
+        return updated
+...
+class _RepoWrapper:
+    """Internal helper to satisfy factory-based init from individual repos."""
+    def __init__(self, dp_repo=None, dc_repo=None):
+        self._dp = dp_repo
+        self._dc = dc_repo
+    def get_data_product_repository(self): return self._dp
+    def get_data_contract_repository(self): return self._dc
+
+
+class AsyncSDK(BaseSDK):
+    """Asynchronous SDK for Data Mesh operations."""
+    
+    def __init__(self, factory: Any):
+        self.dp_repo = factory.get_data_product_repository()
+        self.dc_repo = factory.get_data_contract_repository()
+
+    async def _create_data_product(
+        self, 
+        spec: dict[str, Any], 
+        domain: Optional[str] = None, 
+        name: Optional[str] = None,
+        include_metadata: bool = False
+    ) -> Union[dict, DataProduct]:
+        merged_spec = {**spec}
+        if domain: merged_spec["domain"] = domain
+        if name: merged_spec["name"] = name
+        
+        enriched = self._prepare_dp_spec(merged_spec)
+        dp = DataProduct(id=enriched["id"], specification=enriched)
+        await self.dp_repo.save(dp)
+        return dp if include_metadata else dp.specification
+
+    async def get_data_product(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataProduct]]:
+        try:
+            dp = await self.dp_repo.get(UUID(id))
+            if dp:
+                return dp if include_metadata else dp.specification
+            return None
+        except (ValueError, AttributeError):
+            return None
+
+    async def list_data_products(self, domain: str = None, name: str = None, include_metadata: bool = False) -> List[Union[dict, DataProduct]]:
+        results = await self.dp_repo.list(domain=domain, name=name)
+        if include_metadata:
+            return results
+        return [dp.specification for dp in results]
+
+    async def _update_data_product(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
+        enriched = self._prepare_dp_spec(spec, dp_id=id)
+        dp = DataProduct(id=id, specification=enriched)
+        await self.dp_repo.save(dp)
+        return dp if include_metadata else dp.specification
+
+    async def delete_data_product(self, id: str) -> bool:
+        try:
+            return await self.dp_repo.delete(UUID(id))
+        except ValueError:
+            return False
+
+    async def put_data_product(
+        self, 
+        spec: dict[str, Any], 
+        domain: Optional[str] = None, 
+        name: Optional[str] = None, 
+        include_metadata: bool = False
+    ) -> Union[dict, DataProduct]:
+        merged_spec = {**spec}
+        if domain: merged_spec["domain"] = domain
+        if name: merged_spec["name"] = name
+        
+        id = merged_spec.get("id")
+        if not id:
+            domain_to_search = merged_spec.get("domain")
+            name_to_search = merged_spec.get("name")
+            if domain_to_search and name_to_search:
+                version = merged_spec.get("version", "v1.0.0")
+                results = await self.dp_repo.list(domain=domain_to_search, name=name_to_search)
+                for r in results:
+                    if r.specification.get("version") == version:
+                        id = r.id
+                        break
+        
+        if id:
+            return await self._update_data_product(id, merged_spec, include_metadata=include_metadata)
+        else:
+            return await self._create_data_product(merged_spec, include_metadata=include_metadata)
+
+    async def _create_data_contract(
+        self, 
+        dp_id: str, 
+        spec: dict[str, Any], 
+        include_metadata: bool = False
+    ) -> Union[dict, DataContract]:
+        dp = await self.get_data_product(dp_id, include_metadata=True)
+        if not dp:
+            raise ValueError(f"Parent Data Product {dp_id} not found")
+
+        existing_dcs = await self.dc_repo.list(dp_id=dp_id)
+        dc_index = len(existing_dcs)
+        dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
+        
+        enriched_dc = self._prepare_dc_spec(spec, dc_id, dp_spec=dp.specification)
+        dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
+        await self.dc_repo.save(dc)
+        return dc if include_metadata else dc.specification
+
+    async def get_data_contract(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataContract]]:
+        try:
+            dc = await self.dc_repo.get(UUID(id))
+            if dc:
+                return dc if include_metadata else dc.specification
+            return None
+        except (ValueError, AttributeError):
+            return None
+
+    async def list_data_contracts(self, dp_id: str = None, include_metadata: bool = False) -> List[Union[dict, DataContract]]:
+        results = await self.dc_repo.list(dp_id=dp_id)
+        if include_metadata:
+            return results
+        return [dc.specification for dc in results]
+
+    async def _update_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+        existing = await self.get_data_contract(id, include_metadata=True)
+        if not existing:
+            raise ValueError(f"Data contract {id} not found")
+        
+        enriched_dc = self._prepare_dc_spec(spec, id)
+        dc = DataContract(id=id, data_product_id=existing.data_product_id, specification=enriched_dc)
+        await self.dc_repo.save(dc)
+        return dc if include_metadata else dc.specification
+
+    async def patch_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+        existing = await self.get_data_contract(id, include_metadata=True)
+        if not existing:
+            raise ValueError(f"Data contract {id} not found")
+        
+        updated_spec = self._apply_patch(existing.specification, spec)
+        return await self._update_data_contract(id, updated_spec, include_metadata=include_metadata)
+
+    async def put_data_contract(
+        self, 
+        spec: dict[str, Any], 
+        dp_id: Optional[str] = None, 
+        include_metadata: bool = False
+    ) -> Union[dict, DataContract]:
+        id = spec.get("id")
+        if id and await self.get_data_contract(id):
+            return await self._update_data_contract(id, spec, include_metadata=include_metadata)
+        else:
+            if not dp_id:
+                raise ValueError("dp_id is required to create a new data contract")
+            return await self._create_data_contract(dp_id, spec, include_metadata=include_metadata)
+
+    async def delete_data_contract(self, id: str) -> bool:
+        try:
+            return await self.dc_repo.delete(UUID(id))
+        except ValueError:
+            return False
+
+    async def discover(
+        self,
+        dp_id: Optional[str] = None,
+        domain: Optional[str] = None,
+        name: Optional[str] = None,
+        include_metadata: bool = False
+    ) -> List[Union[dict, DataProduct, DataContract]]:
+        results = []
+        dps = []
+        
+        if dp_id:
+            dp = await self.dp_repo.get(UUID(dp_id))
+            if dp: dps.append(dp)
+        elif domain and name:
+            dps = await self.dp_repo.list(domain=domain, name=name)
+        
+        for dp in dps:
+            results.append(dp if include_metadata else dp.specification)
+            dcs = await self.dc_repo.list(dp_id=dp.id)
+            if include_metadata:
+                results.extend(dcs)
+            else:
+                results.extend([dc.specification for dc in dcs])
+                
+        return results
+
+    async def flush(self) -> None:
+        if hasattr(self.dp_repo, "flush") and callable(getattr(self.dp_repo, "flush")):
+            await self.dp_repo.flush()
+
+
+class SyncSDK(BaseSDK):
+    """Synchronous SDK for Data Mesh operations."""
+    
+    def __init__(self, factory: Any):
+        self.dp_repo = factory.get_data_product_repository()
+        self.dc_repo = factory.get_data_contract_repository()
+
+    def _create_data_product(
+        self, 
+        spec: dict[str, Any], 
+        domain: Optional[str] = None, 
+        name: Optional[str] = None,
+        include_metadata: bool = False
+    ) -> Union[dict, DataProduct]:
+        merged_spec = {**spec}
+        if domain: merged_spec["domain"] = domain
+        if name: merged_spec["name"] = name
+        
+        enriched = self._prepare_dp_spec(merged_spec)
+        dp = DataProduct(id=enriched["id"], specification=enriched)
+        self.dp_repo.save(dp)
+        return dp if include_metadata else dp.specification
+
+    def _update_data_product(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
+        enriched = self._prepare_dp_spec(spec, dp_id=id)
+        dp = DataProduct(id=id, specification=enriched)
+        self.dp_repo.save(dp)
+        return dp if include_metadata else dp.specification
+
+    def get_data_product(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataProduct]]:
+        try:
+            dp = self.dp_repo.get(UUID(id))
+            if dp:
+                return dp if include_metadata else dp.specification
+            return None
+        except (ValueError, AttributeError):
+            return None
+
+    def list_data_products(self, domain: str = None, name: str = None, include_metadata: bool = False) -> List[Union[dict, DataProduct]]:
+        results = self.dp_repo.list(domain=domain, name=name)
+        if include_metadata:
+            return results
+        return [dp.specification for dp in results]
+
+    def delete_data_product(self, id: str) -> bool:
+        try:
+            return self.dp_repo.delete(UUID(id))
+        except ValueError:
+            return False
+
+    def put_data_product(
+        self, 
+        spec: dict[str, Any], 
+        domain: Optional[str] = None, 
+        name: Optional[str] = None, 
+        include_metadata: bool = False
+    ) -> Union[dict, DataProduct]:
+        merged_spec = {**spec}
+        if domain: merged_spec["domain"] = domain
+        if name: merged_spec["name"] = name
+        
+        id = merged_spec.get("id")
+        if not id:
+            domain_to_search = merged_spec.get("domain")
+            name_to_search = merged_spec.get("name")
+            if domain_to_search and name_to_search:
+                version = merged_spec.get("version", "v1.0.0")
+                results = self.dp_repo.list(domain=domain_to_search, name=name_to_search)
+                for r in results:
+                    if r.specification.get("version") == version:
+                        id = r.id
+                        break
+        
+        if id:
+            return self._update_data_product(id, merged_spec, include_metadata=include_metadata)
+        else:
+            return self._create_data_product(merged_spec, include_metadata=include_metadata)
+
+    def _create_data_contract(
+        self, 
+        dp_id: str, 
+        spec: dict[str, Any], 
+        include_metadata: bool = False
+    ) -> Union[dict, DataContract]:
+        dp = self.get_data_product(dp_id, include_metadata=True)
+        if not dp:
+            raise ValueError(f"Parent Data Product {dp_id} not found")
+
+        existing_dcs = self.dc_repo.list(dp_id=dp_id)
+        dc_index = len(existing_dcs)
+        dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
+        
+        enriched_dc = self._prepare_dc_spec(spec, dc_id, dp_spec=dp.specification)
+        dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
+        self.dc_repo.save(dc)
+        return dc if include_metadata else dc.specification
+
+    def get_data_contract(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataContract]]:
+        try:
+            dc = self.dc_repo.get(UUID(id))
+            if dc:
+                return dc if include_metadata else dc.specification
+            return None
+        except (ValueError, AttributeError):
+            return None
+
+    def list_data_contracts(self, dp_id: str = None, include_metadata: bool = False) -> List[Union[dict, DataContract]]:
+        results = self.dc_repo.list(dp_id=dp_id)
+        if include_metadata:
+            return results
+        return [dc.specification for dc in results]
+
+    def _update_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+        existing = self.get_data_contract(id, include_metadata=True)
+        if not existing:
+            raise ValueError(f"Data contract {id} not found")
+        
+        enriched_dc = self._prepare_dc_spec(spec, id)
+        dc = DataContract(id=id, data_product_id=existing.data_product_id, specification=enriched_dc)
+        self.dc_repo.save(dc)
+        return dc if include_metadata else dc.specification
+
+    def patch_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+        existing = self.get_data_contract(id, include_metadata=True)
+        if not existing:
+            raise ValueError(f"Data contract {id} not found")
+        
+        updated_spec = self._apply_patch(existing.specification, spec)
+        return self._update_data_contract(id, updated_spec, include_metadata=include_metadata)
+
+    def put_data_contract(
+        self, 
+        spec: dict[str, Any], 
+        dp_id: Optional[str] = None, 
+        include_metadata: bool = False
+    ) -> Union[dict, DataContract]:
+        id = spec.get("id")
+        if id and self.get_data_contract(id):
+            return self._update_data_contract(id, spec, include_metadata=include_metadata)
+        else:
+            if not dp_id:
+                raise ValueError("dp_id is required to create a new data contract")
+            return self._create_data_contract(dp_id, spec, include_metadata=include_metadata)
+
+    def delete_data_contract(self, id: str) -> bool:
+        try:
+            return self.dc_repo.delete(UUID(id))
+        except ValueError:
+            return False
+
+    def discover(
+        self,
+        dp_id: Optional[str] = None,
+        domain: Optional[str] = None,
+        name: Optional[str] = None,
+        include_metadata: bool = True
+    ) -> List[Union[dict, DataProduct, DataContract]]:
+        results = []
+        dps = []
+        
+        if dp_id:
+            dp = self.dp_repo.get(UUID(dp_id))
+            if dp: dps.append(dp)
+        elif domain and name:
+            dps = self.dp_repo.list(domain=domain, name=name)
+        
+        for dp in dps:
+            results.append(dp if include_metadata else dp.specification)
+            dcs = self.dc_repo.list(dp_id=dp.id)
+            if include_metadata:
+                results.extend(dcs)
+            else:
+                results.extend([dc.specification for dc in dcs])
+                
+        return results
+
+    def flush(self) -> None:
+        if hasattr(self.dp_repo, "flush") and callable(getattr(self.dp_repo, "flush")):
+            self.dp_repo.flush()

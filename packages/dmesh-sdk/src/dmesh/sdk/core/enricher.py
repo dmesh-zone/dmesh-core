@@ -17,6 +17,17 @@ def enrich_dp_spec(spec: dict[str, Any]) -> dict[str, Any]:
     enriched.setdefault("kind", "DataProduct")
     enriched.setdefault("version", "v1.0.0")
     enriched.setdefault("status", "draft")
+    # Default outputPorts version to "v1" if missing
+    if "outputPorts" in enriched and isinstance(enriched["outputPorts"], list):
+        new_ports = []
+        for port in enriched["outputPorts"]:
+            if isinstance(port, dict):
+                p = dict(port)
+                p.setdefault("version", "v1")
+                new_ports.append(p)
+            else:
+                new_ports.append(port)
+        enriched["outputPorts"] = new_ports
     
     enriched["id"] = make_dp_id(
         enriched.get("domain", ""),

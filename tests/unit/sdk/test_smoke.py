@@ -16,6 +16,14 @@ class MemoryDataProductRepository:
         # Compatibility: model uses str id, repo uses UUID
         self.products[UUID(product.id)] = product
 
+    async def list(self, domain: str = None, name: str = None) -> list:
+        results = list(self.products.values())
+        if domain:
+            results = [r for r in results if r.specification.get("domain") == domain]
+        if name:
+            results = [r for r in results if r.specification.get("name") == name]
+        return results
+
 @pytest.mark.anyio
 async def test_create_dp_smoke():
     repo = MemoryDataProductRepository()
@@ -63,5 +71,5 @@ async def test_create_dp_validation_smoke():
     try:
         await create_dp(repo, {"apiVersion": "invalid"})
         pytest.fail("Should have raised ValueError")
-    except ValueError:
+    except (ValueError, DataProductValidationError):
         pass

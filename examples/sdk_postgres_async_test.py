@@ -1,28 +1,36 @@
 import asyncio
-from dmesh.sdk import create_dp
-from dmesh.sdk.persistency.factory import RepositoryFactory
-from dmesh.sdk.config import get_settings
+import selectors
+from dmesh.sdk import AsyncSDK, RepositoryFactory, get_settings
 
 async def main():
     # Load settings from config service
     settings = get_settings()
 
     # Create a PostgreSQL repository factory using settings
-    factory = RepositoryFactory().create_from_settings(settings)
+    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_async")
     
     # Open the connection pool (Mandatory for async Postgres pool)
     await factory.open()
     
     try:
-        repo = factory.get_data_product_repository()
+        # Initialize AsyncSDK with the factory
+        sdk = AsyncSDK(factory)
         
-        # Create Data Product (Requesting metadata to get an object with .id)
-        dp = await create_dp(repo, {"domain": "marketing", "name": "analytics"})
-        print(f"Created data product: {dp}")
+        # Upsert Data Product (idempotent)
+        spec = {"domain": "marketing", "name": "analytics", "version": "v1.1.0"}
+        dp = await sdk.put_data_product(spec, include_metadata=True)
+        
+        print(f"Upserted Data Product: {dp.id}")
+        print(f"Current Status: {dp.specification.get('status')}")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        print("\n>>> Ensure your postgres instance is running:")
+        print("> docker-compose up -d")
     finally:
         # Close the connection pool
         await factory.close()
 
 if __name__ == "__main__":
-    import selectors
+    # Ensure correct loop factory for Windows if needed, though run() usually handles it
     asyncio.run(main(), loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()))

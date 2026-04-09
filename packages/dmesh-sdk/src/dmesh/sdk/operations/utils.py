@@ -1,6 +1,6 @@
-from dmesh.sdk.ports.repository import DataProductRepository, DataContractRepository
+from dmesh.sdk.ports.repository import DataProductRepository
+from dmesh.sdk.sdk import AsyncSDK, _RepoWrapper
 
 async def flush(repo: DataProductRepository) -> None:
     """Flush the repository if supported."""
-    if hasattr(repo, "flush") and callable(getattr(repo, "flush")):
-        await repo.flush()
+    await AsyncSDK(_RepoWrapper(dp_repo=repo)).flush()

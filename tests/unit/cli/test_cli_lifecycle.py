@@ -6,7 +6,7 @@ from dmesh.sdk.persistency.in_memory import InMemoryRepository
 
 # Shared repo for test
 test_repo = InMemoryRepository()
-test_service = DMeshService(test_repo, test_repo)
+test_service = DMeshService(test_repo)
 
 with patch('dmesh.cli.utils.get_service', return_value=test_service):
     from dmesh.cli.main import app
