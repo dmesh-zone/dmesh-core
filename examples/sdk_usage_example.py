@@ -7,7 +7,7 @@ async def main():
     settings = get_settings()
 
     # Create a PostgreSQL repository factory using settings
-    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_async")
+    factory = RepositoryFactory().create_from_settings(settings)
     
     # Open the connection pool (Mandatory for async Postgres pool)
     await factory.open()

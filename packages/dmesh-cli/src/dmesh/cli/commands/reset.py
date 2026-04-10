@@ -10,9 +10,10 @@ def reset(
 ) -> None:
     """Tear down and re-setup the local data mesh environment."""
     feedback = ConsoleFeedback()
+    import asyncio
     try:
         TeardownOrchestrator(feedback).run(full=full)
-        SetupOrchestrator(feedback).run()
+        asyncio.run(SetupOrchestrator(feedback).run())
     except Exception as e:
         feedback.error(str(e))
         raise typer.Exit(code=1)

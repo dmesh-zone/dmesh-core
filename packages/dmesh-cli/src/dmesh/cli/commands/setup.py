@@ -17,8 +17,9 @@ app = typer.Typer()
 def setup(flush: bool = typer.Option(False, "--flush", help="Delete all data products after initialisation.")) -> None:
     """Setup the data mesh environment."""
     feedback = ConsoleFeedback()
+    import asyncio
     try:
-        SetupOrchestrator(feedback).run(flush=flush)
+        asyncio.run(SetupOrchestrator(feedback).run(flush=flush))
     except DockerNotAvailableError as e:
         feedback.error(str(e))
         raise typer.Exit(code=1)

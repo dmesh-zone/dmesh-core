@@ -1,25 +1,22 @@
-from dmesh.sdk import DMeshService
+from dmesh.sdk import AsyncSDK
 from dmesh.sdk.config import get_settings
 from dmesh.sdk.persistency.factory import RepositoryFactory
 
-def get_service() -> DMeshService:
+def get_service() -> AsyncSDK:
     """
-    Initializes and returns a DMeshService instance using the unified configuration.
+    Initializes and returns an AsyncSDK instance using the unified configuration.
     """
     try:
         settings = get_settings()
         
-        # If db.host is provided, use Postgres (Sync for CLI)
-        if settings.db.host:
-            factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_sync")
-            return DMeshService(factory)
+        # Use factory to create appropriate repositories
+        # Default to postgres if host is provided, else in-memory
+        db_type = "postgres" if settings.db.host else "memory"
+        factory = RepositoryFactory().create_from_settings(settings, db_type=db_type)
+        return AsyncSDK(factory)
             
-        # Fallback to in-memory
-        from dmesh.sdk.persistency.in_memory import InMemoryRepository
-        return DMeshService(InMemoryRepository())
-        
     except Exception:
-        # Final fallback for misconfigured environments
-        from dmesh.sdk.persistency.in_memory import InMemoryRepository
-        return DMeshService(InMemoryRepository())
+        # Final fallback for misconfigured environments: in-memory factory
+        factory = RepositoryFactory().create(db_type="memory")
+        return AsyncSDK(factory)
 

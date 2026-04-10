@@ -14,79 +14,80 @@ The project is structured as a modular Python workspace with a clear separation 
 
 ## 🛠️ SDK Usage
 
-The `dmesh-sdk` uses a repository factory pattern for flexible persistency configuration, supporting in-memory storage for testing and PostgreSQL for production.
+The `dmesh-sdk` is built natively for asynchronous operations, supporting in-memory storage for testing and PostgreSQL for production.
 
-### 1. Synchronous Mode (In-Memory Testing)
-
-Perfect for unit tests and isolated development without external dependencies.
-
-Sample code below illustrates how to use the SDK in synchronous mode in-memory.
-Run it as using the following command:
-```bash
-uv run python ./examples/sdk_sync_test.py
-```
-
-```python
-from dmesh.sdk import SyncSDK, RepositoryFactory
-
-def main():
-    # Create repository factory
-    factory = RepositoryFactory().create(db_type="memory_sync")
-    
-    # Use the consistent SDK class with factory init
-    dmesh = SyncSDK(factory)
-    
-    # Register/Update Data Product (idempotent)
-    spec = {"domain": "finance", "name": "ledger", "version": "v1.0.0"}
-    dp_spec = dmesh.put_data_product(spec)
-    
-    print(f"Data Product Spec: {dp_spec}")
-    print(f"ID (deterministic): {dp_spec['id']}")
-
-if __name__ == "__main__":
-    main()
-```
-
-### 2. Asynchronous Mode (Production-ready PostgreSQL)
-
-Leverages a PostgreSQL backend with automated configuration via `get_settings()`.
+#### Usage Example (PostgreSQL)
 
 Before running it, run the PostgreSQL docker with following command:
 ```bash
 docker-compose up -d
 ```
 
-Now you can run the sample sdk code as follows:
-```bash
-uv run python ./examples/sdk_sync_test.py --db postgres_sync
+Run the code shown below as follows:
+
+```shell
+uv run python ./examples/sdk_usage_example.py
 ```
 
 ```python
 import asyncio
+import selectors
+from dmesh.sdk import AsyncSDK, RepositoryFactory, get_settings
+
+async def main():
+    # Load settings from config service
+    settings = get_settings()
+
+    # Create a PostgreSQL repository factory using settings
+    factory = RepositoryFactory().create_from_settings(settings)
+    
+    # Open the connection pool (Mandatory for async Postgres pool)
+    await factory.open()
+    
+    # Initialize AsyncSDK with the factory
+    sdk = AsyncSDK(factory)
+    
+    # Upsert Data Product (idempotent)
+    spec = {"domain": "marketing", "name": "analytics", "version": "v1.1.0"}
+    dp = await sdk.put_data_product(spec, include_metadata=True)
+    
+    print(f"Upserted Data Product: {dp.id}")
+    print(f"Current Status: {dp.specification.get('status')}")
+        
+    await factory.close()
+
+if __name__ == "__main__":
+    # Ensure correct loop factory for Windows if needed, though run() usually handles it
+    asyncio.run(main(), loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()))
+
+
+import asyncio
+import selectors
 from dmesh.sdk import AsyncSDK, RepositoryFactory, get_settings
 
 async def main():
     # Load settings and create async repositories
     settings = get_settings()
+
+    # Create a PostgreSQL repository factory using settings
     factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_async")
     
-    # Initialize Async SDK with the factory
-    dmesh = AsyncSDK(factory)
+    # Open the connection pool (Mandatory for async Postgres pool)
+    await factory.open()
     
-    # Put Data Product (idempotent)
-    spec = {"domain": "finance", "name": "ledger"}
-    dp_spec = await dmesh.put_data_product(spec)
+    # Initialize AsyncSDK with the factory
+    sdk = AsyncSDK(factory)
     
-    # Put Data Contract for the product
-    dc_spec = await dmesh.put_data_contract(
-        {"name": "balances"}, 
-        dp_id=dp_spec["id"]
-    )
+    # Upsert Data Product (idempotent)
+    spec = {"domain": "marketing", "name": "analytics", "version": "v1.1.0"}
+    dp = await sdk.put_data_product(spec, include_metadata=True)
     
-    print(f"Created Data Contract: {dc_spec['id']}")
-
+    print(f"Upserted Data Product: {dp.id}")
+    print(f"Current Status: {dp.specification.get('status')}")
+        
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Ensure correct loop factory for Windows if needed, though run() usually handles it
+    asyncio.run(main(), loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()))
 ```
 
 ---

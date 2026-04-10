@@ -5,15 +5,15 @@ import sys
 from pathlib import Path
 from dmesh.cli.setup.config_writer import ConfigWriter, CONFIG_PATH
 from dmesh.cli.setup.feedback import Feedback
-from dmesh.sdk import DMeshService
-from dmesh.sdk.persistency.in_memory import InMemoryRepository
+from dmesh.sdk import AsyncSDK
+from dmesh.sdk.persistency.factory import RepositoryFactory
 
 
 class SetupOrchestrator:
     def __init__(self, feedback: Feedback) -> None:
         self._feedback = feedback
 
-    def run(self, flush: bool = False) -> None:
+    async def run(self, flush: bool = False) -> None:
         """Execute the initialisation sequence."""
         self._feedback.step("Initializing local data mesh environment...")
         
@@ -37,28 +37,26 @@ class SetupOrchestrator:
         if is_test:
             # Use in-memory for unit tests
             self._feedback.step("Initializing in-memory repository for tests...")
-            repository = InMemoryRepository()
-            service = DMeshService(repository)
+            factory = RepositoryFactory().create(db_type="memory")
         else:
             # Use postgres for integration/local dev
-            from dmesh.sdk.persistency.factory import RepositoryFactory
             self._feedback.step("Initializing Postgres database...")
             
             factory = RepositoryFactory().create(
-                db_type="postgres_sync",
+                db_type="postgres",
                 pg_host=os.getenv('DB_HOST', 'localhost'),
                 pg_port=int(os.getenv('DB_PORT', '5432')),
                 pg_user=os.getenv('DB_USER', 'postgres'),
                 pg_password=os.getenv('DB_PASSWORD', 'postgres'),
                 pg_db=os.getenv('DB_NAME', 'postgres')
             )
-            service = DMeshService(factory)
         
-        if flush:
-            self._feedback.step("Flushing existing data...")
-            service.flush()
-            self._feedback.success("Data flushed.")
-
+        async with AsyncSDK(factory) as sdk:
+            if flush:
+                self._feedback.step("Flushing existing data...")
+                await sdk.flush()
+                self._feedback.success("Data flushed.")
+        
         # Write config
         if not is_test:
             ConfigWriter(self._feedback).write_pg(

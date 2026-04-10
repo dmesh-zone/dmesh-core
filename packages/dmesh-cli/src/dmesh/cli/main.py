@@ -1,3 +1,11 @@
+import sys
+import asyncio
+
+if sys.platform == 'win32':
+    # On Windows, psycopg3 (and some other libs) require the SelectorEventLoop
+    # instead of the default ProactorEventLoop to run async operations correctly.
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 import typer
 from dmesh.cli.commands.setup import setup
 from dmesh.cli.commands.teardown import teardown

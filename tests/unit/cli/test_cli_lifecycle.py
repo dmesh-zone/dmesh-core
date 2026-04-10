@@ -1,27 +1,26 @@
 import os
 from unittest.mock import patch
 from typer.testing import CliRunner
-from dmesh.sdk import DMeshService
-from dmesh.sdk.persistency.in_memory import InMemoryRepository
+from dmesh.sdk import AsyncSDK
+from dmesh.sdk.persistency.factory import RepositoryFactory
 
-# Shared repo for test
-test_repo = InMemoryRepository()
-test_service = DMeshService(test_repo)
+# Shared factory for test
+test_factory = RepositoryFactory().create(db_type="memory")
+test_service = AsyncSDK(test_factory)
 
-with patch('dmesh.cli.utils.get_service', return_value=test_service):
-    from dmesh.cli.main import app
+from dmesh.cli.main import app
 
 runner = CliRunner()
 
-def test_cli_lifecycle():
+@patch('dmesh.cli.utils.get_service')
+def test_cli_lifecycle(mock_get_service):
+    mock_get_service.return_value = test_service
     # 1. Setup
     result = runner.invoke(app, ["setup"], catch_exceptions=False)
     assert result.exit_code == 0
     assert "Data mesh initialised and ready" in result.stdout
-    # For tests, config is not written
     
     # 2. Put DP
-    # Create a dummy spec
     spec_path = "test_dp.yaml"
     with open(spec_path, "w") as f:
         f.write("""
@@ -55,7 +54,6 @@ version: 1.0.0
     result = runner.invoke(app, ["teardown"])
     assert result.exit_code == 0
     assert "removed" in result.stdout
-    # Config not written in tests
     
     # Cleanup
     if os.path.exists(spec_path):

@@ -1,8 +1,15 @@
 import uuid
+import asyncio
 import typer
 from dmesh.cli.utils import get_service
 
 app = typer.Typer(help="Delete data products or data contracts.", no_args_is_help=True)
+
+
+async def _delete_dp(id: uuid.UUID):
+    async with get_service() as service:
+        return await service.delete_data_product(str(id))
+
 
 @app.command("dp")
 def delete_dp(
@@ -10,8 +17,7 @@ def delete_dp(
 ) -> None:
     """Delete a data product by ID."""
     try:
-        service = get_service()
-        success = service.delete_data_product(str(id))
+        success = asyncio.run(_delete_dp(id))
         if success:
             typer.echo(f"Data product {id} deleted.")
         else:
@@ -21,14 +27,19 @@ def delete_dp(
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
 
+
+async def _delete_dc(id: uuid.UUID):
+    async with get_service() as service:
+        return await service.delete_data_contract(str(id))
+
+
 @app.command("dc")
 def delete_dc(
     id: uuid.UUID = typer.Argument(..., help="Data contract ID to delete.")
 ) -> None:
     """Delete a data contract by ID."""
     try:
-        service = get_service()
-        success = service.delete_data_contract(str(id))
+        success = asyncio.run(_delete_dc(id))
         if success:
             typer.echo(f"Data contract {id} deleted.")
         else:
