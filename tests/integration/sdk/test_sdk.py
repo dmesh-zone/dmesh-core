@@ -11,7 +11,7 @@ from dmesh.sdk.persistency.postgres import PostgresSchema
 @pytest.fixture(scope="session")
 def postgres_container():
     """Start a PostgreSQL container for integration tests."""
-    with PostgresContainer("postgres:15-alpine") as postgres:
+    with PostgresContainer("postgres:16") as postgres:
         yield postgres
 
 @pytest.fixture(scope="session", autouse=True)
