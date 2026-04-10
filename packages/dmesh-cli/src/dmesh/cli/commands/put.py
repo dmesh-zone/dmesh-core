@@ -104,7 +104,7 @@ def dc(
                 raise DmPutError("Provide --dp <dp-id-or-path> or --domain and --dp_name for new data contracts.")
 
         # Create or Update
-        new_dc = service.put_data_contract(dp_id, dc_spec)
+        new_dc = service.put_data_contract(dc_spec, dp_id=dp_id)
         
         parent_dp = service.get_data_product(new_dc.data_product_id)
         # Record in history
