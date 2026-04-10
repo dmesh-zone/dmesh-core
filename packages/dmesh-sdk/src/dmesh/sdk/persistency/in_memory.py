@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 from dmesh.sdk.models import DataProduct, DataContract
@@ -8,6 +9,9 @@ class SyncInMemoryDataProductRepository:
         self._data_products = data_products_dict
 
     def save(self, product: DataProduct) -> None:
+        if product.id not in self._data_products:
+            product.created_at = datetime.now()
+        product.updated_at = datetime.now()
         self._data_products[product.id] = product
 
     def get(self, id: UUID) -> Optional[DataProduct]:
@@ -33,6 +37,9 @@ class SyncInMemoryDataContractRepository:
         self._data_contracts = data_contracts_dict
 
     def save(self, contract: DataContract) -> None:
+        if contract.id not in self._data_contracts:
+            contract.created_at = datetime.now()
+        contract.updated_at = datetime.now()
         self._data_contracts[contract.id] = contract
 
     def get(self, id: UUID) -> Optional[DataContract]:
@@ -120,6 +127,9 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         return self.products.get(id)
 
     async def save(self, product: DataProduct) -> None:
+        if product.id not in self.products:
+            product.created_at = datetime.now()
+        product.updated_at = datetime.now()
         self.products[product.id] = product
 
     async def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
@@ -145,6 +155,9 @@ class AsyncInMemoryDataContractRepository(DataContractRepository):
         return self.contracts.get(id)
 
     async def save(self, contract: DataContract) -> None:
+        if contract.id not in self.contracts:
+            contract.created_at = datetime.now()
+        contract.updated_at = datetime.now()
         self.contracts[contract.id] = contract
 
     async def list(self, dp_id: Optional[str] = None) -> List[DataContract]:

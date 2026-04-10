@@ -38,6 +38,7 @@ class DPQueries:
         ON CONFLICT (id) DO UPDATE SET
             specification = EXCLUDED.specification,
             updated_at = NOW()
+        RETURNING created_at, updated_at
     """
     LIST_BASE = "SELECT id, specification, created_at, updated_at FROM data_products"
     DELETE = "DELETE FROM data_products WHERE id = %s RETURNING id"
@@ -50,6 +51,7 @@ class DCQueries:
         ON CONFLICT (id) DO UPDATE SET
             specification = EXCLUDED.specification,
             updated_at = NOW()
+        RETURNING created_at, updated_at
     """
     LIST_BASE = "SELECT id, data_product_id, specification, created_at, updated_at FROM data_contracts"
     DELETE = "DELETE FROM data_contracts WHERE id = %s RETURNING id"
@@ -88,8 +90,12 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
 
     async def save(self, product: DataProduct) -> None:
         async with self.pool.connection() as conn:
-            async with conn.cursor() as cur:
+            async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(DPQueries.SAVE, (product.id, json.dumps(product.specification)))
+                row = await cur.fetchone()
+                if row:
+                    product.created_at = row["created_at"]
+                    product.updated_at = row["updated_at"]
 
     async def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
         async with self.pool.connection() as conn:
@@ -122,8 +128,12 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
 
     async def save(self, contract: DataContract) -> None:
         async with self.pool.connection() as conn:
-            async with conn.cursor() as cur:
+            async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(DCQueries.SAVE, (contract.id, contract.data_product_id, json.dumps(contract.specification)))
+                row = await cur.fetchone()
+                if row:
+                    contract.created_at = row["created_at"]
+                    contract.updated_at = row["updated_at"]
 
     async def list(self, dp_id: Optional[str] = None) -> List[DataContract]:
         async with self.pool.connection() as conn:
@@ -155,8 +165,12 @@ class SyncPostgresDataProductRepository(DataProductRepository, DPMapping):
 
     def save(self, product: DataProduct) -> None:
         with self.pool.connection() as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(DPQueries.SAVE, (product.id, json.dumps(product.specification)))
+                row = cur.fetchone()
+                if row:
+                    product.created_at = row["created_at"]
+                    product.updated_at = row["updated_at"]
 
     def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
         with self.pool.connection() as conn:
@@ -189,8 +203,12 @@ class SyncPostgresDataContractRepository(DataContractRepository, DCMapping):
 
     def save(self, contract: DataContract) -> None:
         with self.pool.connection() as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(DCQueries.SAVE, (contract.id, contract.data_product_id, json.dumps(contract.specification)))
+                row = cur.fetchone()
+                if row:
+                    contract.created_at = row["created_at"]
+                    contract.updated_at = row["updated_at"]
 
     def list(self, dp_id: Optional[str] = None) -> List[DataContract]:
         with self.pool.connection() as conn:

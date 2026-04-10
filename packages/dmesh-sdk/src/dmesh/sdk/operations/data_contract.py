@@ -37,7 +37,7 @@ async def patch_dc(
     if not dc_id:
         raise ValueError("Data contract id is required for patch")
     return await AsyncSDK(_RepoWrapper(dc_repo=repo)).patch_data_contract(
-        dc_id, spec, include_metadata=include_metadata
+        spec, id=dc_id, include_metadata=include_metadata
     )
 
 async def get_dc(

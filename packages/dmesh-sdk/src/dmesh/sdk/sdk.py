@@ -64,17 +64,10 @@ class AsyncSDK(BaseSDK):
 
     async def _create_data_product(
         self, 
-        spec: dict[str, Any], 
-        domain: Optional[str] = None, 
-        name: Optional[str] = None,
+        enriched_spec: dict[str, Any], 
         include_metadata: bool = False
     ) -> Union[dict, DataProduct]:
-        merged_spec = {**spec}
-        if domain: merged_spec["domain"] = domain
-        if name: merged_spec["name"] = name
-        
-        enriched = self._prepare_dp_spec(merged_spec)
-        dp = DataProduct(id=enriched["id"], specification=enriched)
+        dp = DataProduct(id=enriched_spec["id"], specification=enriched_spec)
         await self.dp_repo.save(dp)
         return dp if include_metadata else dp.specification
 
@@ -93,9 +86,8 @@ class AsyncSDK(BaseSDK):
             return results
         return [dp.specification for dp in results]
 
-    async def _update_data_product(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
-        enriched = self._prepare_dp_spec(spec, dp_id=id)
-        dp = DataProduct(id=id, specification=enriched)
+    async def _update_data_product(self, id: str, enriched_spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
+        dp = DataProduct(id=id, specification=enriched_spec)
         await self.dp_repo.save(dp)
         return dp if include_metadata else dp.specification
 
@@ -116,22 +108,16 @@ class AsyncSDK(BaseSDK):
         if domain: merged_spec["domain"] = domain
         if name: merged_spec["name"] = name
         
-        id = merged_spec.get("id")
-        if not id:
-            domain_to_search = merged_spec.get("domain")
-            name_to_search = merged_spec.get("name")
-            if domain_to_search and name_to_search:
-                version = merged_spec.get("version", "v1.0.0")
-                results = await self.dp_repo.list(domain=domain_to_search, name=name_to_search)
-                for r in results:
-                    if r.specification.get("version") == version:
-                        id = r.id
-                        break
+        enriched = self._prepare_dp_spec(merged_spec)
+        dp_id = enriched["id"]
         
-        if id:
-            return await self._update_data_product(id, merged_spec, include_metadata=include_metadata)
+        existing = await self.get_data_product(dp_id, include_metadata=True)
+        if existing:
+            if existing.specification == enriched:
+                return existing if include_metadata else existing.specification
+            return await self._update_data_product(dp_id, enriched, include_metadata=include_metadata)
         else:
-            return await self._create_data_product(merged_spec, include_metadata=include_metadata)
+            return await self._create_data_product(enriched, include_metadata=include_metadata)
 
     async def _create_data_contract(
         self, 
@@ -177,7 +163,11 @@ class AsyncSDK(BaseSDK):
         await self.dc_repo.save(dc)
         return dc if include_metadata else dc.specification
 
-    async def patch_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+    async def patch_data_contract(self, spec: dict[str, Any], id: Optional[str] = None, include_metadata: bool = False) -> Union[dict, DataContract]:
+        id = id or spec.get("id")
+        if not id:
+            raise ValueError("id must be provided or present in spec for patch")
+            
         existing = await self.get_data_contract(id, include_metadata=True)
         if not existing:
             raise ValueError(f"Data contract {id} not found")
@@ -245,23 +235,15 @@ class SyncSDK(BaseSDK):
 
     def _create_data_product(
         self, 
-        spec: dict[str, Any], 
-        domain: Optional[str] = None, 
-        name: Optional[str] = None,
+        enriched_spec: dict[str, Any], 
         include_metadata: bool = False
     ) -> Union[dict, DataProduct]:
-        merged_spec = {**spec}
-        if domain: merged_spec["domain"] = domain
-        if name: merged_spec["name"] = name
-        
-        enriched = self._prepare_dp_spec(merged_spec)
-        dp = DataProduct(id=enriched["id"], specification=enriched)
+        dp = DataProduct(id=enriched_spec["id"], specification=enriched_spec)
         self.dp_repo.save(dp)
         return dp if include_metadata else dp.specification
 
-    def _update_data_product(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
-        enriched = self._prepare_dp_spec(spec, dp_id=id)
-        dp = DataProduct(id=id, specification=enriched)
+    def _update_data_product(self, id: str, enriched_spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
+        dp = DataProduct(id=id, specification=enriched_spec)
         self.dp_repo.save(dp)
         return dp if include_metadata else dp.specification
 
@@ -297,22 +279,16 @@ class SyncSDK(BaseSDK):
         if domain: merged_spec["domain"] = domain
         if name: merged_spec["name"] = name
         
-        id = merged_spec.get("id")
-        if not id:
-            domain_to_search = merged_spec.get("domain")
-            name_to_search = merged_spec.get("name")
-            if domain_to_search and name_to_search:
-                version = merged_spec.get("version", "v1.0.0")
-                results = self.dp_repo.list(domain=domain_to_search, name=name_to_search)
-                for r in results:
-                    if r.specification.get("version") == version:
-                        id = r.id
-                        break
+        enriched = self._prepare_dp_spec(merged_spec)
+        dp_id = enriched["id"]
         
-        if id:
-            return self._update_data_product(id, merged_spec, include_metadata=include_metadata)
+        existing = self.get_data_product(dp_id, include_metadata=True)
+        if existing:
+            if existing.specification == enriched:
+                return existing if include_metadata else existing.specification
+            return self._update_data_product(dp_id, enriched, include_metadata=include_metadata)
         else:
-            return self._create_data_product(merged_spec, include_metadata=include_metadata)
+            return self._create_data_product(enriched, include_metadata=include_metadata)
 
     def _create_data_contract(
         self, 
@@ -358,7 +334,11 @@ class SyncSDK(BaseSDK):
         self.dc_repo.save(dc)
         return dc if include_metadata else dc.specification
 
-    def patch_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+    def patch_data_contract(self, spec: dict[str, Any], id: Optional[str] = None, include_metadata: bool = False) -> Union[dict, DataContract]:
+        id = id or spec.get("id")
+        if not id:
+            raise ValueError("id must be provided or present in spec for patch")
+
         existing = self.get_data_contract(id, include_metadata=True)
         if not existing:
             raise ValueError(f"Data contract {id} not found")
