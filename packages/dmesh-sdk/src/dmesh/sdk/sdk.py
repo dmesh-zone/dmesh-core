@@ -1,3 +1,4 @@
+from __future__ import annotations
 import jsonschema.exceptions
 from typing import Any, List, Optional, Union
 from uuid import UUID
@@ -9,7 +10,7 @@ from dmesh.sdk.models import (
 )
 from dmesh.sdk.core.enricher import enrich_dp_spec, enrich_dc_spec
 from dmesh.sdk.core.validator import validate_spec
-from dmesh.sdk.core.id_generator import make_dc_id
+from dmesh.sdk.core.id_generator import make_dc_id, IDGenerator, get_generator
 
 
 class _RepoWrapper:
@@ -24,11 +25,12 @@ class _RepoWrapper:
 class AsyncSDK:
     """Asynchronous SDK for Data Mesh operations."""
     
-    def __init__(self, factory: Any, settings: Optional[Any] = None):
+    def __init__(self, factory: Any, settings: Optional[Any] = None, id_generator: Optional[IDGenerator] = None):
         self.factory = factory
         self.settings = settings
         self.dp_repo = factory.get_data_product_repository()
         self.dc_repo = factory.get_data_contract_repository()
+        self.id_generator = id_generator or get_generator()
         
         # Initialize configuration options
         self.single_data_contract_per_product = True
@@ -52,7 +54,7 @@ class AsyncSDK:
         """Enrich and validate data product specification."""
         try:
             merged_spec = {**spec}
-            enriched = enrich_dp_spec(merged_spec)
+            enriched = enrich_dp_spec(merged_spec, id_generator=self.id_generator)
             if dp_id:
                 enriched["id"] = dp_id
             validate_spec(enriched)
@@ -90,7 +92,7 @@ class AsyncSDK:
 
     async def get_data_product(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataProduct]]:
         try:
-            dp = await self.dp_repo.get(UUID(id))
+            dp = await self.dp_repo.get(id)
             if dp:
                 return dp if include_metadata else dp.specification
             return None
@@ -110,7 +112,7 @@ class AsyncSDK:
 
     async def delete_data_product(self, id: str) -> bool:
         try:
-            return await self.dp_repo.delete(UUID(id))
+            return await self.dp_repo.delete(id)
         except ValueError:
             return False
 
@@ -152,7 +154,15 @@ class AsyncSDK:
             existing_dcs = await self.dc_repo.list(dp_id=dp_id)
             dc_index = len(existing_dcs)
             
-        dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
+        # Generate ID based on spec (including parent context)
+        id_spec = {
+            **spec, 
+            "domain": dp.domain, 
+            "dataProduct": dp.name, 
+            "version": dp.version,
+            "_dc_index": dc_index
+        }
+        dc_id = self.id_generator.make_dc_id(id_spec)
         
         enriched_dc = self._prepare_dc_spec(spec, dc_id, dp_spec=dp.specification)
         dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
@@ -161,7 +171,7 @@ class AsyncSDK:
 
     async def get_data_contract(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataContract]]:
         try:
-            dc = await self.dc_repo.get(UUID(id))
+            dc = await self.dc_repo.get(id)
             if dc:
                 return dc if include_metadata else dc.specification
             return None
@@ -216,7 +226,13 @@ class AsyncSDK:
 
         # If no ID is provided but we are in single mode, we can determine what the ID should be
         if not id and dp and self.single_data_contract_per_product:
-            id = make_dc_id(dp.domain, dp.name, dp.version, 0)
+            id = self.id_generator.make_dc_id({
+                **spec, 
+                "domain": dp.domain, 
+                "dataProduct": dp.name, 
+                "version": dp.version,
+                "_dc_index": 0
+            })
 
         existing = await self.get_data_contract(id, include_metadata=True) if id else None
         
@@ -237,7 +253,7 @@ class AsyncSDK:
 
     async def delete_data_contract(self, id: str) -> bool:
         try:
-            return await self.dc_repo.delete(UUID(id))
+            return await self.dc_repo.delete(id)
         except ValueError:
             return False
 
@@ -252,7 +268,7 @@ class AsyncSDK:
         dps = []
         
         if dp_id:
-            dp = await self.dp_repo.get(UUID(dp_id))
+            dp = await self.dp_repo.get(dp_id)
             if dp: dps.append(dp)
         elif domain and name:
             dps = await self.dp_repo.list(domain=domain, name=name)

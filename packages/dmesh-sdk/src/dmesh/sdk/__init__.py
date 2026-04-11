@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .sdk import AsyncSDK
 from .models import (
     DataProduct,

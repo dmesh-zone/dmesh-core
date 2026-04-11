@@ -21,6 +21,8 @@ async def setup_schema(postgres_container):
     conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname}"
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:
+            await cur.execute("DROP TABLE IF EXISTS data_contracts CASCADE;")
+            await cur.execute("DROP TABLE IF EXISTS data_products CASCADE;")
             await cur.execute(PostgresSchema.CREATE_TABLES)
         await conn.commit()
 
@@ -80,7 +82,7 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     assert dc["dataProduct"] == "n"
     
     # Assert persistency state
-    persisted = await dc_repo.get(UUID(dc["id"]))
+    persisted = await dc_repo.get(dc["id"])
     assert persisted is not None
     assert persisted.data_product_id == dp["id"]
 

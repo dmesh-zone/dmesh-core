@@ -1,6 +1,7 @@
-"""Deterministic UUID5 generation for data products and data contracts."""
+"""Determininstic ID generation interface and default implementations."""
 import os
 import uuid
+from typing import Any, Protocol, runtime_checkable
 
 # Fixed namespace for all dmesh IDs
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # NAMESPACE_DNS
@@ -9,36 +10,86 @@ DEFAULT_DP_SCHEME = "DataProduct/{domain}/{name}/{version}"
 DEFAULT_DC_SCHEME = "DataContract/{domain}/{name}/{version}/{dc_index}"
 
 
-def _scheme(env_var: str, default: str) -> str:
-    return os.environ.get(env_var, default)
+@runtime_checkable
+class IDGenerator(Protocol):
+    """Protocol for generating determininstic IDs for Data Mesh entities."""
+
+    def make_dp_id(self, spec: dict[str, Any]) -> str:
+        """Generate a deterministic ID for a data product spec."""
+        ...
+
+    def make_dc_id(self, spec: dict[str, Any]) -> str:
+        """Generate a deterministic ID for a data contract spec."""
+        ...
 
 
-def make_dp_id(domain: str, name: str, version: str) -> str:
-    """Generate a deterministic UUID5 for a data product."""
-    scheme = _scheme("DP_ID_SCHEME", DEFAULT_DP_SCHEME)
-    try:
-        key = scheme.format(domain=domain, name=name, version=version)
-    except KeyError as e:
-        # Fallback if scheme is malformed
-        key = f"DataProduct/{domain}/{name}/{version}"
-    return str(uuid.uuid5(_NAMESPACE, key))
+class DefaultIDGenerator:
+    """Default implementation using UUID5 and configurable schemes."""
+
+    def _scheme(self, env_var: str, default: str) -> str:
+        return os.environ.get(env_var, default)
+
+    def make_dp_id(self, spec: dict[str, Any]) -> str:
+        """Generate a deterministic ID for a data product.
+        
+        Input is a dictionary containing at least 'domain', 'name' and 'version'.
+        """
+        domain = spec.get("domain", "")
+        name = spec.get("name", "")
+        version = spec.get("version", "v1.0.0")
+
+        scheme = self._scheme("DP_ID_SCHEME", DEFAULT_DP_SCHEME)
+        try:
+            key = scheme.format(domain=domain, name=name, version=version)
+        except KeyError:
+            key = f"DataProduct/{domain}/{name}/{version}"
+        return str(uuid.uuid5(_NAMESPACE, key))
+
+    def make_dc_id(self, spec: dict[str, Any]) -> str:
+        """Generate a deterministic ID for a data contract.
+
+        Input is a dictionary containing parent information ('domain', 'dataProduct', 'version')
+        and an internal '_dc_index' representing the sequence of contracts for the product
+        (0-based: first DC gets index 0).
+        """
+        domain = spec.get("domain", "")
+        name = spec.get("dataProduct", "")  # In DC spec, 'dataProduct' is the name
+        version = spec.get("version", "v1.0.0")
+        dc_index = spec.get("_dc_index", 0)  # Internal index hook
+
+        scheme = self._scheme("DC_ID_SCHEME", DEFAULT_DC_SCHEME)
+        try:
+            key = scheme.format(
+                domain=domain,
+                name=name,
+                version=version,
+                dc_index=dc_index,
+            )
+        except KeyError:
+            key = f"DataContract/{domain}/{name}/{version}/{dc_index}"
+        return str(uuid.uuid5(_NAMESPACE, key))
 
 
-def make_dc_id(dp_domain: str, dp_name: str, dp_version: str, dc_index: int) -> str:
-    """Generate a deterministic UUID5 for a data contract.
+# Global instance for legacy function-based access
+_generator: IDGenerator = DefaultIDGenerator()
 
-    dc_index is the count of existing data contracts for the parent DP
-    at creation time (0-based: first DC gets index 0).
-    """
-    scheme = _scheme("DC_ID_SCHEME", DEFAULT_DC_SCHEME)
-    try:
-        key = scheme.format(
-            domain=dp_domain,
-            name=dp_name,
-            version=dp_version,
-            dc_index=dc_index,
-        )
-    except KeyError as e:
-        # Fallback if scheme is malformed
-        key = f"DataContract/{dp_domain}/{dp_name}/{dp_version}/{dc_index}"
-    return str(uuid.uuid5(_NAMESPACE, key))
+
+def set_generator(generator: IDGenerator):
+    """Set the global ID generator instance."""
+    global _generator
+    _generator = generator
+
+
+def get_generator() -> IDGenerator:
+    """Get the current global ID generator instance."""
+    return _generator
+
+
+def make_dp_id(spec: dict[str, Any]) -> str:
+    """Generate a deterministic ID for a data product using the configured generator."""
+    return _generator.make_dp_id(spec)
+
+
+def make_dc_id(spec: dict[str, Any]) -> str:
+    """Generate a deterministic ID for a data contract using the configured generator."""
+    return _generator.make_dc_id(spec)

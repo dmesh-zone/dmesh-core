@@ -8,7 +8,7 @@ from dmesh.sdk.ports.repository import DataProductRepository, DataContractReposi
 class PostgresSchema:
     CREATE_TABLES = """
         CREATE TABLE IF NOT EXISTS data_products (
-            id          UUID        PRIMARY KEY,
+            id          TEXT        PRIMARY KEY,
             specification JSONB,
             created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -21,8 +21,8 @@ class PostgresSchema:
             ON data_products (dp_domain, dp_name, dp_version);
 
         CREATE TABLE IF NOT EXISTS data_contracts (
-            id              UUID        PRIMARY KEY,
-            data_product_id UUID        NOT NULL REFERENCES data_products(id) ON DELETE CASCADE,
+            id              TEXT        PRIMARY KEY,
+            data_product_id TEXT        NOT NULL REFERENCES data_products(id) ON DELETE CASCADE,
             specification   JSONB,
             created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -81,10 +81,10 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
     def __init__(self, pool):
         self.pool = pool
 
-    async def get(self, id: UUID) -> Optional[DataProduct]:
+    async def get(self, id: str) -> Optional[DataProduct]:
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute(DPQueries.GET, (str(id),))
+                await cur.execute(DPQueries.GET, (id,))
                 row = await cur.fetchone()
                 return self._row_to_dp(row) if row else None
 
@@ -108,10 +108,10 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
                 rows = await cur.fetchall()
                 return [self._row_to_dp(row) for row in rows]
 
-    async def delete(self, id: UUID) -> bool:
+    async def delete(self, id: str) -> bool:
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(DPQueries.DELETE, (str(id),))
+                await cur.execute(DPQueries.DELETE, (id,))
                 row = await cur.fetchone()
                 return row is not None
 
@@ -119,10 +119,10 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
     def __init__(self, pool):
         self.pool = pool
 
-    async def get(self, id: UUID) -> Optional[DataContract]:
+    async def get(self, id: str) -> Optional[DataContract]:
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute(DCQueries.GET, (str(id),))
+                await cur.execute(DCQueries.GET, (id,))
                 row = await cur.fetchone()
                 return self._row_to_dc(row) if row else None
 
@@ -144,10 +144,10 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
                 rows = await cur.fetchall()
                 return [self._row_to_dc(row) for row in rows]
 
-    async def delete(self, id: UUID) -> bool:
+    async def delete(self, id: str) -> bool:
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(DCQueries.DELETE, (str(id),))
+                await cur.execute(DCQueries.DELETE, (id,))
                 row = await cur.fetchone()
                 return row is not None
 

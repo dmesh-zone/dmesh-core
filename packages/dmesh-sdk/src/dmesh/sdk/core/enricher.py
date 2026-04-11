@@ -1,10 +1,10 @@
 """Enriches an ODPS spec dict before persistence."""
 from typing import Any
 
-from dmesh.sdk.core.id_generator import make_dp_id
+from dmesh.sdk.core.id_generator import make_dp_id, IDGenerator
 
 
-def enrich_dp_spec(spec: dict[str, Any]) -> dict[str, Any]:
+def enrich_dp_spec(spec: dict[str, Any], id_generator: IDGenerator | None = None) -> dict[str, Any]:
     """Return a new dict with deterministic id injected and defaults applied.
 
     The id is derived from domain + name + version (deterministic).
@@ -29,11 +29,11 @@ def enrich_dp_spec(spec: dict[str, Any]) -> dict[str, Any]:
                 new_ports.append(port)
         enriched["outputPorts"] = new_ports
     
-    enriched["id"] = make_dp_id(
-        enriched.get("domain", ""),
-        enriched.get("name", ""),
-        enriched.get("version"),
-    )
+    if id_generator:
+        enriched["id"] = id_generator.make_dp_id(enriched)
+    else:
+        enriched["id"] = make_dp_id(enriched)
+        
     return enriched
 
 
