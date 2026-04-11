@@ -1,5 +1,6 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
+from contextlib import asynccontextmanager
 from typer.testing import CliRunner
 from dmesh.sdk import AsyncSDK
 from dmesh.sdk.persistency.factory import RepositoryFactory
@@ -12,9 +13,31 @@ from dmesh.cli.main import app
 
 runner = CliRunner()
 
+def _get_async_mock_service():
+    """Create an async context manager that returns test_service"""
+    @asynccontextmanager
+    async def async_mock_service():
+        yield test_service
+    return async_mock_service()
+
+@patch('dmesh.cli.commands.delete.get_service')
+@patch('dmesh.cli.commands.get.get_service')
+@patch('dmesh.cli.commands.list.get_service')
+@patch('dmesh.cli.commands.put.get_service')
 @patch('dmesh.cli.utils.get_service')
-def test_cli_lifecycle(mock_get_service):
-    mock_get_service.return_value = test_service
+def test_cli_lifecycle(
+    mock_utils_get_service,
+    mock_put_get_service,
+    mock_list_get_service,
+    mock_get_get_service,
+    mock_delete_get_service,
+):
+    # Setup all mocks to return the async context manager
+    mock_utils_get_service.return_value = test_service
+    mock_put_get_service.return_value = _get_async_mock_service()
+    mock_list_get_service.return_value = _get_async_mock_service()
+    mock_get_get_service.return_value = _get_async_mock_service()
+    mock_delete_get_service.return_value = _get_async_mock_service()
     # 1. Setup
     result = runner.invoke(app, ["setup"], catch_exceptions=False)
     assert result.exit_code == 0
