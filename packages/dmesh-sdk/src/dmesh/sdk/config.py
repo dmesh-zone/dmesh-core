@@ -68,10 +68,14 @@ class ApiSettings(BaseModel):
     port: int = 8000
     debug: bool = False
 
+class SdkSettings(BaseModel):
+    single_data_contract_per_product: bool = True
+
 class Settings(BaseSettings):
     # Field names match the nesting in TOML and env vars
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     api: ApiSettings = Field(default_factory=ApiSettings)
+    sdk: SdkSettings = Field(default_factory=SdkSettings)
     
     @property
     def profile(self) -> str:

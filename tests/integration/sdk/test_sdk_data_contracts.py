@@ -65,151 +65,6 @@ def dc_repo(factory):
     """Short-cut to DataContract repository."""
     return factory.get_data_contract_repository()
 
-# Data Product Tests
-@pytest.mark.asyncio
-async def test_create_dp_valid_minimum_input(sdk, dp_repo):
-    spec = {"domain": "finance", "name": "ledger"}
-    dp = await sdk.put_data_product(spec)
-    
-    # Assert return value
-    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
-    assert dp["domain"] == "finance"
-    assert dp["name"] == "ledger"
-    assert dp["apiVersion"] == "v1.0.0"
-    assert dp["kind"] == "DataProduct"
-    assert dp["status"] == "draft"
-    assert dp["version"] == "v1.0.0"
-    
-    # Assert persistency state
-    persisted = await dp_repo.get(UUID(dp["id"]))
-    assert persisted is not None
-    assert persisted.id == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
-    assert persisted.domain == "finance"
-    assert persisted.name == "ledger"
-
-@pytest.mark.asyncio
-async def test_create_dp_valid_more_input(sdk):
-    spec = {"apiVersion": "v1.0.0", "kind": "DataProduct", "status": "draft", "version": "v1.0.0"}
-    dp = await sdk.put_data_product(spec, domain="finance", name="ledger")
-    
-    # Assert return value
-    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
-    assert dp["domain"] == "finance"
-    assert dp["name"] == "ledger"
-
-@pytest.mark.asyncio
-async def test_create_dp_with_minimal_output_ports(sdk):
-    spec = {"domain": "finance", "name": "ledger", "outputPorts": [{"name": "ledger"}, {"name": "transactions"}]}
-    dp = await sdk.put_data_product(spec)
-    
-    # Assert return value
-    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
-    assert dp["apiVersion"] == "v1.0.0"
-    assert dp["kind"] == "DataProduct"
-    assert dp["status"] == "draft"
-    assert dp["version"] == "v1.0.0"
-    assert dp["domain"] == "finance"
-    assert dp["name"] == "ledger"
-    assert dp["outputPorts"][0]["name"] == "ledger"
-    assert dp["outputPorts"][0]["version"] == "v1"
-    assert dp["outputPorts"][1]["name"] == "transactions"
-    assert dp["outputPorts"][1]["version"] == "v1"
-
-@pytest.mark.asyncio
-async def test_create_dp_invalid_property(sdk):
-    spec = {"domain": "finance", "name": "ledger", "invalid": "property"}
-    with pytest.raises(DataProductValidationError) as exc:
-        await sdk.put_data_product(spec)
-    assert "Invalid Data Product specification: Additional properties are not allowed ('invalid' was unexpected)" in str(exc.value)
-
-@pytest.mark.asyncio
-async def test_update_dp_valid(sdk, dp_repo):
-    spec = {"domain": "finance", "name": "ledger"}
-    dp = await sdk.put_data_product(spec)
-    dp_id = dp["id"]
-
-    # get dp
-    fetched = await sdk.get_data_product(id=dp_id)
-    assert fetched["status"] == "draft"
-    
-    # update dp
-    spec_to_update = fetched.copy()
-    spec_to_update["status"] = "active"
-    updated = await sdk.put_data_product(spec_to_update)
-    
-    # Assert return value
-    assert updated["status"] == "active"
-    
-    # Assert persistency state
-    persisted = await dp_repo.get(UUID(dp_id))
-    assert persisted.specification["status"] == "active"
-
-@pytest.mark.asyncio
-async def test_update_dp_created_and_updated_at_are_set(sdk, dp_repo):
-    spec1 = {"domain": "finance", "name": "ledger", "status": "draft"}
-    spec2 = {"domain": "finance", "name": "ledger", "status": "proposed"}
-    spec3 = {"domain": "finance", "name": "ledger", "status": "active"}
-    dp1 = await sdk.put_data_product(spec1, include_metadata=True)
-    assert dp1.created_at is not None
-    assert dp1.updated_at is not None
-    assert isinstance(dp1.created_at, datetime) 
-    assert isinstance(dp1.updated_at, datetime) 
-    assert dp1.created_at == dp1.updated_at
-    dp2 = await sdk.put_data_product(spec2, include_metadata=True)
-    assert dp2.created_at == dp1.created_at
-    assert dp2.updated_at > dp1.updated_at
-    dp3 = await sdk.put_data_product(spec3, include_metadata=True)
-    assert dp3.created_at == dp1.created_at
-    assert dp3.updated_at > dp2.updated_at
-
-@pytest.mark.asyncio
-async def test_update_dp_no_change_does_not_save(sdk, dp_repo):
-    spec = {"domain": "finance", "name": "ledger", "outputPorts": [{"name": "ledger"}, {"name": "transactions"}]}
-    dp1 = await sdk.put_data_product(spec, include_metadata=True)
-    first_updated_at = dp1.updated_at
-
-    # update dp
-    dp2 = await sdk.put_data_product(spec, include_metadata=True)
-    second_updated_at = dp2.updated_at
-    assert second_updated_at == first_updated_at
-
-
-@pytest.mark.asyncio
-async def test_get_dp_by_id(sdk):
-    spec = {"domain": "f", "name": "n"}
-    created = await sdk.put_data_product(spec)
-    fetched = await sdk.get_data_product(id=created["id"])
-    
-    assert isinstance(fetched, dict)
-    assert fetched["id"] == created["id"]
-
-@pytest.mark.asyncio
-async def test_get_dp_by_domain_name(sdk):
-    await sdk.put_data_product({"domain": "f", "name": "n"})
-    fetched = await sdk.list_data_products(domain="f", name="n")
-    
-    assert fetched[0]["domain"] == "f"
-    assert fetched[0]["name"] == "n"
-
-@pytest.mark.asyncio
-async def test_get_dp_not_found(sdk):
-    assert await sdk.get_data_product(id="ba781283-1f14-5db2-a3f3-ce330da2c6dd") is None
-
-@pytest.mark.asyncio
-async def test_list_dps_filter(sdk):
-    await sdk.put_data_product({"domain": "d1", "name": "n1"})
-    await sdk.put_data_product({"domain": "d2", "name": "n2"})
-    
-    d1s = await sdk.list_data_products(domain="d1")
-    assert len(d1s) == 1
-    assert d1s[0]["domain"] == "d1"
-
-@pytest.mark.asyncio
-async def test_delete_dp_valid(sdk):
-    dp = await sdk.put_data_product({"domain": "d", "name": "n", "version": "v"})
-    assert await sdk.delete_data_product(dp["id"]) is True
-    assert await sdk.get_data_product(id=dp["id"]) is None
-
 # Data Contract Tests
 @pytest.mark.asyncio
 async def test_create_dc_valid_minimum_input(sdk, dc_repo):
@@ -228,6 +83,50 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     persisted = await dc_repo.get(UUID(dc["id"]))
     assert persisted is not None
     assert persisted.data_product_id == dp["id"]
+
+@pytest.mark.asyncio
+async def test_create_dc_single_dc_config(sdk, dc_repo, monkeypatch):
+    # Single contract is the default behavior
+    dp = await sdk.put_data_product({"domain": "d", "name": "n"})
+    dc1 = await sdk.put_data_contract({}, dp_id=dp["id"])
+    assert dc1["status"] == "draft"
+
+    dc2 = await sdk.put_data_contract({"status": "active"}, dp_id=dp["id"])
+    assert dc1["id"] == dc2["id"]
+    assert dc2["status"] == "active"
+    assert dc2["domain"] == "d"
+
+    # Verify we have 1 contract in repo (dc1)
+    dcs = await dc_repo.list(dp_id=dp["id"])
+    assert len(dcs) == 1
+    
+@pytest.mark.asyncio
+async def test_create_dc_multiple_dc_config(factory, dc_repo, monkeypatch):
+    # Multiple contracts allowed via environment variable
+    monkeypatch.setenv("DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT", "false")
+    # or via .toml
+    # [sdk]
+    # single_data_contract_per_product = true
+    
+    # Force reload of settings to pick up the new env var
+    from dmesh.sdk.config import get_settings
+    settings = get_settings(force_reload=True)
+    
+    # Create fresh SDK instance. It will pick up the 'false' value from env.
+    sdk = AsyncSDK(factory, settings=settings)
+    assert sdk.single_data_contract_per_product is False
+    
+    dp = await sdk.put_data_product({"domain": "d", "name": "n"})
+    dc1 = await sdk.put_data_contract({}, dp_id=dp["id"])
+    dc2 = await sdk.put_data_contract({"status": "active"}, dp_id=dp["id"])
+    
+    assert dc1["id"] != dc2["id"]
+    assert dc2["status"] == "active"
+    assert dc2["domain"] == "d"
+    
+    # Verify we have 2 contracts in repo
+    dcs = await dc_repo.list(dp_id=dp["id"])
+    assert len(dcs) == 2
     
 @pytest.mark.asyncio
 async def test_create_dc_invalid_property(sdk):

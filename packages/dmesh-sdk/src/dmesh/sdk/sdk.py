@@ -24,10 +24,20 @@ class _RepoWrapper:
 class AsyncSDK:
     """Asynchronous SDK for Data Mesh operations."""
     
-    def __init__(self, factory: Any):
+    def __init__(self, factory: Any, settings: Optional[Any] = None):
         self.factory = factory
+        self.settings = settings
         self.dp_repo = factory.get_data_product_repository()
         self.dc_repo = factory.get_data_contract_repository()
+        
+        # Initialize configuration options
+        self.single_data_contract_per_product = True
+        if settings:
+            if hasattr(settings, "sdk") and hasattr(settings.sdk, "single_data_contract_per_product"):
+                self.single_data_contract_per_product = settings.sdk.single_data_contract_per_product
+            elif hasattr(settings, "single_data_contract_per_product"):
+                # Fallback for direct setting if provided in a flat dictionary/object
+                self.single_data_contract_per_product = settings.single_data_contract_per_product
 
     async def __aenter__(self):
         if hasattr(self.factory, "open") and callable(getattr(self.factory, "open")):
@@ -136,8 +146,12 @@ class AsyncSDK:
         if not dp:
             raise ValueError(f"Parent Data Product {dp_id} not found")
 
-        existing_dcs = await self.dc_repo.list(dp_id=dp_id)
-        dc_index = len(existing_dcs)
+        if self.single_data_contract_per_product:
+            dc_index = 0
+        else:
+            existing_dcs = await self.dc_repo.list(dp_id=dp_id)
+            dc_index = len(existing_dcs)
+            
         dc_id = make_dc_id(dp.domain, dp.name, dp.version, dc_index)
         
         enriched_dc = self._prepare_dc_spec(spec, dc_id, dp_spec=dp.specification)
@@ -164,8 +178,11 @@ class AsyncSDK:
         existing = await self.get_data_contract(id, include_metadata=True)
         if not existing:
             raise ValueError(f"Data contract {id} not found")
+            
+        dp = await self.get_data_product(existing.data_product_id, include_metadata=True)
+        dp_spec = dp.specification if dp else None
         
-        enriched_dc = self._prepare_dc_spec(spec, id)
+        enriched_dc = self._prepare_dc_spec(spec, id, dp_spec=dp_spec)
         dc = DataContract(id=id, data_product_id=existing.data_product_id, specification=enriched_dc)
         await self.dc_repo.save(dc)
         return dc if include_metadata else dc.specification
@@ -189,7 +206,29 @@ class AsyncSDK:
         include_metadata: bool = False
     ) -> Union[dict, DataContract]:
         id = spec.get("id")
-        if id and await self.get_data_contract(id):
+        
+        # Resolve parent DP if we need it for ID or enrichment
+        dp = None
+        if dp_id:
+            dp = await self.get_data_product(dp_id, include_metadata=True)
+            if not dp:
+                raise ValueError(f"Parent Data Product {dp_id} not found")
+
+        # If no ID is provided but we are in single mode, we can determine what the ID should be
+        if not id and dp and self.single_data_contract_per_product:
+            id = make_dc_id(dp.domain, dp.name, dp.version, 0)
+
+        existing = await self.get_data_contract(id, include_metadata=True) if id else None
+        
+        if existing:
+            # For enrichment, use the DP associated with the existing contract if parent not provided
+            if not dp:
+                dp = await self.get_data_product(existing.data_product_id, include_metadata=True)
+            
+            # Check for changes
+            enriched = self._prepare_dc_spec(spec, id, dp_spec=dp.specification if dp else None)
+            if existing.specification == enriched:
+                return existing if include_metadata else existing.specification
             return await self._update_data_contract(id, spec, include_metadata=include_metadata)
         else:
             if not dp_id:
