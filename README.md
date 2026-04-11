@@ -23,10 +23,20 @@ Before running it, run the PostgreSQL docker with following command:
 docker-compose up -d
 ```
 
+Also ensure your environment variables are set (either in a `.env` file or exported in your shell):
+
+```env
+DMESH_DB__HOST=localhost
+DMESH_DB__PORT=5432
+DMESH_DB__USER=postgres
+DMESH_DB__PASSWORD=postgres
+DMESH_DB__NAME=postgres
+```
+
 Run the code shown below as follows:
 
 ```shell
-uv run python ./examples/sdk_usage_example.py
+uv run python packages/dmesh-sdk/quickstart_postgres.py
 ```
 
 ```python
@@ -38,53 +48,27 @@ async def main():
     # Load settings from config service
     settings = get_settings()
 
-    # Create a PostgreSQL repository factory using settings
-    factory = RepositoryFactory().create_from_settings(settings)
+    # Initialize a PostgreSQL repository using settings
+    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres")
     
-    # Open the connection pool (Mandatory for async Postgres pool)
-    await factory.open()
-    
-    # Initialize AsyncSDK with the factory
-    sdk = AsyncSDK(factory)
-    
-    # Upsert Data Product (idempotent)
-    spec = {"domain": "marketing", "name": "analytics", "version": "v1.1.0"}
-    dp = await sdk.put_data_product(spec, include_metadata=True)
-    
-    print(f"Upserted Data Product: {dp.id}")
-    print(f"Current Status: {dp.specification.get('status')}")
-        
-    await factory.close()
+    # Use the SDK as an asynchronous context manager
+    async with AsyncSDK(factory) as sdk:
+        # Register a data product (idempotent)
+        dp_spec = {
+            "domain": "finance",
+            "name": "ledger"
+        }
 
-if __name__ == "__main__":
-    # Ensure correct loop factory for Windows if needed, though run() usually handles it
-    asyncio.run(main(), loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()))
+        dp = await sdk.put_data_product(dp_spec)
+        stored_dp = await sdk.get_data_product(dp['id'])
+        print(f"Registered Data Product ID: {stored_dp['id']}")
+        print(f"Data Product: {stored_dp}")
+        dc_spec = {}
+        dc = await sdk.put_data_contract(dc_spec, stored_dp['id'])
+        stored_dc = await sdk.get_data_contract(dc['id'])
+        print(f"Registered Data Contract ID: {stored_dc['id']}")
+        print(f"Data Contract: {stored_dc}")
 
-
-import asyncio
-import selectors
-from dmesh.sdk import AsyncSDK, RepositoryFactory, get_settings
-
-async def main():
-    # Load settings and create async repositories
-    settings = get_settings()
-
-    # Create a PostgreSQL repository factory using settings
-    factory = RepositoryFactory().create_from_settings(settings, db_type="postgres_async")
-    
-    # Open the connection pool (Mandatory for async Postgres pool)
-    await factory.open()
-    
-    # Initialize AsyncSDK with the factory
-    sdk = AsyncSDK(factory)
-    
-    # Upsert Data Product (idempotent)
-    spec = {"domain": "marketing", "name": "analytics", "version": "v1.1.0"}
-    dp = await sdk.put_data_product(spec, include_metadata=True)
-    
-    print(f"Upserted Data Product: {dp.id}")
-    print(f"Current Status: {dp.specification.get('status')}")
-        
 if __name__ == "__main__":
     # Ensure correct loop factory for Windows if needed, though run() usually handles it
     asyncio.run(main(), loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()))
@@ -106,8 +90,8 @@ All base and profile-specific configurations reside in the `config/` directory:
 ### 🌍 Environment Selection
 The active profile is selected using the `APP_ENV` environment variable:
 ```bash
-# Select the 'lakebase' profile (will load config/lakebase.toml)
-export APP_ENV="lakebase"
+# Select the 'local_docker' profile (will load config/local_docker.toml)
+export APP_ENV="local_docker"
 ```
 
 ### 🔐 Secrets and .env Files
@@ -154,7 +138,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 
 ## 💻 CLI Usage
 
-The `dmesh` CLI provides a powerful set of tools to manage your Data Mesh environment.
+The `dmesh` CLI provides a set of tools to manage your Data Mesh environment.
 
 ### Installation & Setup
 

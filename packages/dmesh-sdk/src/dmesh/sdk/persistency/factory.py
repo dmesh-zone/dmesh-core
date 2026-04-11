@@ -26,7 +26,11 @@ class PostgresRepositoryFactory:
         self._dc_repo = PostgresDataContractRepository(self.pool)
 
     async def open(self):
+        from dmesh.sdk.persistency.postgres import PostgresSchema
         await self.pool.open()
+        async with self.pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(PostgresSchema.CREATE_TABLES)
 
     async def close(self):
         await self.pool.close()

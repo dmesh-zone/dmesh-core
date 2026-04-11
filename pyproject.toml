@@ -48,3 +48,9 @@ pythonpath = [
     "packages/dmesh-cli/src"
 ]
 asyncio_mode = "auto"
+norecursedirs = [".*", "venv", ".venv", "test_venv", "build", "dist"]
+python_functions = ["test_*", "*_test"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning:asyncio.WindowsSelectorEventLoopPolicy",
+]

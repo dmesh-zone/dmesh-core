@@ -11,7 +11,7 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         self.products = {}
 
     async def get(self, id: UUID) -> Optional[DataProduct]:
-        return self.products.get(id)
+        return self.products.get(str(id))
 
     async def save(self, product: DataProduct) -> None:
         if product.id not in self.products:
@@ -28,8 +28,9 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         return results
 
     async def delete(self, id: UUID) -> bool:
-        if id in self.products:
-            del self.products[id]
+        id_str = str(id)
+        if id_str in self.products:
+            del self.products[id_str]
             return True
         return False
 
@@ -39,7 +40,7 @@ class AsyncInMemoryDataContractRepository(DataContractRepository):
         self.contracts = {}
 
     async def get(self, id: UUID) -> Optional[DataContract]:
-        return self.contracts.get(id)
+        return self.contracts.get(str(id))
 
     async def save(self, contract: DataContract) -> None:
         if contract.id not in self.contracts:
@@ -54,7 +55,8 @@ class AsyncInMemoryDataContractRepository(DataContractRepository):
         return results
 
     async def delete(self, id: UUID) -> bool:
-        if id in self.contracts:
-            del self.contracts[id]
+        id_str = str(id)
+        if id_str in self.contracts:
+            del self.contracts[id_str]
             return True
         return False
