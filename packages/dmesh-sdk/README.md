@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 ![Python Support](https://img.shields.io/badge/python-3.10%2B-blue)
 
-A native asynchronous SDK for managing [open data product](https://bitol-io.github.io/open-data-product-standard/v1.0.0/) and [open contract](https://bitol-io.github.io/open-data-contract-standard/v3.1.0/) standards. `dmesh-sdk` provides the core abstractions and persistence layers needed to implement the Open Data Mesh standard.
+A native asynchronous SDK, provided as a part of [dmesh-core](https://github.com/dmesh-zone/dmesh-core) for managing [open data product](https://bitol-io.github.io/open-data-product-standard/v1.0.0/) and [open contract](https://bitol-io.github.io/open-data-contract-standard/v3.1.0/) standards. `dmesh-sdk` provides the core abstractions and persistence layers needed to implement the Open Data Mesh standard.
 
 ## 🚀 Key Features
 
