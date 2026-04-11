@@ -3,6 +3,10 @@ name = "dmesh-cli"
 version = "0.1.0"
 description = "dmesh CLI"
 readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Joao Vicente" }
+]
 requires-python = ">=3.12"
 dependencies = [
     "dmesh-sdk",

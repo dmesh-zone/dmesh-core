@@ -3,6 +3,10 @@ name = "dmesh-core"
 version = "0.1.0"
 description = "dmesh core workspace"
 readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Joao Vicente" }
+]
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.135.3",
