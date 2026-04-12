@@ -79,7 +79,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     assert dp["name"] == "ledger"
     assert dp["apiVersion"] == "v1.0.0"
     assert dp["kind"] == "DataProduct"
-    assert dp["status"] == "draft"
+    assert dp["status"] == sdk.data_product_status_default
     assert dp["version"] == "v1.0.0"
     
     # Assert persistency state
@@ -108,7 +108,7 @@ async def test_create_dp_with_minimal_output_ports(sdk):
     assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
     assert dp["apiVersion"] == "v1.0.0"
     assert dp["kind"] == "DataProduct"
-    assert dp["status"] == "draft"
+    assert dp["status"] == sdk.data_product_status_default
     assert dp["version"] == "v1.0.0"
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
@@ -132,19 +132,19 @@ async def test_update_dp_valid(sdk, dp_repo):
 
     # get dp
     fetched = await sdk.get_data_product(id=dp_id)
-    assert fetched["status"] == "draft"
+    assert fetched["status"] == sdk.data_product_status_default
     
     # update dp
     spec_to_update = fetched.copy()
-    spec_to_update["status"] = "active"
+    spec_to_update["status"] = "proposed"
     updated = await sdk.put_data_product(spec_to_update)
     
     # Assert return value
-    assert updated["status"] == "active"
+    assert updated["status"] == "proposed"
     
     # Assert persistency state
     persisted = await dp_repo.get(dp_id)
-    assert persisted.specification["status"] == "active"
+    assert persisted.specification["status"] == "proposed"
 
 @pytest.mark.asyncio
 async def test_update_dp_created_and_updated_at_are_set(sdk, dp_repo):

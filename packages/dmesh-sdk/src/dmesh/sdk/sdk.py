@@ -36,11 +36,15 @@ class AsyncSDK:
         self.single_data_contract_per_product = True
         self.dua_start_date_default = "2026-01-01"
         self.dua_purpose_default = "Unknown purpose"
+        self.data_product_status_default = "active"
+        self.data_contract_status_default = "active"
         if settings:
             sdk_settings = getattr(settings, "sdk", settings)
             self.single_data_contract_per_product = getattr(sdk_settings, "single_data_contract_per_product", self.single_data_contract_per_product)
             self.dua_start_date_default = getattr(sdk_settings, "dua_start_date_default", self.dua_start_date_default)
             self.dua_purpose_default = getattr(sdk_settings, "dua_purpose_default", self.dua_purpose_default)
+            self.data_product_status_default = getattr(sdk_settings, "data_product_status_default", self.data_product_status_default)
+            self.data_contract_status_default = getattr(sdk_settings, "data_contract_status_default", self.data_contract_status_default)
 
     async def __aenter__(self):
         if hasattr(self.factory, "open") and callable(getattr(self.factory, "open")):
@@ -55,7 +59,11 @@ class AsyncSDK:
         """Enrich and validate data product specification."""
         try:
             merged_spec = {**spec}
-            enriched = enrich_dp_spec(merged_spec, id_generator=self.id_generator)
+            enriched = enrich_dp_spec(
+                merged_spec, 
+                id_generator=self.id_generator,
+                status_default=self.data_product_status_default
+            )
             if dp_id:
                 enriched["id"] = dp_id
             validate_spec(enriched)
@@ -66,7 +74,11 @@ class AsyncSDK:
     def _prepare_dc_spec(self, spec: dict[str, Any], dc_id: str, dp_spec: Optional[dict] = None) -> dict[str, Any]:
         """Enrich and validate data contract specification."""
         try:
-            enriched_dc = enrich_dc_spec({**spec, "id": dc_id}, dp_spec=dp_spec)
+            enriched_dc = enrich_dc_spec(
+                {**spec, "id": dc_id}, 
+                dp_spec=dp_spec,
+                status_default=self.data_contract_status_default
+            )
             validate_spec(enriched_dc)
             return enriched_dc
         except jsonschema.exceptions.ValidationError as e:
