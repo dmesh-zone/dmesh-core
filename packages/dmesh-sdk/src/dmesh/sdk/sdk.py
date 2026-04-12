@@ -151,6 +151,23 @@ class AsyncSDK:
         else:
             return await self._create_data_product(enriched, include_metadata=include_metadata)
 
+    async def patch_data_product(self, spec: dict[str, Any], id: Optional[str] = None, include_metadata: bool = False) -> Union[dict, DataProduct]:
+        id = id or spec.get("id")
+        if not id:
+            # Try to derive ID if domain/name are provided in spec
+            if spec.get("domain") and spec.get("name"):
+                id = self.id_generator.make_dp_id(spec)
+            else:
+                raise ValueError("id must be provided or present in spec for patch")
+            
+        existing = await self.get_data_product(id, include_metadata=True)
+        if not existing:
+            raise ValueError(f"Data product {id} not found")
+        
+        updated_spec = self._apply_patch(existing.specification, spec)
+        # We use put_data_product to ensure full enrichment/validation of the patched spec
+        return await self.put_data_product(updated_spec, include_metadata=include_metadata)
+
     async def _create_data_contract(
         self, 
         dp_id: str, 

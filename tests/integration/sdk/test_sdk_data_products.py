@@ -175,6 +175,47 @@ async def test_update_dp_no_change_does_not_save(sdk, dp_repo):
     second_updated_at = dp2.updated_at
     assert second_updated_at == first_updated_at
 
+@pytest.mark.asyncio
+async def test_patch_dp(sdk, dp_repo):
+    spec = {
+            "domain": "finance", 
+            "name": "ledger", 
+            "outputPorts": [{"name": "ledger"}, {"name": "transactions"}],
+            "customProperties": [{
+                "property":"dataProductTier",
+                "value": "sourceAligned"
+                }]
+            }
+    dp1 = await sdk.put_data_product(spec)
+
+    # patch dp
+    data_usage_agreement = {
+        "info": {
+            "active": True,
+            "purpose": "Source aligned data product replication",
+            "startDate": "2026-04-12"
+        },
+        "consumer": {
+            "dataProductId": sdk.id_generator.make_dp_id({"domain": "hr", "name": "employees"})
+        }
+    }
+    dp2 = await sdk.patch_data_product({
+        "status": "proposed",
+        "customProperties": [{
+            "property":"dataUsageAgreements",
+            "value": [data_usage_agreement]
+            }]
+        }, id=dp1["id"])
+    # Check that outputPorts are preserved and both custom properties are present
+    stored_dp = await dp_repo.get(dp2["id"])
+    dp3 = stored_dp.specification
+    assert "outputPorts" in dp3
+    # Assert custom properties in any order
+    custom_props = dp3["customProperties"]
+    props_dict = {p["property"]: p["value"] for p in custom_props}
+    
+    assert props_dict.get("dataProductTier") == "sourceAligned"
+    assert props_dict.get("dataUsageAgreements") == [data_usage_agreement]
 
 @pytest.mark.asyncio
 async def test_get_dp_by_id(sdk):
