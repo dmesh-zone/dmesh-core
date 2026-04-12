@@ -8,6 +8,7 @@ _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # NAMESPACE_DNS
 
 DEFAULT_DP_SCHEME = "DataProduct/{domain}/{name}/{version}"
 DEFAULT_DC_SCHEME = "DataContract/{domain}/{name}/{version}/{dc_index}"
+DEFAULT_DUA_SCHEME = "DataUsageAgreement/{provider_id}/{consumer_id}/{start_date}"
 
 
 @runtime_checkable
@@ -20,6 +21,10 @@ class IDGenerator(Protocol):
 
     def make_dc_id(self, spec: dict[str, Any]) -> str:
         """Generate a deterministic ID for a data contract spec."""
+        ...
+
+    def make_dua_id(self, spec: dict[str, Any]) -> str:
+        """Generate a deterministic ID for a data usage agreement spec."""
         ...
 
 
@@ -69,6 +74,28 @@ class DefaultIDGenerator:
             key = f"DataContract/{domain}/{name}/{version}/{dc_index}"
         return str(uuid.uuid5(_NAMESPACE, key))
 
+    def make_dua_id(self, spec: dict[str, Any]) -> str:
+        """Generate a deterministic ID for a data usage agreement.
+
+        Input is a dictionary containing 'provider' and 'consumer' blocks,
+        and an 'info' block with a 'startDate'.
+        """
+        provider_id = spec.get("provider", {}).get("dataProductId", "")
+        consumer_id = spec.get("consumer", {}).get("dataProductId", "")
+        info = spec.get("info", {})
+        start_date = info.get("startDate", "")
+
+        scheme = self._scheme("DUA_ID_SCHEME", DEFAULT_DUA_SCHEME)
+        try:
+            key = scheme.format(
+                provider_id=provider_id,
+                consumer_id=consumer_id,
+                start_date=start_date,
+            )
+        except KeyError:
+            key = f"DataUsageAgreement/{provider_id}/{consumer_id}/{start_date}"
+        return str(uuid.uuid5(_NAMESPACE, key))
+
 
 # Global instance for legacy function-based access
 _generator: IDGenerator = DefaultIDGenerator()
@@ -93,3 +120,8 @@ def make_dp_id(spec: dict[str, Any]) -> str:
 def make_dc_id(spec: dict[str, Any]) -> str:
     """Generate a deterministic ID for a data contract using the configured generator."""
     return _generator.make_dc_id(spec)
+
+
+def make_dua_id(spec: dict[str, Any]) -> str:
+    """Generate a deterministic ID for a data usage agreement using the configured generator."""
+    return _generator.make_dua_id(spec)

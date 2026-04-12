@@ -71,6 +71,8 @@ class ApiSettings(BaseModel):
 
 class SdkSettings(BaseModel):
     single_data_contract_per_product: bool = True
+    dua_start_date_default: str = "2026-01-01"
+    dua_purpose_default: str = "Unknown purpose"
 
 class Settings(BaseSettings):
     # Field names match the nesting in TOML and env vars

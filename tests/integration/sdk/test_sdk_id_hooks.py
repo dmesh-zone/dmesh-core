@@ -16,6 +16,11 @@ class DottedIDGenerator:
         data_product = spec.get("dataProduct", "unknown")
         return f"{domain}.{data_product}"
 
+    def make_dua_id(self, spec: dict[str, Any]) -> str:
+        provider_id = spec.get("provider", {}).get("dataProductId", "unknown")
+        consumer_id = spec.get("consumer", {}).get("dataProductId", "unknown")
+        return f"{provider_id}->{consumer_id}"
+
 @pytest.fixture
 async def factory():
     factory = RepositoryFactory().create(db_type="memory")
@@ -81,3 +86,21 @@ async def test_contract_id_generator_override(factory):
     # 2. DC uses custom logic
     dc = await sdk.put_data_contract({}, dp_id=dp["id"])
     assert dc["id"] == "custom-dc-0"
+
+@pytest.mark.asyncio
+async def test_dua_id_generator_hook(factory):
+    # 1. Create SDK with custom generator
+    sdk = AsyncSDK(factory, id_generator=DottedIDGenerator())
+    
+    # 2. Prepare scenario for DUA expansion
+    provider_dp = await sdk.put_data_product({"domain": "p", "name": "pn", "customProperties": [
+        {"property": "dataUsageAgreements", "value": [{"consumer": {"dataProductId": "c1"}}]}
+    ]})
+    
+    # 3. Discover (will trigger expansion and thus make_dua_id)
+    results = await sdk.discover()
+    
+    # Verify DUA has custom ID
+    duas = [r for r in results if r.get("id") and "->" in r["id"]]
+    assert len(duas) == 1
+    assert duas[0]["id"] == f"{provider_dp['id']}->c1"

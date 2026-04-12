@@ -34,12 +34,13 @@ class AsyncSDK:
         
         # Initialize configuration options
         self.single_data_contract_per_product = True
+        self.dua_start_date_default = "2026-01-01"
+        self.dua_purpose_default = "Unknown purpose"
         if settings:
-            if hasattr(settings, "sdk") and hasattr(settings.sdk, "single_data_contract_per_product"):
-                self.single_data_contract_per_product = settings.sdk.single_data_contract_per_product
-            elif hasattr(settings, "single_data_contract_per_product"):
-                # Fallback for direct setting if provided in a flat dictionary/object
-                self.single_data_contract_per_product = settings.single_data_contract_per_product
+            sdk_settings = getattr(settings, "sdk", settings)
+            self.single_data_contract_per_product = getattr(sdk_settings, "single_data_contract_per_product", self.single_data_contract_per_product)
+            self.dua_start_date_default = getattr(sdk_settings, "dua_start_date_default", self.dua_start_date_default)
+            self.dua_purpose_default = getattr(sdk_settings, "dua_purpose_default", self.dua_purpose_default)
 
     async def __aenter__(self):
         if hasattr(self.factory, "open") and callable(getattr(self.factory, "open")):
@@ -272,15 +273,71 @@ class AsyncSDK:
             if dp: dps.append(dp)
         elif domain and name:
             dps = await self.dp_repo.list(domain=domain, name=name)
+        elif domain:
+            dps = await self.dp_repo.list(domain=domain)
+        else:
+            dps = await self.dp_repo.list()
+        
+        # Keep track of DPs for expansion (id -> domain)
+        dp_map = {dp.id: dp.domain for dp in dps}
+        
+        # Collect all contracts and products to check for agreements
+        to_check = [] # List of (spec, parent_dp_id, parent_dp_domain)
         
         for dp in dps:
             results.append(dp if include_metadata else dp.specification)
+            to_check.append((dp.specification, dp.id, dp.domain))
+            
             dcs = await self.dc_repo.list(dp_id=dp.id)
             if include_metadata:
                 results.extend(dcs)
             else:
                 results.extend([dc.specification for dc in dcs])
-                
+            
+            for dc in dcs:
+                to_check.append((dc.specification, dp.id, dp.domain))
+
+        # Expansion logic for Data Usage Agreements
+        expanded_duas = []
+        for spec, parent_id, parent_domain in to_check:
+            custom_props = spec.get("customProperties", [])
+            for prop in custom_props:
+                if prop.get("property") == "dataUsageAgreements":
+                    agreements = prop.get("value", [])
+                    for ag in agreements:
+                        consumer_id = ag.get("consumer", {}).get("dataProductId")
+                        
+                        # Resolve consumer domain
+                        consumer_domain = dp_map.get(consumer_id)
+                        if not consumer_domain and consumer_id:
+                            cons_dp = await self.get_data_product(consumer_id)
+                            if cons_dp:
+                                consumer_domain = cons_dp.get("domain")
+                                dp_map[consumer_id] = consumer_domain
+
+                        dua = {
+                            "dataUsageAgreementSpecification": "0.0.1",
+                            "info": {
+                                "active": True,
+                                "status": "approved",
+                                "startDate": self.dua_start_date_default,
+                                "purpose": self.dua_purpose_default,
+                                **ag.get("info", {})
+                            },
+                            "provider": {
+                                "teamId": parent_domain,
+                                "outputPortId": "*",
+                                "dataProductId": parent_id
+                            },
+                            "consumer": {
+                                "teamId": consumer_domain,
+                                "dataProductId": consumer_id
+                            }
+                        }
+                        dua["id"] = self.id_generator.make_dua_id(dua)
+                        expanded_duas.append(dua)
+        
+        results.extend(expanded_duas)
         return results
 
     async def flush(self) -> None:
