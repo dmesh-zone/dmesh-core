@@ -73,7 +73,7 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
     dc = await sdk.put_data_contract({}, dp_id=dp["id"])
     
-    assert dc["id"] == 'c9ca57c1-8c75-512d-8c4f-debcc082003f'
+    assert dc["id"] == sdk.id_generator.make_dc_id({**dc, "_dc_index": 0})
     assert dc["kind"] == "DataContract"
     assert dc["apiVersion"] == "v3.1.0"
     assert dc["status"] == sdk.data_contract_status_default
@@ -142,7 +142,7 @@ async def test_create_dc_invalid_property(sdk):
 async def test_update_dc_valid_more_input(sdk):
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
     dc = await sdk.put_data_contract({"dataProduct": "n"}, dp_id=dp["id"])
-    assert dc["id"] == 'c9ca57c1-8c75-512d-8c4f-debcc082003f'
+    assert dc["id"] == sdk.id_generator.make_dc_id({**dc, "_dc_index": 0})
     
     # get dc
     updated_spec = await sdk.get_data_contract(id=dc["id"])

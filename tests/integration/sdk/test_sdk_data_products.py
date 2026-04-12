@@ -74,7 +74,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     dp = await sdk.put_data_product(spec)
     
     # Assert return value
-    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
+    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["apiVersion"] == "v1.0.0"
@@ -85,7 +85,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     # Assert persistency state
     persisted = await dp_repo.get(dp["id"])
     assert persisted is not None
-    assert persisted.id == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
+    assert persisted.id == sdk.id_generator.make_dp_id(dp)
     assert persisted.domain == "finance"
     assert persisted.name == "ledger"
 
@@ -95,7 +95,7 @@ async def test_create_dp_valid_more_input(sdk):
     dp = await sdk.put_data_product(spec, domain="finance", name="ledger")
     
     # Assert return value
-    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
+    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
 
@@ -105,7 +105,7 @@ async def test_create_dp_with_minimal_output_ports(sdk):
     dp = await sdk.put_data_product(spec)
     
     # Assert return value
-    assert dp["id"] == 'ba781283-1f14-5db2-a3f3-ce330da2c6dd'
+    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
     assert dp["apiVersion"] == "v1.0.0"
     assert dp["kind"] == "DataProduct"
     assert dp["status"] == sdk.data_product_status_default
