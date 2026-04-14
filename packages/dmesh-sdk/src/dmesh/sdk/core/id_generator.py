@@ -53,25 +53,23 @@ class DefaultIDGenerator:
     def make_dc_id(self, spec: dict[str, Any]) -> str:
         """Generate a deterministic ID for a data contract.
 
-        Input is a dictionary containing parent information ('domain', 'dataProduct', 'version')
+        Input is a dictionary containing parent information ('domain', 'dataProduct')
         and an internal '_dc_index' representing the sequence of contracts for the product
         (0-based: first DC gets index 0).
         """
         domain = spec.get("domain", "")
-        name = spec.get("dataProduct", "")  # In DC spec, 'dataProduct' is the name
-        version = spec.get("version", "v1.0.0")
-        dc_index = spec.get("_dc_index", 0)  # Internal index hook
+        name = spec.get("dataProduct", "")
+        dc_index = spec.get("_dc_index", 0)
 
         scheme = self._scheme("DC_ID_SCHEME", DEFAULT_DC_SCHEME)
         try:
             key = scheme.format(
                 domain=domain,
                 name=name,
-                version=version,
                 dc_index=dc_index,
             )
         except KeyError:
-            key = f"DataContract/{domain}/{name}/{version}/{dc_index}"
+            key = f"DataContract/{domain}/{name}/{dc_index}"
         return str(uuid.uuid5(_NAMESPACE, key))
 
     def make_dua_id(self, spec: dict[str, Any]) -> str:

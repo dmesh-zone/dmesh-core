@@ -1,5 +1,6 @@
 from __future__ import annotations
 import jsonschema.exceptions
+import copy
 from typing import Any, List, Optional, Union
 from uuid import UUID
 from dmesh.sdk.models import (
@@ -38,6 +39,8 @@ class AsyncSDK:
         self.dua_purpose_default = "Unknown purpose"
         self.data_product_status_default = "active"
         self.data_contract_status_default = "active"
+        self.expand_port_adapters = True
+        self.enrich_output_ports = True
         if settings:
             sdk_settings = getattr(settings, "sdk", settings)
             self.single_data_contract_per_product = getattr(sdk_settings, "single_data_contract_per_product", self.single_data_contract_per_product)
@@ -45,6 +48,8 @@ class AsyncSDK:
             self.dua_purpose_default = getattr(sdk_settings, "dua_purpose_default", self.dua_purpose_default)
             self.data_product_status_default = getattr(sdk_settings, "data_product_status_default", self.data_product_status_default)
             self.data_contract_status_default = getattr(sdk_settings, "data_contract_status_default", self.data_contract_status_default)
+            self.expand_port_adapters = getattr(sdk_settings, "expand_port_adapters", self.expand_port_adapters)
+            self.enrich_output_ports = getattr(sdk_settings, "enrich_output_ports", self.enrich_output_ports)
 
     async def __aenter__(self):
         if hasattr(self.factory, "open") and callable(getattr(self.factory, "open")):
@@ -55,21 +60,103 @@ class AsyncSDK:
         if hasattr(self.factory, "close") and callable(getattr(self.factory, "close")):
             await self.factory.close()
 
-    def _prepare_dp_spec(self, spec: dict[str, Any], dp_id: Optional[str] = None) -> dict[str, Any]:
+    def _prepare_dp_spec(self, spec: dict[str, Any], dp_id: Optional[str] = None, validate: bool = True) -> dict[str, Any]:
         """Enrich and validate data product specification."""
         try:
-            merged_spec = {**spec}
+            merged_spec = copy.deepcopy(spec)
+            
+            # 1. Expand port adapters if present
+            self._expand_port_adapters(merged_spec)
+            
+            # 2. Basic enrichment (defaults, ID)
             enriched = enrich_dp_spec(
                 merged_spec, 
                 id_generator=self.id_generator,
                 status_default=self.data_product_status_default
             )
+            
+            # 3. Enrich output ports (contractId, etc.)
+            self._enrich_output_ports(enriched)
+            
             if dp_id:
                 enriched["id"] = dp_id
-            validate_spec(enriched)
+            if validate:
+                validate_spec(enriched)
             return enriched
         except jsonschema.exceptions.ValidationError as e:
             raise DataProductValidationError(f"Invalid Data Product specification: {e.message}") from e
+
+    def _expand_port_adapters(self, spec: dict[str, Any]) -> None:
+        """Expand output ports based on portAdapters custom property on ports."""
+        if not self.expand_port_adapters:
+            return
+            
+        if "outputPorts" not in spec or not isinstance(spec["outputPorts"], list):
+            return
+            
+        original_ports = [p for p in spec["outputPorts"]]
+        for port in original_ports:
+            if not isinstance(port, dict): continue
+            
+            # Look for portAdapters in port-level customProperties
+            adapters = None
+            custom_props = port.get("customProperties", [])
+            for prop in custom_props:
+                if prop.get("property") == "portAdapters":
+                    adapters = prop.get("value")
+                    break
+            
+            if not adapters or not isinstance(adapters, list):
+                continue
+                
+            for adapter in adapters:
+                new_port = port.copy()
+                new_port["name"] = f"{port['name']}_{adapter}"
+                
+                # Add adaptedFrom custom property
+                if "customProperties" not in new_port:
+                    new_port["customProperties"] = []
+                else:
+                    # Avoid recursive expansion
+                    new_port["customProperties"] = [cp for cp in new_port["customProperties"] if cp.get("property") != "portAdapters"]
+                
+                new_port["customProperties"].append({
+                    "property": "adaptedFrom",
+                    "value": port["name"]
+                })
+                
+                spec["outputPorts"].append(new_port)
+
+    def _enrich_output_ports(self, spec: dict[str, Any]) -> None:
+        """Populate missing fields in output ports."""
+        if not self.enrich_output_ports:
+            return
+            
+        if "outputPorts" not in spec or not isinstance(spec["outputPorts"], list):
+            return
+            
+        # Predict contract ID
+        predicted_dc_id = None
+        if self.single_data_contract_per_product:
+            # Use dataProduct key for name as expected by default ID generator for contracts
+            # Note: version is no longer part of DC ID calculation
+            id_spec = {
+                "domain": spec.get("domain", ""),
+                "dataProduct": spec.get("name", ""),
+                "_dc_index": 0
+            }
+            predicted_dc_id = self.id_generator.make_dc_id(id_spec)
+            
+        for port in spec["outputPorts"]:
+            if not isinstance(port, dict): continue
+            
+            # Default version to "v1" if missing
+            if "version" not in port:
+                port["version"] = "v1"
+                
+            # contractId enrichment
+            if predicted_dc_id and "contractId" not in port:
+                port["contractId"] = predicted_dc_id
 
     def _prepare_dc_spec(self, spec: dict[str, Any], dc_id: str, dp_spec: Optional[dict] = None) -> dict[str, Any]:
         """Enrich and validate data contract specification."""
@@ -128,6 +215,10 @@ class AsyncSDK:
             return await self.dp_repo.delete(id)
         except ValueError:
             return False
+
+    async def enrich_data_product_spec(self, spec: dict[str, Any], validate: bool = False) -> dict[str, Any]:
+        """Enrich data product spec with defaults and ID. Does not save to repo."""
+        return self._prepare_dp_spec(spec, validate=validate)
 
     async def put_data_product(
         self, 

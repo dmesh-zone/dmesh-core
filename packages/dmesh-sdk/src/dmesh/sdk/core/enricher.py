@@ -21,17 +21,7 @@ def enrich_dp_spec(
     enriched.setdefault("kind", "DataProduct")
     enriched.setdefault("version", "v1.0.0")
     enriched.setdefault("status", status_default)
-    # Default outputPorts version to "v1" if missing
-    if "outputPorts" in enriched and isinstance(enriched["outputPorts"], list):
-        new_ports = []
-        for port in enriched["outputPorts"]:
-            if isinstance(port, dict):
-                p = dict(port)
-                p.setdefault("version", "v1")
-                new_ports.append(p)
-            else:
-                new_ports.append(port)
-        enriched["outputPorts"] = new_ports
+    # Basic enrichment moved to SDK enrichment methods if needed
     
     if id_generator:
         enriched["id"] = id_generator.make_dp_id(enriched)

@@ -75,6 +75,8 @@ class SdkSettings(BaseModel):
     dua_purpose_default: str = "Unknown purpose"
     data_product_status_default: str = "active"
     data_contract_status_default: str = "active"
+    expand_port_adapters: bool = True
+    enrich_output_ports: bool = True
 
 class Settings(BaseSettings):
     # Field names match the nesting in TOML and env vars

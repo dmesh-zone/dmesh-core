@@ -176,6 +176,113 @@ async def test_update_dp_no_change_does_not_save(sdk, dp_repo):
     assert second_updated_at == first_updated_at
 
 @pytest.mark.asyncio
+async def test_enrich_dp_spec(sdk, dp_repo):
+    input_spec = {"domain": "finance", "name": "ledger"}
+    expected_enriched_spec = {
+        "domain": "finance", 
+        "name": "ledger", 
+        "id": sdk.id_generator.make_dp_id(input_spec), 
+        "apiVersion": "v1.0.0", 
+        "version": "v1.0.0", 
+        "kind": "DataProduct", 
+        "status": sdk.data_product_status_default
+        }
+    enriched_spec = await sdk.enrich_data_product_spec(input_spec)
+    assert enriched_spec == expected_enriched_spec
+    assert enriched_spec["domain"] == "finance"
+    assert enriched_spec["name"] == "ledger"
+    assert enriched_spec["id"] == sdk.id_generator.make_dp_id(enriched_spec)
+    assert enriched_spec["apiVersion"] == "v1.0.0"
+    assert enriched_spec["version"] == "v1.0.0"
+    assert enriched_spec["kind"] == "DataProduct"
+    assert enriched_spec["status"] == sdk.data_product_status_default
+
+
+@pytest.mark.asyncio
+async def test_enrich_output_ports(sdk):
+    spec = {
+        "domain": "finance",
+        "name": "ledger",
+        "outputPorts": [{"name": "ledger"}]
+    }
+    enriched = await sdk.enrich_data_product_spec(spec)
+
+    # Test with expand_port_adapters = True (default behaviour)
+    assert sdk.enrich_output_ports == True
+    expected_output_ports_with_enrich = {
+        "outputPorts": [
+                {
+                    "name": "ledger",
+                    "version": "v1",
+                    "contractId": sdk.id_generator.make_dc_id({"domain": "finance","dataProduct": "ledger"})
+                },
+            ]
+    }
+    assert enriched["outputPorts"] == expected_output_ports_with_enrich["outputPorts"]
+
+    # Test with enrich_output_ports = False
+    sdk.enrich_output_ports = False
+    assert sdk.enrich_output_ports == False
+    expected_output_ports_no_enrich = {
+        "outputPorts": [
+                {
+                    "name": "ledger"
+                },
+            ]
+    }
+    enriched_no_enrich = await sdk.enrich_data_product_spec(spec)
+    assert enriched_no_enrich["outputPorts"] == expected_output_ports_no_enrich["outputPorts"]
+
+@pytest.mark.asyncio
+async def test_expand_port_adapters(sdk):
+    spec = {
+        "domain": "finance",
+        "name": "ledger",
+        "outputPorts": [
+                {
+                    "name": "ledger",
+                    "customProperties": [
+                        {"property": "portAdapters", "value": ["odata"]}
+                    ]
+                },
+                {
+                    "name": "transactions"
+                }
+            ]
+    }
+    enriched = await sdk.enrich_data_product_spec(spec)
+
+    # Test with expand_port_adapters = True (default behaviour)
+    assert sdk.expand_port_adapters == True
+    
+    # Original 2 + 1 adapter = 3 ports
+    assert len(enriched["outputPorts"]) == 3
+    port_names = [p["name"] for p in enriched["outputPorts"]]
+    assert "ledger" in port_names
+    assert "transactions" in port_names
+    assert "ledger_odata" in port_names
+    
+    # Check adaptedFrom
+    odata_port = next(p for p in enriched["outputPorts"] if p["name"] == "ledger_odata")
+    adapted_from = next(cp["value"] for cp in odata_port["customProperties"] if cp["property"] == "adaptedFrom")
+    assert adapted_from == "ledger"
+
+    # Check adapted port contains has been enriched
+    assert sdk.enrich_output_ports == True
+    assert odata_port["version"] == "v1"
+    assert odata_port["contractId"] == sdk.id_generator.make_dc_id({"domain": "finance","dataProduct": "ledger"})
+
+    # Test with expand_port_adapters = False
+    sdk.expand_port_adapters = False
+    assert sdk.expand_port_adapters == False
+    enriched_no_expand = await sdk.enrich_data_product_spec(spec)
+    assert len(enriched_no_expand["outputPorts"]) == 2
+    port_names_no_expand = [p["name"] for p in enriched_no_expand["outputPorts"]]
+    assert "ledger" in port_names_no_expand
+    assert "transactions" in port_names_no_expand
+    assert "ledger_odata" not in port_names_no_expand
+
+@pytest.mark.asyncio
 async def test_patch_dp(sdk, dp_repo):
     spec = {
             "domain": "finance", 
