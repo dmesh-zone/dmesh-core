@@ -6,8 +6,8 @@ from typing import Any, Protocol, runtime_checkable
 # Fixed namespace for all dmesh IDs
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # NAMESPACE_DNS
 
-DEFAULT_DP_SCHEME = "DataProduct/{domain}/{name}/{version}"
-DEFAULT_DC_SCHEME = "DataContract/{domain}/{name}/{version}/{dc_index}"
+DEFAULT_DP_SCHEME = "DataProduct/{domain}/{name}"
+DEFAULT_DC_SCHEME = "DataContract/{domain}/{name}/{dc_index}"
 DEFAULT_DUA_SCHEME = "DataUsageAgreement/{provider_id}/{consumer_id}/{start_date}"
 
 
