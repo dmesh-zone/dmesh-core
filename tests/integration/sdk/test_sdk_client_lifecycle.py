@@ -72,6 +72,7 @@ async def test_sdk_cicd_client(sdk):
     """Simulates the CI/CD client usage of dmesh-sdk. 
     Assuming data product spec is minimalist containing only domain, name and outputPorts
     Assumes other information will be collected from other sources: e.g. repository_info and onboarding_info"""
+    # TODO: Provide ID maker showing how to handl of dataSource dp
     DOMAIN = "finance"
     DP1_BUSINESS_NAME = "SAP FI"
     DP1_TECHNICAL_NAME = "sap_fi"
@@ -150,7 +151,8 @@ async def test_sdk_cicd_client(sdk):
         # Step 7: Prepare data product spec
         dp_spec = dp_info["spec"]
         dp_spec["domain"] = dp_info["domain"]
-        dp_spec["name"] = dp_info["data_product_technical_name"]
+        dp_spec["name"] = dp_info["data_product_business_name"]
+        dp_spec["customProperties"] = [{"property": "technical_product_name", "value": dp_info["data_product_technical_name"]}]
         # Enriching will populate default values for version and status, outputPort version and contractId, and portAdapter expansion
         enchiched_dp_spec = await sdk.enrich_data_product_spec(dp_spec)
         # Step 8-10: Create or update data product

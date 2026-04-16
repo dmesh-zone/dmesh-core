@@ -41,6 +41,7 @@ class AsyncSDK:
         self.data_contract_status_default = "active"
         self.expand_port_adapters = True
         self.enrich_output_ports = True
+        self.autoDataSourceDpCreationUponSourceAlignedDpCreation = True
         if settings:
             sdk_settings = getattr(settings, "sdk", settings)
             self.single_data_contract_per_product = getattr(sdk_settings, "single_data_contract_per_product", self.single_data_contract_per_product)
@@ -50,6 +51,7 @@ class AsyncSDK:
             self.data_contract_status_default = getattr(sdk_settings, "data_contract_status_default", self.data_contract_status_default)
             self.expand_port_adapters = getattr(sdk_settings, "expand_port_adapters", self.expand_port_adapters)
             self.enrich_output_ports = getattr(sdk_settings, "enrich_output_ports", self.enrich_output_ports)
+            self.autoDataSourceDpCreationUponSourceAlignedDpCreation = getattr(sdk_settings, "autoDataSourceDpCreationUponSourceAlignedDpCreation", self.autoDataSourceDpCreationUponSourceAlignedDpCreation)
 
     async def __aenter__(self):
         if hasattr(self.factory, "open") and callable(getattr(self.factory, "open")):
@@ -281,10 +283,43 @@ class AsyncSDK:
         existing = await self.get_data_product(dp_id, include_metadata=True)
         if existing:
             if existing.specification == enriched:
-                return existing if include_metadata else existing.specification
-            return await self._update_data_product(dp_id, enriched, include_metadata=include_metadata)
+                res = existing if include_metadata else existing.specification
+            else:
+                res = await self._update_data_product(dp_id, enriched, include_metadata=include_metadata)
         else:
-            return await self._create_data_product(enriched, include_metadata=include_metadata)
+            res = await self._create_data_product(enriched, include_metadata=include_metadata)
+
+        # Handle auto-creation logic
+        await self._auto_create_data_source_dp(res if not include_metadata else res.specification)
+        
+        return res
+
+    async def _auto_create_data_source_dp(self, dp_spec: dict[str, Any]) -> None:
+        """Auto-creates a data source DP if the current DP is sourceAligned."""
+        if not self.autoDataSourceDpCreationUponSourceAlignedDpCreation:
+            return
+            
+        tier = None
+        custom_props = dp_spec.get("customProperties", [])
+        for prop in custom_props:
+            if prop.get("property") == "dataProductTier":
+                tier = prop.get("value")
+                break
+        
+        if tier != "sourceAligned":
+            return
+            
+        # Create Data Source DP
+        source_dp_name = dp_spec["name"] + " data source"
+        source_dp_spec = {
+            "domain": dp_spec["domain"],
+            "name": source_dp_name,
+            "customProperties": [
+                {"property": "dataProductTier", "value": "dataSource"},
+                {"property": "dataUsageAgreements", "value": [{"consumer": {"dataProductId": dp_spec["id"]}}]}
+            ]
+        }
+        await self.put_data_product(source_dp_spec)
 
     async def patch_data_product(self, spec: dict[str, Any], id: Optional[str] = None, include_metadata: bool = False) -> Union[dict, DataProduct]:
         id = id or spec.get("id")

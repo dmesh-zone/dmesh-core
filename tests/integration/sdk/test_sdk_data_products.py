@@ -125,6 +125,88 @@ async def test_create_dp_invalid_property(sdk):
     assert "Invalid Data Product specification: Additional properties are not allowed ('invalid' was unexpected)" in str(exc.value)
 
 @pytest.mark.asyncio
+async def test_auto_data_source_dp_created_upon_source_aligned_dp_creation(sdk):
+    spec = {"domain": "finance", "name": "ledger", 
+        "customProperties": [
+            {"property": "dataProductTier", "value": "sourceAligned"}
+        ]
+    }
+    # Assert auto creation upon source aligned dp creation default configuration is true
+    assert sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation == True
+
+    dp = await sdk.put_data_product(spec)
+    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["domain"] == "finance"
+    assert dp["name"] == "ledger"
+    assert dp["apiVersion"] == "v1.0.0"
+    assert dp["kind"] == "DataProduct"
+    assert dp["status"] == sdk.data_product_status_default
+    assert dp["version"] == "v1.0.0"
+
+    expected_data_source_dp_name = dp["name"] + " data source"
+    dp_list = await sdk.list_data_products(domain=dp["domain"], name=expected_data_source_dp_name)
+    assert len(dp_list) == 1
+    data_source_dp = dp_list[0]
+    assert data_source_dp["id"] == sdk.id_generator.make_dp_id({"domain": dp["domain"], "name": dp["name"] + " data source"})
+    assert data_source_dp["domain"] == "finance"
+    assert data_source_dp["name"] == "ledger data source"
+    assert data_source_dp["apiVersion"] == "v1.0.0"
+    assert data_source_dp["kind"] == "DataProduct"
+    assert data_source_dp["status"] == sdk.data_product_status_default
+    assert data_source_dp["version"] == "v1.0.0"
+    custom_properties = {}
+    for property_object in data_source_dp["customProperties"]:
+        property = property_object["property"]
+        value = property_object["value"]
+        custom_properties[property] = value
+    assert custom_properties["dataProductTier"] == "dataSource"
+    assert custom_properties["dataUsageAgreements"] == [{"consumer": {"dataProductId": dp["id"]}}]
+
+@pytest.mark.asyncio
+async def test_auto_data_source_dp_not_created_if_auto_data_source_dp_creation_is_disabled(sdk):
+    spec = {"domain": "finance", "name": "ledger", 
+        "customProperties": [
+            {"property": "dataProductTier", "value": "curated"}
+        ]
+    }
+    # Disable auto data source dp creation
+    sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation = False 
+
+    dp = await sdk.put_data_product(spec)
+    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["domain"] == "finance"
+    assert dp["name"] == "ledger"
+    assert dp["apiVersion"] == "v1.0.0"
+    assert dp["kind"] == "DataProduct"
+    assert dp["status"] == sdk.data_product_status_default
+    assert dp["version"] == "v1.0.0"
+
+    dp_list = await sdk.list_data_products(domain=dp["domain"])
+    assert len(dp_list) == 1
+
+@pytest.mark.asyncio
+async def test_auto_data_source_dp_not_created_upon_source_aligned_dp_creation(sdk):
+    spec = {"domain": "finance", "name": "ledger", 
+        "customProperties": [
+            {"property": "dataProductTier", "value": "curated"}
+        ]
+    }
+    # Assert source aligned dp is not auto created if dataProductTier is not sourceAligned
+    assert sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation == True
+
+    dp = await sdk.put_data_product(spec)
+    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["domain"] == "finance"
+    assert dp["name"] == "ledger"
+    assert dp["apiVersion"] == "v1.0.0"
+    assert dp["kind"] == "DataProduct"
+    assert dp["status"] == sdk.data_product_status_default
+    assert dp["version"] == "v1.0.0"
+
+    dp_list = await sdk.list_data_products(domain=dp["domain"])
+    assert len(dp_list) == 1
+
+@pytest.mark.asyncio
 async def test_update_dp_valid(sdk, dp_repo):
     spec = {"domain": "finance", "name": "ledger"}
     dp = await sdk.put_data_product(spec)
