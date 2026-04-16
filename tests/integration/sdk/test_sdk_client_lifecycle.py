@@ -72,7 +72,6 @@ async def test_sdk_cicd_client(sdk):
     """Simulates the CI/CD client usage of dmesh-sdk. 
     Assuming data product spec is minimalist containing only domain, name and outputPorts
     Assumes other information will be collected from other sources: e.g. repository_info and onboarding_info"""
-    # TODO: SDK to populate dpSpec outputPorts contractId and contractVersion
     DOMAIN = "finance"
     DP1_BUSINESS_NAME = "SAP FI"
     DP1_TECHNICAL_NAME = "sap_fi"
@@ -154,10 +153,49 @@ async def test_sdk_cicd_client(sdk):
         dp_spec["name"] = dp_info["data_product_technical_name"]
         # Enriching will populate default values for version and status, outputPort version and contractId, and portAdapter expansion
         enchiched_dp_spec = await sdk.enrich_data_product_spec(dp_spec)
-        # Step 8: Create or update data product
+        # Step 8-10: Create or update data product
         upserted_dp = await sdk.put_data_product(enchiched_dp_spec)
         # TODO: sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation
-        # TODO: Step 11 Prepare Data Contract
-        # TODO: Add data contract roles
-        # TODO: Add data contract servers
-        # TODO: Upsert Data Contract
+        # Step 11 Prepare Data Contract
+        dc_spec = await sdk.enrich_data_contract(spec=None, dp_spec=upserted_dp)
+        # TODO: Add data contract servers for databricks and api output ports (in a more parameterised way)
+        dc_spec["servers"] = [
+                {
+                    "server": "Databricks",
+                    "type": "databricks",
+                    "environment": "dev",
+                    "host": "https://dbc-12345678-90ab.workspace.cloud.databricks.com/explore/data/food_production/food_production_analytics",
+                    "catalog": "{catalog}",
+                    "schema": "{schema}"
+                },
+                {
+                    "server": f"OData {DP1_TABLE2_NAME} endpoint",
+                    "type": "api",
+                    "environment": "dev",
+                    "location": "https://{path-to-the-odata-endpoint}"
+                }
+            ]
+        # Add data contract roles
+        dc_spec['roles'] = [
+                {
+                    "role": dp_info["data_analyst_group_name"],
+                    "access": "read",
+                },
+                {
+                    "role": dp_info["data_engineer_group_name"],
+                    "access": "write",
+                },
+                {
+                    "role": dp_info["consumer_applications_group_name"],
+                    "access": "read",
+                },
+                {
+                    "role": dp_info["service_account_group_name"],
+                    "access": "write",
+                }
+            ]
+        # Step 12-14: Upsert Data Contract
+        upserted_dc = await sdk.put_data_contract(dc_spec, dp_id=upserted_dp["id"])
+    discover = await sdk.discover()
+    pass
+        

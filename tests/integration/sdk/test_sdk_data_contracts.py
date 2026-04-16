@@ -69,6 +69,19 @@ def dc_repo(factory):
 
 # Data Contract Tests
 @pytest.mark.asyncio
+async def test_dc_enrich_data_contract_spec_empty_spec(sdk, dc_repo):
+    dp = await sdk.put_data_product({"domain": "d", "name": "n"})
+    dc = await sdk.enrich_data_contract({}, dp_id=dp["id"])
+    
+    assert dc["id"] == sdk.id_generator.make_dc_id({**dc, "_dc_index": 0})
+    assert dc["kind"] == "DataContract"
+    assert dc["apiVersion"] == "v3.1.0"
+    assert dc["status"] == sdk.data_contract_status_default
+    assert dc["version"] == "v1.0.0"
+    assert dc["domain"] == "d"
+    assert dc["dataProduct"] == "n"
+
+@pytest.mark.asyncio
 async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
     dc = await sdk.put_data_contract({}, dp_id=dp["id"])

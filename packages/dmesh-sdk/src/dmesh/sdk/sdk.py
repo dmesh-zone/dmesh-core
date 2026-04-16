@@ -220,6 +220,50 @@ class AsyncSDK:
         """Enrich data product spec with defaults and ID. Does not save to repo."""
         return self._prepare_dp_spec(spec, validate=validate)
 
+    async def enrich_data_contract_spec(self, spec: dict[str, Any], dp_id: Optional[str] = None) -> dict[str, Any]:
+        """Enrich data contract spec with defaults and ID. Does not save to repo."""
+        return await self.enrich_data_contract(spec, dp_id=dp_id)
+
+    async def enrich_data_contract(
+        self, 
+        spec: Optional[dict[str, Any]] = None, 
+        dp_id: Optional[str] = None, 
+        dp_spec: Optional[dict] = None
+    ) -> dict[str, Any]:
+        """Enrich a Data Contract specification. Does NOT save to repo."""
+        merged_spec = copy.deepcopy(spec) if spec else {}
+        
+        # 1. Resolve parent DP context
+        if not dp_spec and dp_id:
+            dp = await self.get_data_product(dp_id, include_metadata=True)
+            if not dp:
+                raise ValueError(f"Parent Data Product {dp_id} not found")
+            dp_spec = dp.specification
+
+        # 2. Determine ID (must know index)
+        # We need to know if we are in single mode or not
+        if self.single_data_contract_per_product:
+            dc_index = 0
+        else:
+            # Determine existing count for this DP
+            target_dp_id = dp_id or (dp_spec.get("id") if dp_spec else None)
+            if target_dp_id:
+                existing_dcs = await self.dc_repo.list(dp_id=target_dp_id)
+                dc_index = len(existing_dcs)
+            else:
+                dc_index = 0
+            
+        id_spec = {
+            **merged_spec, 
+            "domain": dp_spec.get("domain", "") if dp_spec else "", 
+            "dataProduct": dp_spec.get("name", "") if dp_spec else "", 
+            "version": dp_spec.get("version", "v1.0.0") if dp_spec else "v1.0.0",
+            "_dc_index": dc_index
+        }
+        dc_id = self.id_generator.make_dc_id(id_spec)
+        
+        return self._prepare_dc_spec(merged_spec, dc_id, dp_spec=dp_spec)
+
     async def put_data_product(
         self, 
         spec: dict[str, Any], 
