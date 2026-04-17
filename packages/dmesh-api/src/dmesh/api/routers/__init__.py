@@ -1,1 +1,1 @@
-from . import dps, dcs
+from . import dps, dcs, discover

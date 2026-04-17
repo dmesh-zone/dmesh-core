@@ -48,5 +48,8 @@ The API routers should map directly to the SDK operations.
 - `GET /dcs`: Calls `sdk.list_data_contracts(dp_id)`
 - `DELETE /dcs/{id}`: Calls `sdk.delete_data_contract(id)`
 
+### Discover (`/discover`)
+- `GET /discover`: Calls `sdk.discover(domain, name)`
+
 ## OS Portabilty
 This SDK is designed so that it can be developed and used in both Windows, Linux and Mac

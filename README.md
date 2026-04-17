@@ -153,6 +153,12 @@ For a consistent development environment, you can use the included Docker config
 docker-compose up -d
 ```
 
+> [!IMPORTANT]
+> **Rebuilding after changes**: If you modify the `dmesh-api` source code, you must rebuild the Docker image for the changes to take effect:
+> ```bash
+> docker-compose up --build api -d
+> ```
+
 ### 🛠️ Using the CLI
 
 The `cli` container comes pre-configured with all dependencies and the `dmesh` command installed globally.
@@ -239,6 +245,11 @@ Start the backend server locally using Uvicorn:
 
 ```bash
 uv run uvicorn dmesh.api.main:app --reload
+```
+
+If you are running the API via **Docker**, remember to rebuild after making changes:
+```bash
+docker-compose up --build api
 ```
 
 ### 🌐 API Documentation

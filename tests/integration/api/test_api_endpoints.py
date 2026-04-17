@@ -134,3 +134,51 @@ class TestApiIntegration:
         # THEN
         assert_that(resp.status_code).is_equal_to(404)
         assert_that(resp.json()["detail"]).contains("not found")
+
+    async def test_discovery(self, api_client):
+        """Verify the /discover endpoint returns a flat list of entities with filtering."""
+        # GIVEN: 2 domains, each with 2 data products, each product with a contract
+        # Domain: Finance
+        f_ledger = await api_client.post("/dmesh/dps", json={"domain": "finance", "name": "ledger"})
+        await api_client.post(f"/dmesh/dps/{f_ledger.json()['id']}/dcs", json={"name": "ledger-contract"})
+        
+        f_tx = await api_client.post("/dmesh/dps", json={"domain": "finance", "name": "transactions"})
+        await api_client.post(f"/dmesh/dps/{f_tx.json()['id']}/dcs", json={"name": "tx-contract"})
+
+        # Domain: HR
+        h_staff = await api_client.post("/dmesh/dps", json={"domain": "hr", "name": "staff"})
+        await api_client.post(f"/dmesh/dps/{h_staff.json()['id']}/dcs", json={"name": "staff-contract"})
+        
+        h_payroll = await api_client.post("/dmesh/dps", json={"domain": "hr", "name": "payroll"})
+        await api_client.post(f"/dmesh/dps/{h_payroll.json()['id']}/dcs", json={"name": "payroll-contract"})
+
+        # --- SCENARIO 1: No filters (Global Discovery) ---
+        all_resp = await api_client.get("/dmesh/discover")
+        assert_that(all_resp.status_code).is_equal_to(200)
+        # 4 DPs + 4 DCs = 8 items
+        items = all_resp.json()
+        assert_that(items).is_type_of(list)
+        assert_that(len(items)).is_equal_to(8)
+
+        # --- SCENARIO 2: Filter by Domain only ---
+        fin_resp = await api_client.get("/dmesh/discover?domain=finance")
+        assert_that(fin_resp.status_code).is_equal_to(200)
+        # 2 DPs + 2 DCs = 4 items
+        items = fin_resp.json()
+        assert_that(len(items)).is_equal_to(4)
+        for item in items:
+            assert_that(item["domain"]).is_equal_to("finance")
+
+        # --- SCENARIO 3: Filter by Domain + Name ---
+        spec_resp = await api_client.get("/dmesh/discover?domain=finance&name=ledger")
+        assert_that(spec_resp.status_code).is_equal_to(200)
+        # 1 DP + 1 DC = 2 items
+        items = spec_resp.json()
+        assert_that(len(items)).is_equal_to(2)
+        assert_that([i["name"] for i in items if i["kind"] == "DataProduct"]).contains("ledger")
+        assert_that([i["dataProduct"] for i in items if i["kind"] == "DataContract"]).contains("ledger")
+
+        # --- SCENARIO 4: Filter by non-existent domain ---
+        none_resp = await api_client.get("/dmesh/discover?domain=marketing")
+        assert_that(none_resp.status_code).is_equal_to(200)
+        assert_that(none_resp.json()).is_empty()

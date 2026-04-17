@@ -5,12 +5,16 @@ import asyncio
 # On Windows, psycopg3 requires SelectorEventLoop for async operations.
 # This must be set before any event loop is created.
 if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from mangum import Mangum
 from dmesh.api.routers import dps, dcs
+from dmesh.api.routers.discover import discover_router
 from dmesh.api.dependencies import get_factory
 
 @asynccontextmanager
@@ -40,6 +44,7 @@ def create_app() -> FastAPI:
     
     app.include_router(dps.router, prefix=f"/{_BASE}")
     app.include_router(dcs.router, prefix=f"/{_BASE}")
+    app.include_router(discover_router, prefix=f"/{_BASE}")
     
     @app.get(f"/{_BASE}/health")
     async def health():
