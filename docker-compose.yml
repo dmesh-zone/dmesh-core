@@ -36,11 +36,23 @@ services:
       db:
         condition: service_healthy
 
-  cli-sandbox:
-    image: python:3.11-slim
+  cli:
+    build:
+      context: .
+      dockerfile: packages/dmesh-cli/Dockerfile.sandbox
     volumes:
       - .:/app
     working_dir: /app
     environment:
-      PYTHONPATH: /app/sdk/src:/app/cli
-    command: tail -f /dev/null
+      PYTHONPATH: /app/packages/dmesh-sdk/src:/app/packages/dmesh-cli/src
+      TERM: xterm-256color
+      # Override the DB host to point to the 'db' service container
+      DMESH_DB__HOST: db
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+    depends_on:
+      db:
+        condition: service_healthy

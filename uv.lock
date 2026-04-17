@@ -244,6 +244,7 @@ version = "0.1.0"
 source = { editable = "packages/dmesh-sdk" }
 dependencies = [
     { name = "jsonschema" },
+    { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
@@ -253,6 +254,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "jsonschema" },
+    { name = "psycopg", extras = ["binary", "pool"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },

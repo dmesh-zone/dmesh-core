@@ -140,6 +140,39 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 
 The `dmesh` CLI provides a set of tools to manage your Data Mesh environment.
 
+---
+
+## 🐳 Docker Development Sandbox
+
+For a consistent development environment, you can use the included Docker configuration. This starts the PostgreSQL database, the REST API, and a dedicated CLI.
+
+### 🚀 Starting the Environment
+
+```bash
+# Start all services (db, api, and cli)
+docker-compose up -d
+```
+
+### 🛠️ Using the CLI
+
+The `cli` container comes pre-configured with all dependencies and the `dmesh` command installed globally.
+
+```bash
+# Enter the CLI
+docker-compose exec cli bash
+
+# Run dmesh commands directly (no 'uv run' needed inside)
+dmesh --help
+dmesh setup
+dmesh list dps
+```
+
+The sandbox mounts your local directory, so any code changes you make in your IDE are immediately reflected inside the container.
+
+---
+
+## 💻 Local CLI Usage
+
 ### Installation & Setup
 
 Ensure you have [uv](https://github.com/astral-sh/uv) installed, then sync the workspace:
