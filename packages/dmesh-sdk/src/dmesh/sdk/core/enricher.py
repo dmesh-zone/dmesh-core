@@ -24,9 +24,9 @@ def enrich_dp_spec(
     # Basic enrichment moved to SDK enrichment methods if needed
     
     if id_generator:
-        enriched["id"] = id_generator.make_dp_id(enriched)
+        enriched["id"] = str(id_generator.make_dp_id(enriched))
     else:
-        enriched["id"] = make_dp_id(enriched)
+        enriched["id"] = str(make_dp_id(enriched))
         
     return enriched
 

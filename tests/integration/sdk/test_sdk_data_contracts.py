@@ -73,7 +73,7 @@ async def test_dc_enrich_data_contract_spec_empty_spec(sdk, dc_repo):
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
     dc = await sdk.enrich_data_contract({}, dp_id=dp["id"])
     
-    assert dc["id"] == sdk.id_generator.make_dc_id({**dc, "_dc_index": 0})
+    assert dc["id"] == str(sdk.id_generator.make_dc_id({**dc, "_dc_index": 0}))
     assert dc["kind"] == "DataContract"
     assert dc["apiVersion"] == "v3.1.0"
     assert dc["status"] == sdk.data_contract_status_default
@@ -86,7 +86,7 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
     dc = await sdk.put_data_contract({}, dp_id=dp["id"])
     
-    assert dc["id"] == sdk.id_generator.make_dc_id({**dc, "_dc_index": 0})
+    assert dc["id"] == str(sdk.id_generator.make_dc_id({**dc, "_dc_index": 0}))
     assert dc["kind"] == "DataContract"
     assert dc["apiVersion"] == "v3.1.0"
     assert dc["status"] == sdk.data_contract_status_default
@@ -95,9 +95,9 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     assert dc["dataProduct"] == "n"
     
     # Assert persistency state
-    persisted = await dc_repo.get(dc["id"])
+    persisted = await dc_repo.get(UUID(dc["id"]))
     assert persisted is not None
-    assert persisted.data_product_id == dp["id"]
+    assert persisted.data_product_id == UUID(dp["id"])
 
 @pytest.mark.asyncio
 async def test_create_dc_single_dc_config(sdk, dc_repo, monkeypatch):
@@ -112,7 +112,7 @@ async def test_create_dc_single_dc_config(sdk, dc_repo, monkeypatch):
     assert dc2["domain"] == "d"
 
     # Verify we have 1 contract in repo (dc1)
-    dcs = await dc_repo.list(dp_id=dp["id"])
+    dcs = await dc_repo.list(dp_id=UUID(dp["id"]))
     assert len(dcs) == 1
     
 @pytest.mark.asyncio
@@ -140,7 +140,7 @@ async def test_create_dc_multiple_dc_config(factory, dc_repo, monkeypatch):
     assert dc2["domain"] == "d"
     
     # Verify we have 2 contracts in repo
-    dcs = await dc_repo.list(dp_id=dp["id"])
+    dcs = await dc_repo.list(dp_id=UUID(dp["id"]))
     assert len(dcs) == 2
     
 @pytest.mark.asyncio
@@ -155,7 +155,7 @@ async def test_create_dc_invalid_property(sdk):
 async def test_update_dc_valid_more_input(sdk):
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
     dc = await sdk.put_data_contract({"dataProduct": "n"}, dp_id=dp["id"])
-    assert dc["id"] == sdk.id_generator.make_dc_id({**dc, "_dc_index": 0})
+    assert dc["id"] == str(sdk.id_generator.make_dc_id({**dc, "_dc_index": 0}))
     
     # get dc
     updated_spec = await sdk.get_data_contract(id=dc["id"])

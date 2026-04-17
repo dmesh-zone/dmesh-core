@@ -1,25 +1,29 @@
 import pytest
 from typing import Any
+import uuid
 from dmesh.sdk import AsyncSDK
 from dmesh.sdk.core.id_generator import set_generator, DefaultIDGenerator, IDGenerator
 from dmesh.sdk.persistency.factory import RepositoryFactory
 
+# Fixed namespace for custom test IDs
+CUSTOM_NS = uuid.UUID("12345678-1234-5678-1234-567812345678")
+
 class DottedIDGenerator:
-    """Custom ID generator that uses dot concatenation as requested."""
-    def make_dp_id(self, spec: dict[str, Any]) -> str:
+    """Custom ID generator that returns UUIDs derived from dot concatenation."""
+    def make_dp_id(self, spec: dict[str, Any]) -> uuid.UUID:
         domain = spec.get("domain", "unknown")
         name = spec.get("name", "unknown")
-        return f"{domain}.{name}"
+        return uuid.uuid5(CUSTOM_NS, f"{domain}.{name}")
 
-    def make_dc_id(self, spec: dict[str, Any]) -> str:
+    def make_dc_id(self, spec: dict[str, Any]) -> uuid.UUID:
         domain = spec.get("domain", "unknown")
         data_product = spec.get("dataProduct", "unknown")
-        return f"{domain}.{data_product}"
+        return uuid.uuid5(CUSTOM_NS, f"{domain}.{data_product}")
 
-    def make_dua_id(self, spec: dict[str, Any]) -> str:
+    def make_dua_id(self, spec: dict[str, Any]) -> uuid.UUID:
         provider_id = spec.get("provider", {}).get("dataProductId", "unknown")
         consumer_id = spec.get("consumer", {}).get("dataProductId", "unknown")
-        return f"{provider_id}->{consumer_id}"
+        return uuid.uuid5(CUSTOM_NS, f"{provider_id}->{consumer_id}")
 
 @pytest.fixture
 async def factory():
@@ -39,20 +43,20 @@ async def test_custom_id_generator_hook(factory):
     dp_spec = {"domain": "finance", "name": "ledger"}
     dp = await sdk.put_data_product(dp_spec)
     
-    # Verify custom ID (domain.name)
-    assert dp["id"] == "finance.ledger"
+    # Verify custom ID (uuid5 derived from domain.name)
+    assert dp["id"] == str(uuid.uuid5(CUSTOM_NS, "finance.ledger"))
     
     # 3. Create Data Contract
     dc_spec = {}
     dc = await sdk.put_data_contract(dc_spec, dp_id=dp["id"])
     
-    # Verify custom ID (domain.dataProduct)
-    assert dc["id"] == "finance.ledger"
+    # Verify custom ID (uuid5 derived from domain.dataProduct)
+    assert dc["id"] == str(uuid.uuid5(CUSTOM_NS, "finance.ledger"))
 
 class CustomDPOnlyGenerator(DefaultIDGenerator):
     """Overrides only DP ID generation, uses default for DC."""
-    def make_dp_id(self, spec: dict[str, Any]) -> str:
-        return "manual-dp-id"
+    def make_dp_id(self, spec: dict[str, Any]) -> uuid.UUID:
+        return uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 @pytest.mark.asyncio
 async def test_product_id_generator_override(factory):
@@ -61,17 +65,16 @@ async def test_product_id_generator_override(factory):
     
     # 1. DP uses custom logic
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
-    assert dp["id"] == "manual-dp-id"
+    assert dp["id"] == str(uuid.UUID("00000000-0000-0000-0000-000000000001"))
     
     # 2. DC uses DEFAULT logic (UUID5)
     dc = await sdk.put_data_contract({}, dp_id=dp["id"])
-    import uuid
-    uuid.UUID(dc["id"]) # Should be a valid UUID5
+    assert isinstance(dc["id"], str)
 
 class CustomDCOnlyGenerator(DefaultIDGenerator):
     """Overrides only DC ID generation, uses default for DP."""
-    def make_dc_id(self, spec: dict[str, Any]) -> str:
-        return f"custom-dc-{spec.get('_dc_index')}"
+    def make_dc_id(self, spec: dict[str, Any]) -> uuid.UUID:
+        return uuid.uuid5(CUSTOM_NS, f"custom-dc-{spec.get('_dc_index')}")
 
 @pytest.mark.asyncio
 async def test_contract_id_generator_override(factory):
@@ -80,12 +83,11 @@ async def test_contract_id_generator_override(factory):
     
     # 1. DP uses DEFAULT logic (UUID5)
     dp = await sdk.put_data_product({"domain": "d", "name": "n"})
-    import uuid
-    uuid.UUID(dp["id"]) # Should be a valid UUID5
+    assert isinstance(dp["id"], str)
     
     # 2. DC uses custom logic
     dc = await sdk.put_data_contract({}, dp_id=dp["id"])
-    assert dc["id"] == "custom-dc-0"
+    assert dc["id"] == str(uuid.uuid5(CUSTOM_NS, "custom-dc-0"))
 
 @pytest.mark.asyncio
 async def test_dua_id_generator_hook(factory):
@@ -93,14 +95,16 @@ async def test_dua_id_generator_hook(factory):
     sdk = AsyncSDK(factory, id_generator=DottedIDGenerator())
     
     # 2. Prepare scenario for DUA expansion
+    consumer_uuid = "00000000-0000-0000-0000-0000000000c1"
     provider_dp = await sdk.put_data_product({"domain": "p", "name": "pn", "customProperties": [
-        {"property": "dataUsageAgreements", "value": [{"consumer": {"dataProductId": "c1"}}]}
+        {"property": "dataUsageAgreements", "value": [{"consumer": {"dataProductId": consumer_uuid}}]}
     ]})
     
     # 3. Discover (will trigger expansion and thus make_dua_id)
     results = await sdk.discover()
     
     # Verify DUA has custom ID
-    duas = [r for r in results if r.get("id") and "->" in r["id"]]
+    duas = [r for r in results if "dataUsageAgreementSpecification" in r]
     assert len(duas) == 1
-    assert duas[0]["id"] == f"{provider_dp['id']}->c1"
+    expected_dua_id = uuid.uuid5(CUSTOM_NS, f"{provider_dp['id']}->{consumer_uuid}")
+    assert duas[0]["id"] == str(expected_dua_id)

@@ -1,8 +1,11 @@
 import importlib.resources
 import json
 import re
+import copy
 from pathlib import Path
 from typing import Any
+from uuid import UUID
+from datetime import datetime
 
 import jsonschema
 import requests
@@ -20,6 +23,17 @@ SCHEMA_MAP = {
 
 class SchemaFetchError(Exception):
     """Raised when the Bitol JSON Schema cannot be fetched."""
+
+
+def _stringify_spec(spec: Any) -> Any:
+    """Recursively convert UUID and datetime objects to strings."""
+    if isinstance(spec, dict):
+        return {k: _stringify_spec(v) for k, v in spec.items()}
+    elif isinstance(spec, list):
+        return [_stringify_spec(v) for v in spec]
+    elif isinstance(spec, (UUID, datetime)):
+        return str(spec)
+    return spec
 
 
 def validate_spec(spec: dict[str, Any]) -> None:
@@ -49,6 +63,9 @@ def validate_spec(spec: dict[str, Any]) -> None:
             # Default to DataProduct if ambiguous
             kind = "DataProduct"
 
+    # Convert UUIDs and datetimes to strings for JSON schema validation
+    serializable_spec = _stringify_spec(spec)
+
     # Normalize version: strip 'v' prefix for local file lookup
     clean_version = api_version[1:] if api_version.startswith("v") else api_version
 
@@ -66,11 +83,10 @@ def validate_spec(spec: dict[str, Any]) -> None:
                 schema = json.load(f)
                 # Successful local schema load
                 try:
-                    jsonschema.validate(spec, schema)
+                    jsonschema.validate(serializable_spec, schema)
                     return
                 except jsonschema.ValidationError:
                     # If it's a validation error against a local schema, we STOP here.
-                    # This is the strict Source of Truth.
                     raise
     except jsonschema.ValidationError:
         raise
@@ -91,7 +107,7 @@ def validate_spec(spec: dict[str, Any]) -> None:
             response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 schema = response.json()
-                jsonschema.validate(spec, schema)
+                jsonschema.validate(serializable_spec, schema)
                 return
             last_error = f"HTTP {response.status_code} at {url}"
         except requests.RequestException as e:

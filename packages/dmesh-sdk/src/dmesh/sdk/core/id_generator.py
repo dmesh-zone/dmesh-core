@@ -15,15 +15,15 @@ DEFAULT_DUA_SCHEME = "DataUsageAgreement/{provider_id}/{consumer_id}/{start_date
 class IDGenerator(Protocol):
     """Protocol for generating determininstic IDs for Data Mesh entities."""
 
-    def make_dp_id(self, spec: dict[str, Any]) -> str:
+    def make_dp_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data product spec."""
         ...
 
-    def make_dc_id(self, spec: dict[str, Any]) -> str:
+    def make_dc_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data contract spec."""
         ...
 
-    def make_dua_id(self, spec: dict[str, Any]) -> str:
+    def make_dua_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data usage agreement spec."""
         ...
 
@@ -48,7 +48,7 @@ class DefaultIDGenerator:
             key = scheme.format(domain=domain, name=name, version=version)
         except KeyError:
             key = f"DataProduct/{domain}/{name}/{version}"
-        return str(uuid.uuid5(_NAMESPACE, key))
+        return uuid.uuid5(_NAMESPACE, key)
 
     def make_dc_id(self, spec: dict[str, Any]) -> str:
         """Generate a deterministic ID for a data contract.
@@ -70,7 +70,7 @@ class DefaultIDGenerator:
             )
         except KeyError:
             key = f"DataContract/{domain}/{name}/{dc_index}"
-        return str(uuid.uuid5(_NAMESPACE, key))
+        return uuid.uuid5(_NAMESPACE, key)
 
     def make_dua_id(self, spec: dict[str, Any]) -> str:
         """Generate a deterministic ID for a data usage agreement.
@@ -92,7 +92,7 @@ class DefaultIDGenerator:
             )
         except KeyError:
             key = f"DataUsageAgreement/{provider_id}/{consumer_id}/{start_date}"
-        return str(uuid.uuid5(_NAMESPACE, key))
+        return uuid.uuid5(_NAMESPACE, key)
 
 
 # Global instance for legacy function-based access
@@ -110,16 +110,16 @@ def get_generator() -> IDGenerator:
     return _generator
 
 
-def make_dp_id(spec: dict[str, Any]) -> str:
+def make_dp_id(spec: dict[str, Any]) -> uuid.UUID:
     """Generate a deterministic ID for a data product using the configured generator."""
     return _generator.make_dp_id(spec)
 
 
-def make_dc_id(spec: dict[str, Any]) -> str:
+def make_dc_id(spec: dict[str, Any]) -> uuid.UUID:
     """Generate a deterministic ID for a data contract using the configured generator."""
     return _generator.make_dc_id(spec)
 
 
-def make_dua_id(spec: dict[str, Any]) -> str:
+def make_dua_id(spec: dict[str, Any]) -> uuid.UUID:
     """Generate a deterministic ID for a data usage agreement using the configured generator."""
     return _generator.make_dua_id(spec)

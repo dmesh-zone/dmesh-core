@@ -62,7 +62,7 @@ class AsyncSDK:
         if hasattr(self.factory, "close") and callable(getattr(self.factory, "close")):
             await self.factory.close()
 
-    def _prepare_dp_spec(self, spec: dict[str, Any], dp_id: Optional[str] = None, validate: bool = True) -> dict[str, Any]:
+    def _prepare_dp_spec(self, spec: dict[str, Any], dp_id: Optional[Union[str, UUID]] = None, validate: bool = True) -> dict[str, Any]:
         """Enrich and validate data product specification."""
         try:
             merged_spec = copy.deepcopy(spec)
@@ -160,7 +160,7 @@ class AsyncSDK:
                 "dataProduct": spec.get("name", ""),
                 "_dc_index": 0
             }
-            predicted_dc_id = self.id_generator.make_dc_id(id_spec)
+            predicted_dc_id = str(self.id_generator.make_dc_id(id_spec))
             
         for port in spec["outputPorts"]:
             if not isinstance(port, dict): continue
@@ -173,11 +173,11 @@ class AsyncSDK:
             if predicted_dc_id and "contractId" not in port:
                 port["contractId"] = predicted_dc_id
 
-    def _prepare_dc_spec(self, spec: dict[str, Any], dc_id: str, dp_spec: Optional[dict] = None) -> dict[str, Any]:
+    def _prepare_dc_spec(self, spec: dict[str, Any], dc_id: Union[str, UUID], dp_spec: Optional[dict] = None) -> dict[str, Any]:
         """Enrich and validate data contract specification."""
         try:
             enriched_dc = enrich_dc_spec(
-                {**spec, "id": dc_id}, 
+                {**spec, "id": str(dc_id)}, 
                 dp_spec=dp_spec,
                 status_default=self.data_contract_status_default
             )
@@ -201,11 +201,13 @@ class AsyncSDK:
         enriched_spec: dict[str, Any], 
         include_metadata: bool = False
     ) -> Union[dict, DataProduct]:
-        dp = DataProduct(id=enriched_spec["id"], specification=enriched_spec)
+        dp = DataProduct(id=UUID(str(enriched_spec["id"])), specification=enriched_spec)
         await self.dp_repo.save(dp)
         return dp if include_metadata else dp.specification
 
     async def get_data_product(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataProduct]]:
+        if isinstance(id, str):
+            id = UUID(id)
         try:
             dp = await self.dp_repo.get(id)
             if dp:
@@ -220,12 +222,16 @@ class AsyncSDK:
             return results
         return [dp.specification for dp in results]
 
-    async def _update_data_product(self, id: str, enriched_spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
+    async def _update_data_product(self, id: Union[str, UUID], enriched_spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
+        if isinstance(id, str):
+            id = UUID(id)
         dp = DataProduct(id=id, specification=enriched_spec)
         await self.dp_repo.save(dp)
         return dp if include_metadata else dp.specification
 
     async def delete_data_product(self, id: str) -> bool:
+        if isinstance(id, str):
+            id = UUID(id)
         try:
             return await self.dp_repo.delete(id)
         except ValueError:
@@ -245,6 +251,8 @@ class AsyncSDK:
         dp_id: Optional[str] = None, 
         dp_spec: Optional[dict] = None
     ) -> dict[str, Any]:
+        if dp_id and isinstance(dp_id, str):
+            dp_id = UUID(dp_id)
         """Enrich a Data Contract specification. Does NOT save to repo."""
         merged_spec = copy.deepcopy(spec) if spec else {}
         
@@ -336,6 +344,9 @@ class AsyncSDK:
 
     async def patch_data_product(self, spec: dict[str, Any], id: Optional[str] = None, include_metadata: bool = False) -> Union[dict, DataProduct]:
         id = id or spec.get("id")
+        if id and isinstance(id, str):
+            id = UUID(id)
+            
         if not id:
             # Try to derive ID if domain/name are provided in spec
             if spec.get("domain") and spec.get("name"):
@@ -357,6 +368,8 @@ class AsyncSDK:
         spec: dict[str, Any], 
         include_metadata: bool = False
     ) -> Union[dict, DataContract]:
+        if isinstance(dp_id, str):
+            dp_id = UUID(dp_id)
         dp = await self.get_data_product(dp_id, include_metadata=True)
         if not dp:
             raise ValueError(f"Parent Data Product {dp_id} not found")
@@ -378,11 +391,13 @@ class AsyncSDK:
         dc_id = self.id_generator.make_dc_id(id_spec)
         
         enriched_dc = self._prepare_dc_spec(spec, dc_id, dp_spec=dp.specification)
-        dc = DataContract(id=dc_id, data_product_id=dp_id, specification=enriched_dc)
+        dc = DataContract(id=dc_id, data_product_id=dp.id, specification=enriched_dc)
         await self.dc_repo.save(dc)
         return dc if include_metadata else dc.specification
 
     async def get_data_contract(self, id: str, include_metadata: bool = False) -> Optional[Union[dict, DataContract]]:
+        if isinstance(id, str):
+            id = UUID(id)
         try:
             dc = await self.dc_repo.get(id)
             if dc:
@@ -397,8 +412,10 @@ class AsyncSDK:
             return results
         return [dc.specification for dc in results]
 
-    async def _update_data_contract(self, id: str, spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
-        existing = await self.get_data_contract(id, include_metadata=True)
+    async def _update_data_contract(self, id: Union[str, UUID], spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataContract]:
+        if isinstance(id, str):
+            id = UUID(id)
+        existing = await self.get_data_contract(str(id), include_metadata=True)
         if not existing:
             raise ValueError(f"Data contract {id} not found")
             
@@ -412,6 +429,9 @@ class AsyncSDK:
 
     async def patch_data_contract(self, spec: dict[str, Any], id: Optional[str] = None, include_metadata: bool = False) -> Union[dict, DataContract]:
         id = id or spec.get("id")
+        if id and isinstance(id, str):
+            id = UUID(id)
+            
         if not id:
             raise ValueError("id must be provided or present in spec for patch")
             
@@ -429,6 +449,11 @@ class AsyncSDK:
         include_metadata: bool = False
     ) -> Union[dict, DataContract]:
         id = spec.get("id")
+        if id and isinstance(id, str):
+            id = UUID(id)
+            
+        if dp_id and isinstance(dp_id, str):
+            dp_id = UUID(dp_id)
         
         # Resolve parent DP if we need it for ID or enrichment
         dp = None
@@ -465,6 +490,8 @@ class AsyncSDK:
             return await self._create_data_contract(dp_id, spec, include_metadata=include_metadata)
 
     async def delete_data_contract(self, id: str) -> bool:
+        if isinstance(id, str):
+            id = UUID(id)
         try:
             return await self.dc_repo.delete(id)
         except ValueError:
@@ -477,6 +504,8 @@ class AsyncSDK:
         name: Optional[str] = None,
         include_metadata: bool = False
     ) -> List[Union[dict, DataProduct, DataContract]]:
+        if dp_id and isinstance(dp_id, str):
+            dp_id = UUID(dp_id)
         results = []
         dps = []
         
@@ -518,6 +547,8 @@ class AsyncSDK:
                     agreements = prop.get("value", [])
                     for ag in agreements:
                         consumer_id = ag.get("consumer", {}).get("dataProductId")
+                        if consumer_id and isinstance(consumer_id, str):
+                            consumer_id = UUID(consumer_id)
                         
                         # Resolve consumer domain
                         consumer_domain = dp_map.get(consumer_id)
@@ -539,14 +570,14 @@ class AsyncSDK:
                             "provider": {
                                 "teamId": parent_domain,
                                 "outputPortId": "*",
-                                "dataProductId": parent_id
+                                "dataProductId": str(parent_id)
                             },
                             "consumer": {
                                 "teamId": consumer_domain,
-                                "dataProductId": consumer_id
+                                "dataProductId": str(consumer_id)
                             }
                         }
-                        dua["id"] = self.id_generator.make_dua_id(dua)
+                        dua["id"] = str(self.id_generator.make_dua_id(dua))
                         expanded_duas.append(dua)
         
         results.extend(expanded_duas)

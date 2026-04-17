@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 
 @dataclass
 class DataProduct:
-    id: str
+    id: UUID
     specification: Dict[str, Any]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -25,8 +26,8 @@ class DataProduct:
 
 @dataclass
 class DataContract:
-    id: str
-    data_product_id: str
+    id: UUID
+    data_product_id: UUID
     specification: Dict[str, Any]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

@@ -13,8 +13,9 @@ class MemoryDataProductRepository:
         return self.products.get(id)
 
     async def save(self, product: DataProduct) -> None:
-        # Compatibility: model uses str id, repo uses UUID
-        self.products[UUID(product.id)] = product
+        # Consistency: ensure key is UUID
+        product_id = product.id if isinstance(product.id, UUID) else UUID(product.id)
+        self.products[product_id] = product
 
     async def list(self, domain: str = None, name: str = None) -> list:
         results = list(self.products.values())
@@ -44,7 +45,7 @@ async def test_create_dp_smoke():
     persisted = await repo.get(UUID(dp_id))
     assert persisted is not None
     assert persisted.domain == "test-domain"
-    assert persisted.specification["id"] == dp_id
+    assert str(persisted.specification["id"]) == dp_id
 
 @pytest.mark.anyio
 async def test_create_dp_with_metadata_smoke():

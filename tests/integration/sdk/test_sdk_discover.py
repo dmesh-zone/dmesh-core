@@ -127,7 +127,7 @@ async def test_discover(sdk):
 
 @pytest.mark.asyncio
 async def test_discover_id_not_found(sdk):
-    results = await sdk.discover(dp_id="ba781283-1f14-5db2-a3f3-ce330da2c6dd")
+    results = await sdk.discover(dp_id=UUID("ba781283-1f14-5db2-a3f3-ce330da2c6dd"))
     assert results == []
 
 @pytest.mark.asyncio
@@ -176,7 +176,7 @@ async def test_discover_expands_data_usage_agreement(sdk):
             "dataProductId": consumer_dp["id"]
         }
     }
-    data_usage_agreement["id"] = sdk.id_generator.make_dua_id(data_usage_agreement)
+    data_usage_agreement["id"] = str(sdk.id_generator.make_dua_id(data_usage_agreement))
     results = await sdk.discover()
     assert len(results) == 3
     assert provider_dp in results
@@ -191,7 +191,7 @@ async def test_discover_expands_data_usage_agreement(sdk):
     
     dua_no_start_date = copy.deepcopy(data_usage_agreement)
     dua_no_start_date["info"]["startDate"] = sdk.dua_start_date_default 
-    dua_no_start_date["id"] = sdk.id_generator.make_dua_id(dua_no_start_date)
+    dua_no_start_date["id"] = str(sdk.id_generator.make_dua_id(dua_no_start_date))
     
     results = await sdk.discover()
     assert len(results) == 3
@@ -206,7 +206,7 @@ async def test_discover_expands_data_usage_agreement(sdk):
     dua_no_purpose = copy.deepcopy(data_usage_agreement)
     dua_no_purpose["info"]["purpose"] = sdk.dua_purpose_default 
     # ID doesn't change since purpose is not in scheme, but let's be safe
-    dua_no_purpose["id"] = sdk.id_generator.make_dua_id(dua_no_purpose)
+    dua_no_purpose["id"] = str(sdk.id_generator.make_dua_id(dua_no_purpose))
     
     results = await sdk.discover()
     assert len(results) == 3

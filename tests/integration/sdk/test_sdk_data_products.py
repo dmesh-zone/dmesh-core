@@ -74,7 +74,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     dp = await sdk.put_data_product(spec)
     
     # Assert return value
-    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["apiVersion"] == "v1.0.0"
@@ -83,7 +83,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     assert dp["version"] == "v1.0.0"
     
     # Assert persistency state
-    persisted = await dp_repo.get(dp["id"])
+    persisted = await dp_repo.get(UUID(dp["id"]))
     assert persisted is not None
     assert persisted.id == sdk.id_generator.make_dp_id(dp)
     assert persisted.domain == "finance"
@@ -95,7 +95,7 @@ async def test_create_dp_valid_more_input(sdk):
     dp = await sdk.put_data_product(spec, domain="finance", name="ledger")
     
     # Assert return value
-    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
 
@@ -105,7 +105,7 @@ async def test_create_dp_with_minimal_output_ports(sdk):
     dp = await sdk.put_data_product(spec)
     
     # Assert return value
-    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["apiVersion"] == "v1.0.0"
     assert dp["kind"] == "DataProduct"
     assert dp["status"] == sdk.data_product_status_default
@@ -135,7 +135,7 @@ async def test_auto_data_source_dp_created_upon_source_aligned_dp_creation(sdk):
     assert sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation == True
 
     dp = await sdk.put_data_product(spec)
-    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["apiVersion"] == "v1.0.0"
@@ -147,7 +147,7 @@ async def test_auto_data_source_dp_created_upon_source_aligned_dp_creation(sdk):
     dp_list = await sdk.list_data_products(domain=dp["domain"], name=expected_data_source_dp_name)
     assert len(dp_list) == 1
     data_source_dp = dp_list[0]
-    assert data_source_dp["id"] == sdk.id_generator.make_dp_id({"domain": dp["domain"], "name": dp["name"] + " data source"})
+    assert data_source_dp["id"] == str(sdk.id_generator.make_dp_id({"domain": dp["domain"], "name": dp["name"] + " data source"}))
     assert data_source_dp["domain"] == "finance"
     assert data_source_dp["name"] == "ledger data source"
     assert data_source_dp["apiVersion"] == "v1.0.0"
@@ -173,7 +173,7 @@ async def test_auto_data_source_dp_not_created_if_auto_data_source_dp_creation_i
     sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation = False 
 
     dp = await sdk.put_data_product(spec)
-    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["apiVersion"] == "v1.0.0"
@@ -195,7 +195,7 @@ async def test_auto_data_source_dp_not_created_upon_source_aligned_dp_creation(s
     assert sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation == True
 
     dp = await sdk.put_data_product(spec)
-    assert dp["id"] == sdk.id_generator.make_dp_id(dp)
+    assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["apiVersion"] == "v1.0.0"
@@ -210,7 +210,7 @@ async def test_auto_data_source_dp_not_created_upon_source_aligned_dp_creation(s
 async def test_update_dp_valid(sdk, dp_repo):
     spec = {"domain": "finance", "name": "ledger"}
     dp = await sdk.put_data_product(spec)
-    dp_id = dp["id"]
+    dp_id = UUID(dp["id"])
 
     # get dp
     fetched = await sdk.get_data_product(id=dp_id)
@@ -263,7 +263,7 @@ async def test_enrich_dp_spec(sdk, dp_repo):
     expected_enriched_spec = {
         "domain": "finance", 
         "name": "ledger", 
-        "id": sdk.id_generator.make_dp_id(input_spec), 
+        "id": str(sdk.id_generator.make_dp_id(input_spec)), 
         "apiVersion": "v1.0.0", 
         "version": "v1.0.0", 
         "kind": "DataProduct", 
@@ -273,7 +273,7 @@ async def test_enrich_dp_spec(sdk, dp_repo):
     assert enriched_spec == expected_enriched_spec
     assert enriched_spec["domain"] == "finance"
     assert enriched_spec["name"] == "ledger"
-    assert enriched_spec["id"] == sdk.id_generator.make_dp_id(enriched_spec)
+    assert enriched_spec["id"] == str(sdk.id_generator.make_dp_id(enriched_spec))
     assert enriched_spec["apiVersion"] == "v1.0.0"
     assert enriched_spec["version"] == "v1.0.0"
     assert enriched_spec["kind"] == "DataProduct"
@@ -296,7 +296,7 @@ async def test_enrich_output_ports(sdk):
                 {
                     "name": "ledger",
                     "version": "v1",
-                    "contractId": sdk.id_generator.make_dc_id({"domain": "finance","dataProduct": "ledger"})
+                    "contractId": str(sdk.id_generator.make_dc_id({"domain": "finance","dataProduct": "ledger"}))
                 },
             ]
     }
@@ -352,7 +352,7 @@ async def test_expand_port_adapters(sdk):
     # Check adapted port contains has been enriched
     assert sdk.enrich_output_ports == True
     assert odata_port["version"] == "v1"
-    assert odata_port["contractId"] == sdk.id_generator.make_dc_id({"domain": "finance","dataProduct": "ledger"})
+    assert odata_port["contractId"] == str(sdk.id_generator.make_dc_id({"domain": "finance","dataProduct": "ledger"}))
 
     # Test with expand_port_adapters = False
     sdk.expand_port_adapters = False
@@ -385,7 +385,7 @@ async def test_patch_dp(sdk, dp_repo):
             "startDate": "2026-04-12"
         },
         "consumer": {
-            "dataProductId": sdk.id_generator.make_dp_id({"domain": "hr", "name": "employees"})
+            "dataProductId": str(sdk.id_generator.make_dp_id({"domain": "hr", "name": "employees"}))
         }
     }
     dp2 = await sdk.patch_data_product({
@@ -394,9 +394,9 @@ async def test_patch_dp(sdk, dp_repo):
             "property":"dataUsageAgreements",
             "value": [data_usage_agreement]
             }]
-        }, id=dp1["id"])
+        }, id=UUID(dp1["id"]))
     # Check that outputPorts are preserved and both custom properties are present
-    stored_dp = await dp_repo.get(dp2["id"])
+    stored_dp = await dp_repo.get(UUID(dp2["id"]))
     dp3 = stored_dp.specification
     assert "outputPorts" in dp3
     # Assert custom properties in any order
@@ -410,10 +410,10 @@ async def test_patch_dp(sdk, dp_repo):
 async def test_get_dp_by_id(sdk):
     spec = {"domain": "f", "name": "n"}
     created = await sdk.put_data_product(spec)
-    fetched = await sdk.get_data_product(id=created["id"])
+    fetched = await sdk.get_data_product(id=UUID(created["id"]))
     
     assert isinstance(fetched, dict)
-    assert fetched["id"] == created["id"]
+    assert str(fetched["id"]) == str(created["id"])
 
 @pytest.mark.asyncio
 async def test_get_dp_by_domain_name(sdk):
@@ -425,7 +425,7 @@ async def test_get_dp_by_domain_name(sdk):
 
 @pytest.mark.asyncio
 async def test_get_dp_not_found(sdk):
-    assert await sdk.get_data_product(id="ba781283-1f14-5db2-a3f3-ce330da2c6dd") is None
+    assert await sdk.get_data_product(id=UUID("ba781283-1f14-5db2-a3f3-ce330da2c6dd")) is None
 
 @pytest.mark.asyncio
 async def test_list_dps_filter(sdk):
@@ -439,5 +439,5 @@ async def test_list_dps_filter(sdk):
 @pytest.mark.asyncio
 async def test_delete_dp_valid(sdk):
     dp = await sdk.put_data_product({"domain": "d", "name": "n", "version": "v"})
-    assert await sdk.delete_data_product(dp["id"]) is True
+    assert await sdk.delete_data_product(UUID(dp["id"])) is True
     assert await sdk.get_data_product(id=dp["id"]) is None
