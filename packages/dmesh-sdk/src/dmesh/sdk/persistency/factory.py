@@ -25,12 +25,21 @@ class PostgresRepositoryFactory:
         self._dp_repo = PostgresDataProductRepository(self.pool)
         self._dc_repo = PostgresDataContractRepository(self.pool)
 
+    @property
+    def is_open(self) -> bool:
+        # Psycopg pool doesn't have a simple 'is_open' but we can check if it's not closed
+        # and has been initialized.
+        return hasattr(self, 'pool') and self.pool and not getattr(self.pool, '_closed', True)
+
     async def open(self):
         from dmesh.sdk.persistency.postgres import PostgresSchema
-        await self.pool.open()
-        async with self.pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(PostgresSchema.CREATE_TABLES)
+        try:
+            await self.pool.open()
+            async with self.pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(PostgresSchema.CREATE_TABLES)
+        except Exception:
+            raise
 
     async def close(self):
         await self.pool.close()
