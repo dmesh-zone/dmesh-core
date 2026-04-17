@@ -96,11 +96,12 @@ class AsyncSDK:
         if "outputPorts" not in spec or not isinstance(spec["outputPorts"], list):
             return
             
-        original_ports = [p for p in spec["outputPorts"]]
-        for port in original_ports:
-            if not isinstance(port, dict): continue
-            
-            # Look for portAdapters in port-level customProperties
+        expanded_ports = []
+        for port in spec["outputPorts"]:
+            if not isinstance(port, dict):
+                expanded_ports.append(port)
+                continue
+                
             adapters = None
             custom_props = port.get("customProperties", [])
             for prop in custom_props:
@@ -108,26 +109,38 @@ class AsyncSDK:
                     adapters = prop.get("value")
                     break
             
-            if not adapters or not isinstance(adapters, list):
-                continue
+            if adapters and isinstance(adapters, list):
+                # Remove portAdapters from the original port as well
+                port["customProperties"] = [
+                    p for p in custom_props 
+                    if p.get("property") != "portAdapters"
+                ]
+                expanded_ports.append(port)
                 
-            for adapter in adapters:
-                new_port = port.copy()
-                new_port["name"] = f"{port['name']}_{adapter}"
+                for adapter in adapters:
+                    new_port = copy.deepcopy(port)
+                    original_name = port.get("name", "unknown")
+                    new_port["name"] = f"{original_name}_{adapter}"
+                    
+                    # Add adaptedFrom to customProperties instead of top-level
+                    if "customProperties" not in new_port:
+                        new_port["customProperties"] = []
+                    
+                    # Remove portAdapters (already removed in original, but good to be sure)
+                    new_port["customProperties"] = [
+                        p for p in new_port["customProperties"] 
+                        if p.get("property") != "portAdapters"
+                    ]
+                    new_port["customProperties"].append({
+                        "property": "adaptedFrom",
+                        "value": original_name
+                    })
+                    
+                    expanded_ports.append(new_port)
+            else:
+                expanded_ports.append(port)
                 
-                # Add adaptedFrom custom property
-                if "customProperties" not in new_port:
-                    new_port["customProperties"] = []
-                else:
-                    # Avoid recursive expansion
-                    new_port["customProperties"] = [cp for cp in new_port["customProperties"] if cp.get("property") != "portAdapters"]
-                
-                new_port["customProperties"].append({
-                    "property": "adaptedFrom",
-                    "value": port["name"]
-                })
-                
-                spec["outputPorts"].append(new_port)
+        spec["outputPorts"] = expanded_ports
 
     def _enrich_output_ports(self, spec: dict[str, Any]) -> None:
         """Populate missing fields in output ports."""
