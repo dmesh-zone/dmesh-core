@@ -24,6 +24,7 @@ dependencies = [
     "testcontainers[postgres]>=4.9.0",
     "typer>=0.24.1",
     "uvicorn>=0.43.0",
+    "assertpy",
     "dmesh-sdk",
     "dmesh-cli",
     "dmesh-api",
