@@ -66,13 +66,13 @@ def dc_repo(factory):
     """Short-cut to DataContract repository."""
     return factory.get_data_contract_repository()
 
-@pytest.mark.skip(reason="Not implemented yet")
+# @pytest.mark.skip(reason="Not implemented yet")
 @pytest.mark.asyncio
 async def test_sdk_cicd_client(sdk):
     """Simulates the CI/CD client usage of dmesh-sdk. 
     Assuming data product spec is minimalist containing only domain, name and outputPorts
     Assumes other information will be collected from other sources: e.g. repository_info and onboarding_info"""
-    # TODO: Provide ID maker showing how to handl of dataSource dp
+    # TODO: Provide ID maker showing how to handle dataSource dp
     DOMAIN = "finance"
     DP1_BUSINESS_NAME = "SAP FI"
     DP1_TECHNICAL_NAME = "sap_fi"
@@ -85,6 +85,7 @@ async def test_sdk_cicd_client(sdk):
     DP2_SCHEMA_NAME = "curated_account_receivables_ledger"
     DP1_TABLE2_NAME = "customer_open_items"
     DP2_DOMAIN_DP_ID = "0002"
+    # *** CI/CD commit flow ***
     # Step 1-3: domain_data_product_repository_scan() 
     # repository_info = domain_data_product_repository_scan() 
     domain_repository_info = [
@@ -105,8 +106,7 @@ async def test_sdk_cicd_client(sdk):
             "spec": { 
                 "outputPorts": [ { "name": DP1_TABLE2_NAME} ],
                 "customProperties": [
-                    { "property": "dataProductTier", "value": "curated" },
-                    { "property": "portAdapters", "value": ["odata", "iceberg"] }
+                    { "property": "dataProductTier", "value": "curated" }
                 ]
             }
         }
@@ -152,12 +152,12 @@ async def test_sdk_cicd_client(sdk):
         dp_spec = dp_info["spec"]
         dp_spec["domain"] = dp_info["domain"]
         dp_spec["name"] = dp_info["data_product_business_name"]
-        dp_spec["customProperties"] = [{"property": "technical_product_name", "value": dp_info["data_product_technical_name"]}]
+        # Add technical_product_name custom property to dp_spec
+        dp_spec["customProperties"].append({"property": "technical_product_name", "value": dp_info["data_product_technical_name"]})
         # Enriching will populate default values for version and status, outputPort version and contractId, and portAdapter expansion
         enchiched_dp_spec = await sdk.enrich_data_product_spec(dp_spec)
         # Step 8-10: Create or update data product
         upserted_dp = await sdk.put_data_product(enchiched_dp_spec)
-        # TODO: sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation
         # Step 11 Prepare Data Contract
         dc_spec = await sdk.enrich_data_contract(spec=None, dp_spec=upserted_dp)
         # TODO: Add data contract servers for databricks and api output ports (in a more parameterised way)
@@ -199,5 +199,43 @@ async def test_sdk_cicd_client(sdk):
         # Step 12-14: Upsert Data Contract
         upserted_dc = await sdk.put_data_contract(dc_spec, dp_id=upserted_dp["id"])
     discover = await sdk.discover()
-    pass
-        
+    assert len(discover) == 6
+    
+    # Maps for easy lookup
+    dps_by_name = {dp["name"]: dp for dp in discover if dp.get("kind") == "DataProduct"}
+    dcs_by_product = {dc["dataProduct"]: dc for dc in discover if dc.get("kind") == "DataContract"}
+    duas = [x for x in discover if "dataUsageAgreementSpecification" in x]
+
+    # Check SADP and curated data products exist
+    assert DP1_BUSINESS_NAME in dps_by_name # "SAP FI"
+    assert DP2_BUSINESS_NAME in dps_by_name # "Account Receivables Ledger"
+
+    # Check DP1_BUSINESS_NAME data source exists
+    data_source_name = f"{DP1_BUSINESS_NAME} data source"
+    assert data_source_name in dps_by_name
+    data_source_dp = dps_by_name[data_source_name]
+
+    # Check DP1_BUSINESS_NAME data source has a dataUsageAgreement custom property with SADP as consumer
+    custom_props = {p["property"]: p["value"] for p in data_source_dp.get("customProperties", [])}
+    assert "dataUsageAgreements" in custom_props
+    agreements = custom_props["dataUsageAgreements"]
+    assert len(agreements) > 0
+    assert agreements[0]["consumer"]["dataProductId"] == dps_by_name[DP1_BUSINESS_NAME]["id"]
+
+    # Check there is dataUsageAgreementSpecification node with data source dp as producer and SADP as consumer
+    assert len(duas) == 1
+    dua = duas[0]
+    assert dua["provider"]["dataProductId"] == data_source_dp["id"]
+    assert dua["consumer"]["dataProductId"] == dps_by_name[DP1_BUSINESS_NAME]["id"]
+
+    # Check there is a DP2_BUSINESS_NAME data product
+    assert DP2_BUSINESS_NAME in dps_by_name
+
+    # Check there is a data contract for DP1_BUSINESS_NAME data product
+    assert DP1_BUSINESS_NAME in dcs_by_product
+
+    # Check there is a data contract for DP2_BUSINESS_NAME data product
+    assert DP2_BUSINESS_NAME in dcs_by_product
+
+    # TODO: *** Schema refresh flow ***
+    # TODO: *** Data Usage Agreement flow ***
