@@ -66,9 +66,8 @@ def dc_repo(factory):
     """Short-cut to DataContract repository."""
     return factory.get_data_contract_repository()
 
-# @pytest.mark.skip(reason="Not implemented yet")
 @pytest.mark.asyncio
-async def test_sdk_cicd_client(sdk):
+async def test_sdk_client_example_usage(sdk):
     """Simulates the CI/CD client usage of dmesh-sdk. 
     Assuming data product spec is minimalist containing only domain, name and outputPorts
     Assumes other information will be collected from other sources: e.g. repository_info and onboarding_info"""
@@ -76,14 +75,16 @@ async def test_sdk_cicd_client(sdk):
     DOMAIN = "finance"
     DP1_BUSINESS_NAME = "SAP FI"
     DP1_TECHNICAL_NAME = "sap_fi"
+    DP1_CATALOG_NAME = "dmesh-finance"
     DP1_SCHEMA_NAME = "landing_sap_fi"
     DP1_TABLE1_NAME = "accounting_document_line_items"
     DP1_DATA_SOURCE_TECH = "sap"
     DP1_DOMAIN_DP_ID = "0001"
     DP2_BUSINESS_NAME = "Account Receivables Ledger"
     DP2_TECHNICAL_NAME = "account_receivables_ledger"
+    DP2_CATALOG_NAME = "dmesh-finance"
     DP2_SCHEMA_NAME = "curated_account_receivables_ledger"
-    DP1_TABLE2_NAME = "customer_open_items"
+    DP2_TABLE1_NAME = "customer_open_items"
     DP2_DOMAIN_DP_ID = "0002"
     # *** CI/CD commit flow ***
     # Step 1-3: domain_data_product_repository_scan() 
@@ -92,6 +93,8 @@ async def test_sdk_cicd_client(sdk):
         {
             "domain": DOMAIN,
             "name": DP1_TECHNICAL_NAME, 
+            "catalog": DP1_CATALOG_NAME,
+            "schema": DP1_SCHEMA_NAME,
             "spec": { 
                 "outputPorts": [ { "name": DP1_TABLE1_NAME}],
                 "customProperties": [
@@ -103,8 +106,10 @@ async def test_sdk_cicd_client(sdk):
         {
             "domain": DOMAIN,
             "name": DP2_TECHNICAL_NAME, 
+            "catalog": DP2_CATALOG_NAME,
+            "schema": DP2_SCHEMA_NAME,
             "spec": { 
-                "outputPorts": [ { "name": DP1_TABLE2_NAME} ],
+                "outputPorts": [ { "name": DP2_TABLE1_NAME} ],
                 "customProperties": [
                     { "property": "dataProductTier", "value": "curated" }
                 ]
@@ -160,21 +165,15 @@ async def test_sdk_cicd_client(sdk):
         upserted_dp = await sdk.put_data_product(enchiched_dp_spec)
         # Step 11 Prepare Data Contract
         dc_spec = await sdk.enrich_data_contract(spec=None, dp_spec=upserted_dp)
-        # TODO: Add data contract servers for databricks and api output ports (in a more parameterised way)
+        # TODO: Consider adding sdk support for data contract databricks servers
         dc_spec["servers"] = [
                 {
                     "server": "Databricks",
                     "type": "databricks",
                     "environment": "dev",
                     "host": "https://dbc-12345678-90ab.workspace.cloud.databricks.com/explore/data/food_production/food_production_analytics",
-                    "catalog": "{catalog}",
-                    "schema": "{schema}"
-                },
-                {
-                    "server": f"OData {DP1_TABLE2_NAME} endpoint",
-                    "type": "api",
-                    "environment": "dev",
-                    "location": "https://{path-to-the-odata-endpoint}"
+                    "catalog": dp_info["catalog"],
+                    "schema": dp_info["schema"]
                 }
             ]
         # Add data contract roles
@@ -237,5 +236,56 @@ async def test_sdk_cicd_client(sdk):
     # Check there is a data contract for DP2_BUSINESS_NAME data product
     assert DP2_BUSINESS_NAME in dcs_by_product
 
-    # TODO: *** Schema refresh flow ***
+    # *** Schema refresh flow ***
+    # The following code would be executed by a Schema Discovery service
+    # Step 1-2: Get all tables technical metadata via databricks unity catalog tables get endpoint 
+    # https://docs.databricks.com/api/workspace/tables/get
+    schema_technical_metadata_dict = {
+        f"{DP1_CATALOG_NAME}.{DP1_SCHEMA_NAME}" : [
+            {
+                "name" : DP1_TABLE1_NAME,
+                "columns": [
+                    {"name": "id", "type_name": "string", "type_text": "string"},
+                    {"name": "some_column", "type_name": "number", "type_text": "bigint"}
+                ]
+            }
+        ],
+        f"{DP2_CATALOG_NAME}.{DP2_SCHEMA_NAME}" : [
+            {
+                "name" : DP2_TABLE1_NAME,
+                "columns": [
+                    {"name": "id", "type_name": "string", "type_text": "string"},
+                    {"name": "some_column", "type_name": "number", "type_text": "bigint"}
+                ]
+            }
+        ]
+    }
+    data_contracts = await sdk.list_data_contracts()
+    for data_contract in data_contracts:
+        # Step 2: Convert technical metadata to data contract schema 
+        databricks_server_info = data_contract["servers"][0]
+        key = f"{databricks_server_info["catalog"]}.{databricks_server_info["schema"]}"
+        tables_technical_metadata = schema_technical_metadata_dict.get(key)
+        data_contract_schema = []
+        for table in tables_technical_metadata:
+            # Convert table technical metadata to data contract schema
+            table_columns = []
+            for column in table["columns"]:
+                table_columns.append({
+                    "name": column["name"],
+                    "physicalName": column["name"],
+                    "logicalType": column["type_name"],
+                    "physicalType": column["type_text"]
+                })
+            # add schema to dc
+            data_contract_schema.append({
+                "name": table["name"], # this must match the dataProduct's port name that the contract relates to
+                "physicalName": table["name"], # the physical name of the table in the data source
+                "physicalType": "table", # this could be table or view depending on source and what discover service returns
+                "properties": table_columns
+            })
+        # Step 4-5: Patch Data Contract
+        schema_updated_dc = await sdk.patch_data_contract({"id": data_contract["id"], "schema": data_contract_schema})
+
     # TODO: *** Data Usage Agreement flow ***
+    pass
