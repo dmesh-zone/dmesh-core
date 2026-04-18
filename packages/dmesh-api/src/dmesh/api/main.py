@@ -12,6 +12,7 @@ if sys.platform == 'win32':
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from dmesh.api.routers import dps, dcs
 from dmesh.api.routers.discover import discover_router
@@ -39,6 +40,15 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="DMesh API", lifespan=lifespan)
+    
+    # Enable CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     
     _BASE = os.environ.get("WS_BASE_PATH", "dmesh").strip("/") or "dmesh"
     
