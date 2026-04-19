@@ -609,6 +609,11 @@ class AsyncSDK:
         if hasattr(self.dp_repo, "flush") and callable(getattr(self.dp_repo, "flush")):
             await self.dp_repo.flush()
 
+    async def clean(self) -> None:
+        """Truncate all repositories."""
+        await self.dp_repo.truncate()
+        await self.dc_repo.truncate()
+
     @staticmethod
     def get_custom_property_value(spec_or_list: Union[dict, List[dict]], property: str) -> Any:
         """Retrieve a value from custom properties. 

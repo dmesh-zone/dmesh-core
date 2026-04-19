@@ -32,6 +32,9 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         return False
 
 
+    async def truncate(self) -> None:
+        self.products.clear()
+
 class AsyncInMemoryDataContractRepository(DataContractRepository):
     def __init__(self):
         self.contracts = {}
@@ -56,3 +59,5 @@ class AsyncInMemoryDataContractRepository(DataContractRepository):
             del self.contracts[id]
             return True
         return False
+    async def truncate(self) -> None:
+        self.contracts.clear()

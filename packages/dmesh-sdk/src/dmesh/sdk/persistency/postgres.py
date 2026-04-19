@@ -122,6 +122,11 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
                 row = await cur.fetchone()
                 return row is not None
 
+    async def truncate(self) -> None:
+        async with self.pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("TRUNCATE data_products CASCADE")
+
 class PostgresDataContractRepository(DataContractRepository, DCMapping):
     def __init__(self, pool):
         self.pool = pool
@@ -158,3 +163,7 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
                 row = await cur.fetchone()
                 return row is not None
 
+    async def truncate(self) -> None:
+        async with self.pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("TRUNCATE data_contracts CASCADE")
