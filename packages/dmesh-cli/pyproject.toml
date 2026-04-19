@@ -12,6 +12,7 @@ dependencies = [
     "dmesh-sdk",
     "typer",
     "rich",
+    "prompt_toolkit",
 ]
 
 [project.scripts]

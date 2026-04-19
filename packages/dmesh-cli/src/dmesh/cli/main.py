@@ -42,5 +42,57 @@ def version() -> None:
     typer.echo(v)
 
 
+def repl() -> None:
+    """Launch the interactive REPL."""
+    import shlex
+    from rich.console import Console
+    from prompt_toolkit import PromptSession
+    from prompt_toolkit.formatted_text import HTML
+    from prompt_toolkit.history import FileHistory
+    import os
+    
+    console = Console()
+    console.print(f"[bold blue]{CLI_NAME} interactive mode[/bold blue]")
+    console.print("Type 'exit' or 'quit' to leave. Type '--help' for commands.")
+    
+    history_file = os.path.join(os.path.expanduser("~"), ".dmesh_history")
+    session = PromptSession(history=FileHistory(history_file))
+    
+    while True:
+        try:
+            # We use prompt_toolkit to support command history (up/down arrows)
+            line = session.prompt(HTML(f"<ansigreen><b>{CLI_NAME}&gt;</b></ansigreen> ")).strip()
+            if not line:
+                continue
+            if line.lower() in ("exit", "quit"):
+                break
+            
+            args = shlex.split(line)
+            try:
+                # standalone_mode=False prevents Typer from calling sys.exit()
+                app(args, standalone_mode=False)
+            except SystemExit:
+                # Typer raises SystemExit for --help or incorrect arguments
+                pass
+            except Exception as e:
+                console.print(f"[bold red]Error:[/bold red] {e}")
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[yellow]Exiting interactive mode.[/yellow]")
+            break
+
+
+@app.callback(invoke_without_command=True)
+def main_callback(
+    ctx: typer.Context,
+    interactive: bool = typer.Option(False, "--interactive", "-i", help="Launch interactive mode.")
+) -> None:
+    """Data Mesh CLI."""
+    if interactive:
+        repl()
+    elif ctx.invoked_subcommand is None:
+        # Show help if no command is provided
+        typer.echo(ctx.get_help())
+
+
 if __name__ == "__main__":
     app()

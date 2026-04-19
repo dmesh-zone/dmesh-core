@@ -23,10 +23,17 @@ def _write_spec(spec: dict, filename: Path) -> Path:
 
 def _handle_output(spec: dict, format: str, filename: Path) -> None:
     import json
+    from rich.console import Console
+    from rich.syntax import Syntax
+
+    console = Console()
+
     if format == "json":
-        typer.echo(json.dumps(spec, indent=2))
+        json_str = json.dumps(spec, indent=2)
+        console.print(Syntax(json_str, "json", theme="ansi_dark", word_wrap=True))
     elif format == "yaml":
-        typer.echo(yaml.dump(spec, default_flow_style=False, allow_unicode=True))
+        yaml_str = yaml.dump(spec, default_flow_style=False, allow_unicode=True)
+        console.print(Syntax(yaml_str, "yaml", theme="ansi_dark", word_wrap=True))
     elif format == "file":
         _write_spec(spec, filename)
         typer.echo(str(filename))
