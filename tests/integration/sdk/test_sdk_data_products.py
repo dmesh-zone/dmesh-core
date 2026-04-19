@@ -160,7 +160,13 @@ async def test_auto_data_source_dp_created_upon_source_aligned_dp_creation(sdk):
         value = property_object["value"]
         custom_properties[property] = value
     assert custom_properties["dataProductTier"] == "dataSource"
-    assert custom_properties["dataUsageAgreements"] == [{"consumer": {"dataProductId": dp["id"]}}]
+    assert custom_properties["dataUsageAgreements"] == [{
+        "info": {
+            "active": True,
+            "purpose": "Data Source replication"
+        },
+        "consumer": {"dataProductId": dp["id"]}
+    }]
 
 @pytest.mark.asyncio
 async def test_auto_data_source_dp_not_created_if_auto_data_source_dp_creation_is_disabled(sdk):

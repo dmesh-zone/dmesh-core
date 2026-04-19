@@ -42,6 +42,7 @@ class AsyncSDK:
         self.expand_port_adapters = True
         self.enrich_output_ports = True
         self.autoDataSourceDpCreationUponSourceAlignedDpCreation = True
+        self.auto_data_product_id_in_data_contract = True
         if settings:
             sdk_settings = getattr(settings, "sdk", settings)
             self.single_data_contract_per_product = getattr(sdk_settings, "single_data_contract_per_product", self.single_data_contract_per_product)
@@ -52,6 +53,7 @@ class AsyncSDK:
             self.expand_port_adapters = getattr(sdk_settings, "expand_port_adapters", self.expand_port_adapters)
             self.enrich_output_ports = getattr(sdk_settings, "enrich_output_ports", self.enrich_output_ports)
             self.autoDataSourceDpCreationUponSourceAlignedDpCreation = getattr(sdk_settings, "autoDataSourceDpCreationUponSourceAlignedDpCreation", self.autoDataSourceDpCreationUponSourceAlignedDpCreation)
+            self.auto_data_product_id_in_data_contract = getattr(sdk_settings, "auto_data_product_id_in_data_contract", self.auto_data_product_id_in_data_contract)
 
     async def __aenter__(self):
         if hasattr(self.factory, "open") and callable(getattr(self.factory, "open")):
@@ -181,6 +183,19 @@ class AsyncSDK:
                 dp_spec=dp_spec,
                 status_default=self.data_contract_status_default
             )
+            
+            if self.auto_data_product_id_in_data_contract and dp_spec and "id" in dp_spec:
+                if "customProperties" not in enriched_dc:
+                    enriched_dc["customProperties"] = []
+                
+                # Check if it already exists to avoid duplicates
+                has_prop = any(p.get("property") == "dataProductId" for p in enriched_dc["customProperties"])
+                if not has_prop:
+                    enriched_dc["customProperties"].append({
+                        "property": "dataProductId",
+                        "value": dp_spec["id"]
+                    })
+
             validate_spec(enriched_dc)
             return enriched_dc
         except jsonschema.exceptions.ValidationError as e:
@@ -337,7 +352,14 @@ class AsyncSDK:
             "name": source_dp_name,
             "customProperties": [
                 {"property": "dataProductTier", "value": "dataSource"},
-                {"property": "dataUsageAgreements", "value": [{"consumer": {"dataProductId": dp_spec["id"]}}]}
+                {"property": "dataUsageAgreements", "value": [
+                    {
+                        "info": {
+                            "active": True,
+                            "purpose":"Data Source replication"
+                        },
+                        "consumer": {"dataProductId": dp_spec["id"]}
+                    }]}
             ]
         }
         await self.put_data_product(source_dp_spec)
@@ -586,3 +608,42 @@ class AsyncSDK:
     async def flush(self) -> None:
         if hasattr(self.dp_repo, "flush") and callable(getattr(self.dp_repo, "flush")):
             await self.dp_repo.flush()
+
+    @staticmethod
+    def get_custom_property_value(spec_or_list: Union[dict, List[dict]], property: str) -> Any:
+        """Retrieve a value from custom properties. 
+        Input can be either a full specification dict or a list of custom property objects.
+        """
+        props = spec_or_list.get("customProperties", []) if isinstance(spec_or_list, dict) else spec_or_list
+        if not isinstance(props, list):
+            return None
+
+        for prop in props:
+            if prop.get("property") == property:
+                return prop.get("value")
+        return None
+
+    @staticmethod
+    def set_custom_property_value(spec_or_list: Union[dict, List[dict]], property: str, value: Any) -> Union[dict, List[dict]]:
+        """Set a value in custom properties. 
+        Modifies the input object in place and returns it.
+        """
+        if isinstance(spec_or_list, dict):
+            if "customProperties" not in spec_or_list:
+                spec_or_list["customProperties"] = []
+            props = spec_or_list["customProperties"]
+        else:
+            props = spec_or_list
+
+        if not isinstance(props, list):
+            raise ValueError("Input must be a dict with 'customProperties' or a list of properties.")
+
+        # Try to update existing
+        for prop in props:
+            if prop.get("property") == property:
+                prop["value"] = value
+                return spec_or_list
+
+        # Add new
+        props.append({"property": property, "value": value})
+        return spec_or_list

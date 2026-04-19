@@ -34,7 +34,7 @@ class DefaultIDGenerator:
     def _scheme(self, env_var: str, default: str) -> str:
         return os.environ.get(env_var, default)
 
-    def make_dp_id(self, spec: dict[str, Any]) -> str:
+    def make_dp_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data product.
         
         Input is a dictionary containing at least 'domain', 'name' and 'version'.
@@ -50,7 +50,7 @@ class DefaultIDGenerator:
             key = f"DataProduct/{domain}/{name}/{version}"
         return uuid.uuid5(_NAMESPACE, key)
 
-    def make_dc_id(self, spec: dict[str, Any]) -> str:
+    def make_dc_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data contract.
 
         Input is a dictionary containing parent information ('domain', 'dataProduct')
@@ -72,7 +72,7 @@ class DefaultIDGenerator:
             key = f"DataContract/{domain}/{name}/{dc_index}"
         return uuid.uuid5(_NAMESPACE, key)
 
-    def make_dua_id(self, spec: dict[str, Any]) -> str:
+    def make_dua_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data usage agreement.
 
         Input is a dictionary containing 'provider' and 'consumer' blocks,
