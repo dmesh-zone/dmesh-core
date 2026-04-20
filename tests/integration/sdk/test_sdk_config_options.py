@@ -249,6 +249,8 @@ async def test_sdk_multiple_data_contract_per_product(sdk, dc_repo):
 async def test_sdk_multiple_data_contract_per_product_via_config(factory, dc_repo, monkeypatch):
     # Multiple contracts allowed via environment variable
     monkeypatch.setenv("DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT", "false")
+    # Need to provide a dummy password because DatabaseSettings has it as a required field
+    monkeypatch.setenv("DMESH_DB__PASSWORD", "dummy")
     
     # Force reload of settings to pick up the new env var
     from dmesh.sdk.config import get_settings
