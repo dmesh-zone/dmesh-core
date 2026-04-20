@@ -7,43 +7,20 @@ from dmesh.cli.utils import get_service
 
 app = typer.Typer()
 
-DEFAULT_MERMAID_SPEC = """
-classDiagram
-    class finance{
-        <<domain>>
-    }
-    class sap_fi{
-        <<data-product>>
-        dataProductTier : sourceAligned
-    }
-    class accounting_document_line_items{
-        <<data-contract-schema>>
-        client_id : string
-        amount : number
-    }
-    class account_receivables_ledger{
-        <<data-product>>
-        dataProductTier : curated
-    }
-    class customer_open_items {
-        <<data-contract-schema>>
-        ledger_id : string
-        invoice_date : date
-        debit_amount : number
-        credit_amount : number
-    }
-    class 360_finance {
-        <<data-product>>
-        dataProductTier : application
-    }
-    finance --> sap_fi: owns
-    sap_fi --> accounting_document_line_items : exposes
-    finance --> account_receivables_ledger : owns
-    account_receivables_ledger --> customer_open_items : exposes
-    finance --> 360_finance: owns
-    sap_fi --> account_receivables_ledger : provides
-    account_receivables_ledger --> 360_finance : provides
-"""
+SPEC_FILE = Path(__file__).parent / "testdata" / "testdata_finance_mermaid.md"
+
+def _strip_mermaid_markers(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```mermaid"):
+        text = text[len("```mermaid"):].strip()
+    if text.endswith("```"):
+        text = text[:-3].strip()
+    return text
+
+def get_default_spec() -> str:
+    if SPEC_FILE.exists():
+        return _strip_mermaid_markers(SPEC_FILE.read_text())
+    return ""
 
 def parse_mermaid_mesh(spec: str):
     # New parser following SCRATCH.md specification
@@ -213,12 +190,12 @@ def main(
     if ctx.invoked_subcommand:
         return
 
-    spec = DEFAULT_MERMAID_SPEC
+    spec = get_default_spec()
     if file:
         if not file.exists():
             typer.echo(f"Error: File {file} not found.", err=True)
             raise typer.Exit(1)
-        spec = file.read_text()
+        spec = _strip_mermaid_markers(file.read_text())
     
     try:
         asyncio.run(_generate_testdata(spec))

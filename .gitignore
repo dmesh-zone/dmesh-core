@@ -12,6 +12,7 @@ test_venv/
 
 # project specific
 sandbox/
+scratch/
 .hypothesis/
 dc_results.txt
 

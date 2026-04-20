@@ -77,6 +77,8 @@ class SdkSettings(BaseModel):
     data_contract_status_default: str = "active"
     expand_port_adapters: bool = True
     enrich_output_ports: bool = True
+    auto_data_source_dp_creation_upon_source_aligned_dp_creation: bool = True
+    auto_data_product_id_in_data_contract: bool = True
 
 class Settings(BaseSettings):
     # Field names match the nesting in TOML and env vars

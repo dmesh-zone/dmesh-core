@@ -6,9 +6,42 @@ A modern, high-performance toolkit for managing **Open Data Mesh** specification
 
 The project is structured as a modular Python workspace with a clear separation of concerns:
 
--   **`dmesh-sdk`**: The core logic layer. Provides CRUD operations for Open Data Product and Open Data Contract specifications through a repository factory pattern that supports in-memory (for testing) and PostgreSQL (for production) persistency.
--   **`dmesh-cli`**: A Typer-powered command-line interface for local-first development. It allows users to setup a local environment, manage specifications, and interact with PostgreSQL backend.
--   **`dmesh-api`**: A FastAPI backend. It provides a RESTful interface for external integrations. It uses `psycopg3` for robust, async PostgreSQL persistence.
+-   **`dmesh-sdk`**: The core logic layer, built upon Python. Provides put, patch, get and delete operations for Open Data Product and Open Data Contract specifications through a repository factory pattern that supports in-memory (for testing) and PostgreSQL (for production-like) persistency. It is available in PyPI as [dmesh-sdk](https://pypi.org/project/dmesh-sdk) package.
+-   **`dmesh-cli`**: A Typer-powered command-line interface for local-first development. It allows users to setup a local environment, and manage data product and data contract specifications stored in a PostgreSQL backend.
+-   **`dmesh-api`**: A FastAPI backend. It provides a RESTful interface to allow visual discovery of Data Mesh using [DMesh viewer](https://github.com/dm3-org/dmesh-viewer), and allows external integrations. It uses `psycopg3` for robust, async PostgreSQL persistence.
+
+```mermaid
+graph TD
+    User([User])
+    Client([Python Client])
+    Viewer([DMesh Viewer])
+    
+    subgraph Workspace [uv Workspace]
+        direction TB
+        CLI[dmesh-cli]
+        API[dmesh-api]
+        SDK[dmesh-sdk]
+        
+        subgraph SDK_Internals [SDK Internals]
+            Logic[Core Logic / Enrichers]
+            Factory{Repository Factory}
+        end
+        
+        CLI --> SDK
+        API --> SDK
+        SDK --> Logic
+        Logic --> Factory
+    end
+    
+    User --> CLI
+    User --> API
+    Client --> SDK
+    Viewer --> API
+    
+    Factory --> PG[(PostgreSQL)]
+    Factory --> MEM[(In-Memory)]
+    
+```
 
 ---
 
@@ -76,6 +109,201 @@ if __name__ == "__main__":
 
 ---
 
+
+## 💻 CLI Usage
+
+The `dmesh` CLI provides a set of tools to manage your Data Mesh environment.
+
+---
+
+## 🐳 Docker Development Sandbox
+
+For a consistent development environment, you can use the included Docker configuration. This starts the PostgreSQL database, the REST API, and a dedicated CLI.
+
+### 🚀 Starting the Environment
+
+This section shows the docker building blocks for illustration purposes, however, it is recommended to use dmesh-cli `setup` and `teardown` commands to start and stop the docker environment (more on that below).
+
+> [!IMPORTANT]
+> When using for the first time or when rebuilding after changes (if you modify source code, you must rebuild the Docker images for the changes to take effect:
+> ```bash
+> docker-compose up --build -d
+> ```
+
+```bash
+# Start all services (db, api, and cli)
+docker-compose up -d
+```
+
+
+### 🛠️ Using the CLI
+
+The `cli` container comes pre-configured with all dependencies and the `dmesh` command installed globally.
+
+```bash
+# Enter the CLI
+docker-compose exec cli bash
+
+# Run dmesh commands directly (no 'uv run' needed inside)
+dmesh --help
+dmesh setup
+dmesh list dps
+```
+
+The sandbox mounts your local directory, so any code changes you make in your IDE are immediately reflected inside the container.
+
+---
+
+## 💻 Local CLI Usage
+
+### Installation & Setup
+
+Ensure you have [uv](https://github.com/astral-sh/uv) installed, then sync the workspace:
+
+```bash
+uv sync
+```
+
+### Quick start
+
+Easiest way to start is to use the CLI in interactive mode
+> Docker needs to be running to setup the local environment
+
+Start CLI in interactive mode
+```shell
+uv run dmesh -i
+```
+
+Run required docker containers: 
+```shell
+dmesh> setup
+Initializing local data mesh environment...
+Starting infrastructure via docker-compose...
+...
+Data mesh initialised and ready (Postgres mode).
+```
+
+```shell
+dmesh> testdata
+Creating Data Product: finance.sap_fi (sourceAligned)
+  Creating Data Contract for schema: accounting_document_line_items
+Creating Data Product: finance.account_receivables_ledger (curated)
+  Creating Data Contract for schema: customer_open_items
+Creating Data Product: finance.360_finance (consumerAligned)
+  Creating Data Contract for schema: financial_overview_report
+Creating Data Product: finance.360_finance_application (application)
+Creating edge: sap_fi -> account_receivables_ledger
+Creating edge: account_receivables_ledger -> 360_finance
+Creating edge: 360_finance -> 360_finance_application
+Test data generation complete.
+```
+
+```shell
+dmesh> list dps
+ID                                    DOMAIN                NAME                            VERSION       STATUS
+----------------------------------------------------------------------------------------------------------------------
+50ac0fd8-0c42-5bb4-94be-09cb3324e951  finance               360_finance                     v1.0.0        ACTIVE
+05167ad3-b99a-52f3-8806-faa1bef615da  finance               360_finance_application         v1.0.0        ACTIVE
+172f12b3-bc54-5d75-95e7-a241182f8cda  finance               account_receivables_ledger      v1.0.0        ACTIVE
+0a9a3c38-38ac-585c-9712-55649082db66  finance               sap_fi                          v1.0.0        ACTIVE
+86970a19-3490-5cdd-bfe9-de71394a85f1  finance               sap_fi data source              v1.0.0        ACTIVE
+```
+
+### Common Commands
+
+**Setup the local environment (starts infrastructure):**
+```bash
+uv run dmesh setup
+```
+
+**Force a clean environment (teardown + setup):**
+```bash
+uv run dmesh reset
+```
+
+**Tear down the environment (stops infrastructure):**
+```bash
+uv run dmesh teardown --full
+```
+
+**Generate Test Data:**
+```bash
+uv run dmesh testdata
+```
+
+**List Data Products:**
+```bash
+uv run dmesh list dps
+```
+
+**Delete data:**
+```bash
+uv run dmesh clean
+``` 
+
+**Manage Data Products:**
+```bash
+# Register a Data Product from a YAML specification
+uv run dmesh put dp path/to/spec.yaml
+
+# List all registered Data Products
+uv run dmesh list dps
+
+# Get specific Data Product spec
+uv run dmesh get dp <id>
+```
+
+**Manage Data Contracts:**
+```bash
+# Register a Data Contract for a parent Data Product
+uv run dmesh put dc path/to/contract.yaml --dp <dp-id>
+
+# List Data Contracts for a product
+uv run dmesh list dcs --dp <dp-id>
+
+# Get specific Data Contract spec
+uv run dmesh get dc <id>
+```
+
+### Launching the API
+
+Start the backend server locally using Uvicorn:
+
+```bash
+uv run uvicorn dmesh.api.main:app --reload
+```
+
+If you are running the API via **Docker**, remember to rebuild after making changes:
+```bash
+docker-compose up --build api
+```
+
+### 🌐 API Documentation
+
+Once the server is running, you can explore and interact with the **interactive OpenAPI (Swagger) documentation**:
+
+-   **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+-   **Redoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+All endpoints are consistently namespaced (default: `/dmesh/`) and support full aliasing (e.g., `/dmesh/dp`, `/dmesh/dps`, or `/dmesh/data-product` are all valid).
+
+---
+
+## 🧪 Testing
+
+Run the full unified test suite from the repository root:
+
+```bash
+### Run unit tests (logic & models)
+uv run pytest tests/unit
+
+### Run core sdk integration tests
+uv run pytest tests/integration/sdk/test_sdk.py
+
+### Run integration tests (requires uv run dmesh setup)
+uv run pytest tests/integration
+```
+
 ## ⚙️ Configuration Management
 
 `dmesh-core` uses a hierarchical configuration system powered by `pydantic-settings`. It supports profiles, environment variable overrides, and `.env` files for secrets management.
@@ -136,147 +364,32 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 
 ---
 
-## 💻 CLI Usage
+### ⚙️ Supported Configuration Options
 
-The `dmesh` CLI provides a set of tools to manage your Data Mesh environment.
-
----
-
-## 🐳 Docker Development Sandbox
-
-For a consistent development environment, you can use the included Docker configuration. This starts the PostgreSQL database, the REST API, and a dedicated CLI.
-
-### 🚀 Starting the Environment
-
-```bash
-# Start all services (db, api, and cli)
-docker-compose up -d
-```
-
-> [!IMPORTANT]
-> **Rebuilding after changes**: If you modify the `dmesh-api` source code, you must rebuild the Docker image for the changes to take effect:
-> ```bash
-> docker-compose up --build api -d
-> ```
-
-### 🛠️ Using the CLI
-
-The `cli` container comes pre-configured with all dependencies and the `dmesh` command installed globally.
-
-```bash
-# Enter the CLI
-docker-compose exec cli bash
-
-# Run dmesh commands directly (no 'uv run' needed inside)
-dmesh --help
-dmesh setup
-dmesh list dps
-```
-
-The sandbox mounts your local directory, so any code changes you make in your IDE are immediately reflected inside the container.
+| Option | Environment Variable | Default | Description |
+|--------|----------------------|---------|-------------|
+| **Database (`db`)** | | | |
+| `host` | `DMESH_DB__HOST` | `"localhost"` | PostgreSQL host |
+| `port` | `DMESH_DB__PORT` | `5432` | PostgreSQL port |
+| `user` | `DMESH_DB__USER` | `"postgres"` | PostgreSQL user |
+| `password` | `DMESH_DB__PASSWORD` | **Required** | PostgreSQL password |
+| `name` | `DMESH_DB__NAME` | `"postgres"` | PostgreSQL database name |
+| **API (`api`)** | | | |
+| `host` | `DMESH_API__HOST` | `"0.0.0.0"` | API server host |
+| `port` | `DMESH_API__PORT` | `8000` | API server port |
+| `debug` | `DMESH_API__DEBUG` | `false` | Enable API debug mode |
+| **SDK (`sdk`)** | | | |
+| `single_data_contract_per_product` | `DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT` | `true` | Restrict to one data contract per data product |
+| `dua_start_date_default` | `DMESH_SDK__DUA_START_DATE_DEFAULT` | `"2026-01-01"` | Default start date for Data Usage Agreements |
+| `dua_purpose_default` | `DMESH_SDK__DUA_PURPOSE_DEFAULT` | `"Unknown purpose"` | Default purpose for Data Usage Agreements |
+| `data_product_status_default` | `DMESH_SDK__DATA_PRODUCT_STATUS_DEFAULT` | `"active"` | Default status for new Data Products |
+| `data_contract_status_default` | `DMESH_SDK__DATA_CONTRACT_STATUS_DEFAULT` | `"active"` | Default status for new Data Contracts |
+| `expand_port_adapters` | `DMESH_SDK__EXPAND_PORT_ADAPTERS` | `true` | Enable automated port adapter expansion |
+| `enrich_output_ports` | `DMESH_SDK__ENRICH_OUTPUT_PORTS` | `true` | Enable enrichment of output ports |
+| `auto_data_source_dp_creation_upon_source_aligned_dp_creation` | `DMESH_SDK__AUTO_DATA_SOURCE_DP_CREATION_UPON_SOURCE_ALIGNED_DP_CREATION` | `true` | Auto-create Data Source DP for Source Aligned DPs |
+| `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Auto-populate `dataProductId` in Data Contracts |
 
 ---
-
-## 💻 Local CLI Usage
-
-### Installation & Setup
-
-Ensure you have [uv](https://github.com/astral-sh/uv) installed, then sync the workspace:
-
-```bash
-uv sync
-```
-
-### Quick start
-
-examples folder provide a quick start script and data product and data contract sample yaml files
-
-Execute it to see the CLI in action (Linux/MacOS):
-```bash
-bash -x ./examples/dmesh-cli-smoke-test.sh
-```
-
-On Windows (PowerShell):
-```powershell
-.\examples\dmesh-cli-smoke-test.ps1
-```
-
-### Common Commands
-
-**Setup the local environment (starts infrastructure):**
-```bash
-uv run dmesh setup
-```
-
-**Force a clean environment (teardown + setup):**
-```bash
-uv run dmesh reset
-```
-
-**Tear down the environment (stops infrastructure):**
-```bash
-uv run dmesh teardown --full
-```
-
-**Manage Data Products:**
-```bash
-# Register a Data Product from a YAML specification
-uv run dmesh put dp path/to/spec.yaml
-
-# List all registered Data Products
-uv run dmesh list dps
-
-# Get details of a specific Data Product
-uv run dmesh get dp <id>
-```
-
-**Manage Data Contracts:**
-```bash
-# Register a Data Contract for a parent Data Product
-uv run dmesh put dc path/to/contract.yaml --dp <dp-id>
-
-# List Data Contracts for a product
-uv run dmesh list dcs --dp <dp-id>
-```
-
-### Launching the API
-
-Start the backend server locally using Uvicorn:
-
-```bash
-uv run uvicorn dmesh.api.main:app --reload
-```
-
-If you are running the API via **Docker**, remember to rebuild after making changes:
-```bash
-docker-compose up --build api
-```
-
-### 🌐 API Documentation
-
-Once the server is running, you can explore and interact with the **interactive OpenAPI (Swagger) documentation**:
-
--   **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
--   **Redoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
-All endpoints are consistently namespaced (default: `/dmesh/`) and support full aliasing (e.g., `/dmesh/dp`, `/dmesh/dps`, or `/dmesh/data-product` are all valid).
-
----
-
-## 🧪 Testing
-
-Run the full unified test suite from the repository root:
-
-```bash
-# Run unit tests (logic & models)
-uv run pytest tests/unit
-
-# Run core sdk integration tests
-uv run pytest tests/integration/sdk/test_sdk.py
-
-# Run integration tests (requires uv run dmesh setup)
-uv run pytest tests/integration
-```
 
 ### VSCode Setup
 

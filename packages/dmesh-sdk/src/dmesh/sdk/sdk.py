@@ -41,7 +41,7 @@ class AsyncSDK:
         self.data_contract_status_default = "active"
         self.expand_port_adapters = True
         self.enrich_output_ports = True
-        self.autoDataSourceDpCreationUponSourceAlignedDpCreation = True
+        self.auto_data_source_dp_creation_upon_source_aligned_dp_creation = True
         self.auto_data_product_id_in_data_contract = True
         if settings:
             sdk_settings = getattr(settings, "sdk", settings)
@@ -52,7 +52,7 @@ class AsyncSDK:
             self.data_contract_status_default = getattr(sdk_settings, "data_contract_status_default", self.data_contract_status_default)
             self.expand_port_adapters = getattr(sdk_settings, "expand_port_adapters", self.expand_port_adapters)
             self.enrich_output_ports = getattr(sdk_settings, "enrich_output_ports", self.enrich_output_ports)
-            self.autoDataSourceDpCreationUponSourceAlignedDpCreation = getattr(sdk_settings, "autoDataSourceDpCreationUponSourceAlignedDpCreation", self.autoDataSourceDpCreationUponSourceAlignedDpCreation)
+            self.auto_data_source_dp_creation_upon_source_aligned_dp_creation = getattr(sdk_settings, "auto_data_source_dp_creation_upon_source_aligned_dp_creation", self.auto_data_source_dp_creation_upon_source_aligned_dp_creation)
             self.auto_data_product_id_in_data_contract = getattr(sdk_settings, "auto_data_product_id_in_data_contract", self.auto_data_product_id_in_data_contract)
 
     async def __aenter__(self):
@@ -332,7 +332,7 @@ class AsyncSDK:
 
     async def _auto_create_data_source_dp(self, dp_spec: dict[str, Any]) -> None:
         """Auto-creates a data source DP if the current DP is sourceAligned."""
-        if not self.autoDataSourceDpCreationUponSourceAlignedDpCreation:
+        if not self.auto_data_source_dp_creation_upon_source_aligned_dp_creation:
             return
             
         tier = None

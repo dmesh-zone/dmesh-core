@@ -347,7 +347,7 @@ async def test_sdk_client_example_usage(factory):
         if data_product["id"] in data_product_id_to_consumer_application_group:
             dp_memberships = memberships_in_consumer_application_group.get(data_product_id_to_consumer_application_group[data_product["id"]], [])
         else:
-            pass # Data Source data products data usage agreements managed automatically by default (see sdk.autoDataSourceDpCreationUponSourceAlignedDpCreation)
+            pass # Data Source data products data usage agreements managed automatically by default (see sdk.auto_data_source_dp_creation_upon_source_aligned_dp_creation)
         duas = []
         for membership in dp_memberships:
             if "DP_SERVICE_ACCOUNT" in membership["member"]:
