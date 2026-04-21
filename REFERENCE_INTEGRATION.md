@@ -2,7 +2,7 @@
 DMesh provides a set of tools to help organisations manage a data mesh, using standard data mesh open standards specifications.
 At a high level DMesh provides: 
 - Ability to create and manage data products and data contracts with easy to use interfaces (SDK, API, CLI)
-- Exposes `/discover` data mesh endpoint that is compatible with Data Mesh Viewer project (https://github.com/.../dmesh-viewer)
+- Exposes `/discover` data mesh endpoint that is compatible with Data Mesh Viewer project (https://github.com/dmesh-zone/dmesh-viewer)
 
 # Goal
 The goal of this document is to describe how to integrate DMesh with an organisation's existing stack.
