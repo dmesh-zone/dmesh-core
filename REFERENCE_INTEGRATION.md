@@ -141,7 +141,7 @@ When you see `➜ Local:   http://localhost:5173/dmesh-viewer/` you can open the
 
 You should then see the data mesh data products and data contracts visible in DMesh Viewer, as shown below:
 
-![DMesh Viewer showing data products and data contracts](resources\testdata_in_dmesh_viewer.png)
+![DMesh Viewer showing data products and data contracts](./resources/testdata_in_dmesh_viewer.png)
 
 ## Step 9: Clean up the test data
 
