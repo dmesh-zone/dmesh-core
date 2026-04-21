@@ -114,7 +114,7 @@ In another terminal window:
 git clone https://github.com/dmesh-zone/dmesh-viewer.git
 ```
 
-## Step 6: Update DMesh Viewer to point to the DMesh API (`http://localhost:8000/dmesh/discover`)
+## Step 6: Configure DMesh Viewer to point to your local DMesh API 
 
 ```shell
 cd dmesh-viewer
@@ -122,7 +122,7 @@ cd dmesh-viewer
 cp ./public/config.yaml ./public/customConfig.yaml
 ```
 
-# Update the first line of customConfig.yaml to point to DMesh API endpoint
+Update the first line of customConfig.yaml to point to DMesh API endpoint
 ```yaml
 defaultDataMeshOperationalDataUrl: http://localhost:8000/dmesh/discover`
 ```
@@ -163,7 +163,7 @@ If you refresh your DMesh Viewer in your browser you should see that the data pr
 
 ## Step 11: Run the SDK integration test to demonstrate execute the reference integration flows described in the following section
 
-In dmesh-core working directory:
+In `dmesh-core` working directory run:
 
 ```shell
 uv run pytest ./tests/integration/sdk/test_sdk_client_lifecycle.py --external-db
