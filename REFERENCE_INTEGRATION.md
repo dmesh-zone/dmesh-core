@@ -61,7 +61,7 @@ pip install uv
 git clone https://github.com/dmesh-zone/dmesh-core.git
 cd dmesh-core
 ```
-s
+
 ## Step 1: Start CLI in interactive mode
 ```shell
 uv run dmesh -i
