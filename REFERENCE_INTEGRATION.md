@@ -53,12 +53,21 @@ graph TD
 Easiest way to start is to use the CLI in interactive mode
 > Docker needs to be running to setup the local environment
 
-Start CLI in interactive mode
+## Step 0: Clone dmesh-core repository and install dependencies
+
+```shell
+# Install uv package manager, which dmesh requires
+pip install uv
+git clone https://github.com/dmesh-zone/dmesh-core.git
+cd dmesh-core
+```
+s
+## Step 1: Start CLI in interactive mode
 ```shell
 uv run dmesh -i
 ```
 
-Run required docker containers using the `setup` command
+## Step 2: Run required docker containers using the `setup` command
 ```shell
 dmesh> setup
 Initializing local data mesh environment...
@@ -67,7 +76,7 @@ Starting infrastructure via docker-compose...
 Data mesh initialised and ready (Postgres mode).
 ```
 
-Create test data using the `testdata` command
+## Step 3: Create test data using the `testdata` command
 
 ```shell
 dmesh> testdata
@@ -84,7 +93,7 @@ Creating edge: 360_finance -> 360_finance_application
 Test data generation complete.
 ```
 
-List the created data products
+## Step 4: List the created data products
 
 ```shell
 dmesh> list dps
@@ -96,6 +105,73 @@ ID                                    DOMAIN                NAME                
 0a9a3c38-38ac-585c-9712-55649082db66  finance               sap_fi                          v1.0.0        ACTIVE
 86970a19-3490-5cdd-bfe9-de71394a85f1  finance               sap_fi data source              v1.0.0        ACTIVE
 ```
+
+## Step 5: Clone the DMesh Viewer repository to your local machine
+
+In another terminal window:
+
+```shell
+git clone https://github.com/dmesh-zone/dmesh-viewer.git
+```
+
+## Step 6: Update DMesh Viewer to point to the DMesh API (`http://localhost:8000/dmesh/discover`)
+
+```shell
+cd dmesh-viewer
+# Clone config.yaml into customConfig.yaml 
+cp ./public/config.yaml ./public/customConfig.yaml
+```
+
+# Update the first line of customConfig.yaml to point to DMesh API endpoint
+```yaml
+defaultDataMeshOperationalDataUrl: http://localhost:8000/dmesh/discover`
+```
+
+## Step 7: Start DMesh Viewer
+
+Start DMesh Viewer by running the `npm start` command in the `dmesh-viewer` directory:
+
+```shell
+npm install
+npm run dev
+```
+When you see `➜ Local:   http://localhost:5173/dmesh-viewer/` you can open the browser and navigate to that URL.
+
+## Step 8: Verify the Data Mesh data products and data contracts are visible in DMesh Viewer
+
+You should then see the data mesh data products and data contracts visible in DMesh Viewer, as shown below:
+
+![DMesh Viewer showing data products and data contracts](resources\testdata_in_dmesh_viewer.png)
+
+## Step 9: Clean up the test data
+
+Type the `clean` command in dmesh CLI window to remove all the test data:
+
+```shell
+dmesh> clean
+Data mesh cleaned (all tables truncated).
+```
+
+## Step 10: Verify the Data Mesh data products and data contracts are no longer visible in DMesh Viewer
+
+```shell
+dmesh> list dps
+No data products found.
+```
+
+If you refresh your DMesh Viewer in your browser you should see that the data products and data contracts are no longer visible. You should be presented with a blank screen.
+
+## Step 11: Run the SDK integration test to demonstrate execute the reference integration flows described in the following section
+
+In dmesh-core working directory:
+
+```shell
+uv run pytest ./tests/integration/sdk/test_sdk_client_lifecycle.py --external-db
+```
+
+dmesh viewer should now show the data products and data contracts created by the test, as shown below:
+
+![DMesh Viewer showing data products and data contracts after running the integration test](./resources/test_sdk_client_lifecycle_in_dmesh_viewer.png)
 
 # Reference integration strategy
 
