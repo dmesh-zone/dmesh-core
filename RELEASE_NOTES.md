@@ -4,7 +4,7 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
-## 🚀 [v0.2.0] - 2026-04-20
+## 🚀 [v0.2.0] - 2026-05-04
 
 ### ✨ Highlights
 This release introduces significant enhancements to the CLI experience, SDK extensibility via custom ID hooks, and advanced discovery capabilities.
