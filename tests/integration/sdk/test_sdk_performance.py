@@ -21,6 +21,8 @@ async def test_create_1000_data_products_performance(sdk):
     dps = await sdk.list_data_products(domain="performance")
     assert len(dps) == 1000
 
+    assert elapsed < 30, "Creation of 1000 data products must take less than 30 seconds" 
+
 @pytest.mark.asyncio
 async def test_create_1000_data_contracts_performance(sdk):
     """
@@ -42,3 +44,5 @@ async def test_create_1000_data_contracts_performance(sdk):
     elapsed = end_time - start_time
     
     print(f"\nTime to create 1000 data contracts: {elapsed:.4f} seconds")
+
+    assert elapsed < 30, "Creation of 1000 data contracts must take less than 30 seconds"
