@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 from datetime import datetime
+import functools
 
 import jsonschema
+from jsonschema.validators import validator_for
 import requests
 
 SCHEMA_URLS = {
@@ -34,6 +36,54 @@ def _stringify_spec(spec: Any) -> Any:
     elif isinstance(spec, (UUID, datetime)):
         return str(spec)
     return spec
+
+
+@functools.lru_cache(maxsize=32)
+def _get_validator(kind: str, api_version: str) -> Any:
+    # Normalize version: strip 'v' prefix for local file lookup
+    clean_version = api_version[1:] if api_version.startswith("v") else api_version
+
+    # 1. Try local lookup
+    local_name_template = SCHEMA_MAP.get(kind, "odps-{api_version}.json")
+    local_filename = local_name_template.format(api_version=clean_version)
+    
+    try:
+        pkg_path = importlib.resources.files("dmesh.sdk.schemas")
+        schema_file = pkg_path / local_filename
+        
+        if schema_file.is_file():
+            with schema_file.open("r", encoding="utf-8") as f:
+                schema = json.load(f)
+                ValidatorClass = validator_for(schema)
+                ValidatorClass.check_schema(schema)
+                return ValidatorClass(schema)
+    except Exception:
+        # Only fallback if the file itself was missing or malformed
+        pass
+
+    # 2. Try remote lookup (fallback)
+    template = SCHEMA_URLS.get(kind, SCHEMA_URLS["DataProduct"])
+    versions_to_try = [api_version, clean_version]
+    if not api_version.startswith("v"):
+        versions_to_try.append(f"v{api_version}")
+
+    last_error = None
+    for v in versions_to_try:
+        url = template.format(api_version=v)
+        try:
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                schema = response.json()
+                ValidatorClass = validator_for(schema)
+                ValidatorClass.check_schema(schema)
+                return ValidatorClass(schema)
+            last_error = f"HTTP {response.status_code} at {url}"
+        except requests.RequestException as e:
+            last_error = str(e)
+
+    raise SchemaFetchError(
+        f"Schema not found for {kind} apiVersion={api_version} ({last_error})"
+    )
 
 
 def validate_spec(spec: dict[str, Any]) -> None:
@@ -66,53 +116,5 @@ def validate_spec(spec: dict[str, Any]) -> None:
     # Convert UUIDs and datetimes to strings for JSON schema validation
     serializable_spec = _stringify_spec(spec)
 
-    # Normalize version: strip 'v' prefix for local file lookup
-    clean_version = api_version[1:] if api_version.startswith("v") else api_version
-
-    # 1. Try local lookup
-    local_name_template = SCHEMA_MAP.get(kind, "odps-{api_version}.json")
-    local_filename = local_name_template.format(api_version=clean_version)
-    
-    try:
-        # Modern importlib.resources API (files() instead of is_resource/open_text)
-        pkg_path = importlib.resources.files("dmesh.sdk.schemas")
-        schema_file = pkg_path / local_filename
-        
-        if schema_file.is_file():
-            with schema_file.open("r", encoding="utf-8") as f:
-                schema = json.load(f)
-                # Successful local schema load
-                try:
-                    jsonschema.validate(serializable_spec, schema)
-                    return
-                except jsonschema.ValidationError:
-                    # If it's a validation error against a local schema, we STOP here.
-                    raise
-    except jsonschema.ValidationError:
-        raise
-    except Exception:
-        # Only fallback if the file itself was missing or malformed
-        pass
-
-    # 2. Try remote lookup (fallback)
-    template = SCHEMA_URLS.get(kind, SCHEMA_URLS["DataProduct"])
-    versions_to_try = [api_version, clean_version]
-    if not api_version.startswith("v"):
-        versions_to_try.append(f"v{api_version}")
-
-    last_error = None
-    for v in versions_to_try:
-        url = template.format(api_version=v)
-        try:
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                schema = response.json()
-                jsonschema.validate(serializable_spec, schema)
-                return
-            last_error = f"HTTP {response.status_code} at {url}"
-        except requests.RequestException as e:
-            last_error = str(e)
-
-    raise SchemaFetchError(
-        f"Schema not found for {kind} apiVersion={api_version} ({last_error})"
-    )
+    validator = _get_validator(kind, api_version)
+    validator.validate(serializable_spec)
