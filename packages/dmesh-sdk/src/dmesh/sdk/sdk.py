@@ -335,32 +335,32 @@ class AsyncSDK:
         if not self.auto_data_source_dp_creation_upon_source_aligned_dp_creation:
             return
             
-        tier = None
-        custom_props = dp_spec.get("customProperties", [])
-        for prop in custom_props:
-            if prop.get("property") == "dataProductTier":
-                tier = prop.get("value")
-                break
-        
+        tier = self.get_custom_property_value(dp_spec, "dataProductTier")
         if tier != "sourceAligned":
             return
             
         # Create Data Source DP
         source_dp_name = dp_spec["name"] + " data source"
+        custom_properties = [
+            {"property": "dataProductTier", "value": "dataSource"},
+            {"property": "dataUsageAgreements", "value": [
+                {
+                    "info": {
+                        "active": True,
+                        "purpose":"Data Source replication"
+                    },
+                    "consumer": {"dataProductId": dp_spec["id"]}
+                }]}
+        ]
+        
+        tech = self.get_custom_property_value(dp_spec, "dataSourceTechnology")
+        if tech:
+            custom_properties.append({"property": "technology", "value": tech})
+
         source_dp_spec = {
             "domain": dp_spec["domain"],
             "name": source_dp_name,
-            "customProperties": [
-                {"property": "dataProductTier", "value": "dataSource"},
-                {"property": "dataUsageAgreements", "value": [
-                    {
-                        "info": {
-                            "active": True,
-                            "purpose":"Data Source replication"
-                        },
-                        "consumer": {"dataProductId": dp_spec["id"]}
-                    }]}
-            ]
+            "customProperties": custom_properties
         }
         await self.put_data_product(source_dp_spec)
 

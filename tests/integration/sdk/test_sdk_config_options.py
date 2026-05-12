@@ -12,7 +12,8 @@ from dmesh.sdk.persistency.postgres import PostgresSchema
 async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(sdk):
     spec = {"domain": "finance", "name": "ledger", 
         "customProperties": [
-            {"property": "dataProductTier", "value": "sourceAligned"}
+            {"property": "dataProductTier", "value": "sourceAligned"},
+            {"property": "dataSourceTechnology", "value": "sap"}
         ]
     }
     # Assert auto creation upon source aligned dp creation default configuration is true
@@ -37,6 +38,7 @@ async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(s
         },
         "consumer": {"dataProductId": dp["id"]}
     }]
+    assert custom_properties["technology"] == "sap"
 
 @pytest.mark.asyncio
 async def test_sdk_auto_data_source_dp_not_created_if_auto_data_source_dp_creation_is_disabled(sdk):
