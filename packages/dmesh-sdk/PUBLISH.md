@@ -95,10 +95,12 @@ Once verified, publish to the main PyPI:
 
 **Windows (PowerShell):**
 ```powershell
-uv publish "../../dist/dmesh_sdk-${env:SDK_VERSION}*" --token $env:MY_PYPI_TOKEN
+$env:DMESH_PYPI_TOKEN = "your-pypi-token"
+uv publish "../../dist/dmesh_sdk-${env:SDK_VERSION}*" --token $env:DMESH_PYPI_TOKEN
 ```
 
 **Linux / macOS:**
 ```bash
-uv publish "../../dist/dmesh_sdk-${SDK_VERSION}*" --token $MY_PYPI_TOKEN
+export DMESH_PYPI_TOKEN="your-pypi-token"
+uv publish "../../dist/dmesh_sdk-${SDK_VERSION}*" --token $DMESH_PYPI_TOKEN
 ```
