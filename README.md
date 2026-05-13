@@ -297,12 +297,20 @@ Run the full unified test suite from the repository root:
 ### Run unit tests (logic & models)
 uv run pytest tests/unit
 
-### Run core sdk integration tests
-uv run pytest tests/integration/sdk/test_sdk.py
-
-### Run integration tests (requires uv run dmesh setup)
+### Run integration tests
 uv run pytest tests/integration
 ```
+
+### ⚡ Performance Testing
+
+Heavy performance integration tests are **skipped by default** to keep the development loop fast. You can explicitly opt-in to running performance checks by appending the `--run-perf` flag:
+
+```bash
+### Run integration tests including performance suites
+uv run pytest tests/integration --run-perf
+```
+
+---
 
 ## ⚙️ Configuration Management
 

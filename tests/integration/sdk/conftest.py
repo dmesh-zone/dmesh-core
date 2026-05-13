@@ -5,11 +5,6 @@ from testcontainers.postgres import PostgresContainer
 from dmesh.sdk.persistency.factory import RepositoryFactory
 from dmesh.sdk.persistency.postgres import PostgresSchema
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--external-db", action="store_true", default=False, help="Use external DB instead of testcontainers"
-    )
-
 class ExternalDB:
     """Mock object for PostgresContainer when using external DB."""
     def get_container_host_ip(self):
@@ -68,7 +63,7 @@ async def clean_database(postgres_container, setup_schema):
     )
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:
-            await cur.execute("TRUNCATE TABLE data_contracts, data_products CASCADE;")
+            await cur.execute("TRUNCATE TABLE dmesh.data_contracts, dmesh.data_products CASCADE;")
         await conn.commit()
     yield
 

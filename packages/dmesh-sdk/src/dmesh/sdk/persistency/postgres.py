@@ -6,6 +6,8 @@ from psycopg.rows import dict_row
 from dmesh.sdk.models import DataProduct, DataContract
 from dmesh.sdk.ports.repository import DataProductRepository, DataContractRepository
 
+from pathlib import Path
+
 class DMeshJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (UUID, datetime)):
@@ -13,55 +15,35 @@ class DMeshJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 class PostgresSchema:
-    CREATE_TABLES = """
-        CREATE TABLE IF NOT EXISTS data_products (
-            id          UUID        PRIMARY KEY,
-            specification JSONB,
-            created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            dp_domain   TEXT        GENERATED ALWAYS AS (specification->>'domain')  STORED,
-            dp_name     TEXT        GENERATED ALWAYS AS (specification->>'name')    STORED,
-            dp_version  TEXT        GENERATED ALWAYS AS (specification->>'version') STORED
-        );
-
-        CREATE UNIQUE INDEX IF NOT EXISTS uq_data_products_domain_name_version
-            ON data_products (dp_domain, dp_name, dp_version);
-
-        CREATE TABLE IF NOT EXISTS data_contracts (
-            id              UUID        PRIMARY KEY,
-            data_product_id UUID        NOT NULL REFERENCES data_products(id) ON DELETE CASCADE,
-            specification   JSONB,
-            created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-    """
+    # Load schema definition dynamically from unified SQL resource file
+    CREATE_TABLES = (Path(__file__).parent / "init.sql").read_text(encoding="utf-8")
 
 # --- SQL Queries ---
 class DPQueries:
-    GET = "SELECT id, specification, created_at, updated_at FROM data_products WHERE id = %s"
+    GET = "SELECT id, specification, created_at, updated_at FROM dmesh.data_products WHERE id = %s"
     SAVE = """
-        INSERT INTO data_products (id, specification)
+        INSERT INTO dmesh.data_products (id, specification)
         VALUES (%s, %s)
         ON CONFLICT (id) DO UPDATE SET
             specification = EXCLUDED.specification,
             updated_at = NOW()
         RETURNING created_at, updated_at
     """
-    LIST_BASE = "SELECT id, specification, created_at, updated_at FROM data_products"
-    DELETE = "DELETE FROM data_products WHERE id = %s RETURNING id"
+    LIST_BASE = "SELECT id, specification, created_at, updated_at FROM dmesh.data_products"
+    DELETE = "DELETE FROM dmesh.data_products WHERE id = %s RETURNING id"
 
 class DCQueries:
-    GET = "SELECT id, data_product_id, specification, created_at, updated_at FROM data_contracts WHERE id = %s"
+    GET = "SELECT id, data_product_id, specification, created_at, updated_at FROM dmesh.data_contracts WHERE id = %s"
     SAVE = """
-        INSERT INTO data_contracts (id, data_product_id, specification)
+        INSERT INTO dmesh.data_contracts (id, data_product_id, specification)
         VALUES (%s, %s, %s)
         ON CONFLICT (id) DO UPDATE SET
             specification = EXCLUDED.specification,
             updated_at = NOW()
         RETURNING created_at, updated_at
     """
-    LIST_BASE = "SELECT id, data_product_id, specification, created_at, updated_at FROM data_contracts"
-    DELETE = "DELETE FROM data_contracts WHERE id = %s RETURNING id"
+    LIST_BASE = "SELECT id, data_product_id, specification, created_at, updated_at FROM dmesh.data_contracts"
+    DELETE = "DELETE FROM dmesh.data_contracts WHERE id = %s RETURNING id"
 
 # --- Mapping Mixins ---
 class DPMapping:
@@ -125,7 +107,7 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
     async def truncate(self) -> None:
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("TRUNCATE data_products CASCADE")
+                await cur.execute("TRUNCATE dmesh.data_products CASCADE")
 
 class PostgresDataContractRepository(DataContractRepository, DCMapping):
     def __init__(self, pool):
@@ -166,4 +148,4 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
     async def truncate(self) -> None:
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("TRUNCATE data_contracts CASCADE")
+                await cur.execute("TRUNCATE dmesh.data_contracts CASCADE")

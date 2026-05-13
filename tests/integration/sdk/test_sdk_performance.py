@@ -1,6 +1,9 @@
 import time
 import pytest
 
+# Mark all tests in this file as performance tests
+pytestmark = pytest.mark.performance
+
 @pytest.mark.asyncio
 async def test_create_1000_data_products_performance(sdk):
     """

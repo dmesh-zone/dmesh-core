@@ -4,6 +4,26 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.3.0] - 2026-05-13
+
+### ✨ Highlights
+This release advances architectural maturity through automated data source creation, rigorous SQL namespace isolation, streamlined schema configuration, and a fast-path performance testing suite.
+
+### ⚙️ SDK & Core Logic
+- **Automated Data Source Generation**: Introduced auto-creation of "Application Data Products" whenever a new "Source-Aligned Data Product" is registered (leveraging the `dataProductTier` spec property).
+- **Database Schema Unification**: Completely eliminated the redundant embedded SQL string literal. Python's persistency layer now loads the single SQL source of truth (`init.sql`) dynamically at runtime.
+- **Schema Consolidation**: Cleaned up legacy database structures by removing the redundant `dp_version` column from the physical `data_products` table (with version supported only inside specification JSONB column)
+
+### 🏛️ Infrastructure & Security
+- **Isolated SQL Namespaces**: Migrated all database persistence and integration test suites into a dedicated Postgres `dmesh` schema, enabling clean multi-tenant hosting and stricter access controls.
+- **Consolidated Docker Setup**: Streamlined Docker layouts by removing duplicate DB initialization folders in the API module in favor of a shared volume pointing to the core SDK asset.
+
+### 🛠️ Developer Experience (DX)
+- **Opt-in Performance Testing**: Heavy performance testing suites (`test_sdk_performance.py`) are now **skipped by default** using global pytest hooks. High-scale runs can be toggled via a new `--run-perf` CLI argument.
+- **Global Testing Configuration**: Promoted performance testing and external database CLI flags to the root test fixtures for global execution flexibility.
+
+---
+
 ## 🚀 [v0.2.0] - 2026-05-04
 
 ### ✨ Highlights

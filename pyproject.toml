@@ -60,3 +60,6 @@ addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::DeprecationWarning:asyncio.WindowsSelectorEventLoopPolicy",
 ]
+markers = [
+    "performance: marks performance tests (skipped by default unless run with --run-perf)",
+]
