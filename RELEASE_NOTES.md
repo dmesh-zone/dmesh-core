@@ -10,7 +10,8 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 This release advances architectural maturity through automated data source creation, rigorous SQL namespace isolation, streamlined schema configuration, and a fast-path performance testing suite.
 
 ### ⚙️ SDK & Core Logic
-- **Automated Data Source Generation**: Introduced auto-creation of "Application Data Products" whenever a new "Source-Aligned Data Product" is registered (leveraging the `dataProductTier` spec property).
+- Automated Data Source Generation: Introduced auto-creation of "Data Source Data Product" whenever a new "Source-Aligned Data Product" is registered (leveraging the `dataSourceTechnology` spec property).
+Database Schema Unification: Completely eliminated the redundant embedded SQL string literal. Python's persistency layer now loads the single SQL source of truth (init.sql) dynamically at runtime.
 - **Database Schema Unification**: Completely eliminated the redundant embedded SQL string literal. Python's persistency layer now loads the single SQL source of truth (`init.sql`) dynamically at runtime.
 - **Schema Consolidation**: Cleaned up legacy database structures by removing the redundant `dp_version` column from the physical `data_products` table (with version supported only inside specification JSONB column)
 
