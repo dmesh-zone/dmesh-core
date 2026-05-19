@@ -80,7 +80,7 @@ class RepositoryFactory:
             if not all([pg_host, pg_user, pg_password, pg_db]):
                 raise ValueError("Postgres connection parameters required")
             import psycopg_pool
-            conn_str = f"host={pg_host} port={pg_port or 5432} user={pg_user} password={pg_password} dbname={pg_db} connect_timeout=10"
+            conn_str = f"host={pg_host} port={pg_port or 5432} user={pg_user} password={pg_password} dbname={pg_db} connect_timeout=10 options=-csearch_path=dmesh,public"
             pool = psycopg_pool.AsyncConnectionPool(conninfo=conn_str, open=False)
             return PostgresRepositoryFactory(pool)
         else:

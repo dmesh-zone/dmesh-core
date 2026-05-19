@@ -43,7 +43,8 @@ async def setup_schema(postgres_container):
         f"port={postgres_container.get_exposed_port(5432)} "
         f"user={postgres_container.username} "
         f"password={postgres_container.password} "
-        f"dbname={postgres_container.dbname}"
+        f"dbname={postgres_container.dbname} "
+        f"options=-csearch_path=dmesh,public"
     )
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:
@@ -59,7 +60,8 @@ async def clean_database(postgres_container, setup_schema):
         f"port={postgres_container.get_exposed_port(5432)} "
         f"user={postgres_container.username} "
         f"password={postgres_container.password} "
-        f"dbname={postgres_container.dbname}"
+        f"dbname={postgres_container.dbname} "
+        f"options=-csearch_path=dmesh,public"
     )
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:

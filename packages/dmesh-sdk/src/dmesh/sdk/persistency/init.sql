@@ -1,5 +1,9 @@
 CREATE SCHEMA IF NOT EXISTS dmesh;
 
+-- Set search_path to dmesh schema for subsequent operations
+SET search_path TO dmesh, public;
+ALTER ROLE CURRENT_USER SET search_path TO dmesh, public;
+
 CREATE TABLE IF NOT EXISTS dmesh.data_products (
     id UUID PRIMARY KEY,
     specification JSONB NOT NULL,

@@ -18,7 +18,7 @@ def postgres_container():
 async def setup_api_schema(postgres_container):
     """Create the database schema for tests."""
     import psycopg
-    conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname}"
+    conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname} options=-csearch_path=dmesh,public"
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:
             await cur.execute("DROP TABLE IF EXISTS dmesh.data_contracts CASCADE;")
@@ -60,7 +60,7 @@ async def api_client(api_factory):
 async def clean_api_db(postgres_container):
     """Ensure a clean database state for each integration test."""
     import psycopg
-    conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname}"
+    conn_string = f"host={postgres_container.get_container_host_ip()} port={postgres_container.get_exposed_port(5432)} user={postgres_container.username} password={postgres_container.password} dbname={postgres_container.dbname} options=-csearch_path=dmesh,public"
     async with await psycopg.AsyncConnection.connect(conn_string) as conn:
         async with conn.cursor() as cur:
             await cur.execute("TRUNCATE TABLE dmesh.data_contracts, dmesh.data_products CASCADE;")
