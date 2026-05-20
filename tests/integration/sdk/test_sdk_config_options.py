@@ -69,6 +69,24 @@ async def test_sdk_auto_data_source_dp_not_created_if_not_source_aligned(sdk):
     assert len(dp_list) == 1
 
 @pytest.mark.asyncio
+async def test_sdk_auto_data_source_dp_not_created_if_suppressed(sdk):
+    # Assert auto creation upon source aligned dp creation default configuration is true
+    assert sdk.auto_data_source_dp_creation_upon_source_aligned_dp_creation == True
+    spec = {
+        "domain": "finance", 
+        "name": "ledger", 
+        "customProperties": [
+            {"property": "dataProductTier", "value": "sourceAligned"},
+            {"property": "dataSourceSupressed", "value": "true"}
+        ]
+    }
+    
+    dp = await sdk.put_data_product(spec)
+    dp_list = await sdk.list_data_products(domain=dp["domain"])
+    # Should only have the one we created
+    assert len(dp_list) == 1
+
+@pytest.mark.asyncio
 async def test_sdk_expand_port_adapters(sdk):
     dp_finance_ledger = await sdk.put_data_product(
         {

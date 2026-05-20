@@ -57,9 +57,7 @@ async def _put_dc(
     dp: Optional[str] = None,
     domain: Optional[str] = None,
     dp_name: Optional[str] = None,
-    dp_version: Optional[str] = None,
 ):
-    DEFAULT_VERSION = "v1.0.0"
     dc_spec = read_yaml_spec(path)
     dc_id = dc_spec.get("id")
 
@@ -79,17 +77,13 @@ async def _put_dc(
                         dp_spec = dp_spec["specification"]
                     d = dp_spec.get("domain", "")
                     n = dp_spec.get("name", "")
-                    v = dp_spec.get("version", DEFAULT_VERSION)
                     results = await service.list_data_products(domain=d, name=n)
-                    # Filter by version manually if needed or update list_data_products
-                    results = [r for r in results if r.version == v]
                     if not results:
                         raise DmPutError(f"No Data Product found for {d}/{n}")
                     dp_id = results[0].id
             elif domain and dp_name:
-                d, n, v = domain, dp_name, dp_version or DEFAULT_VERSION
+                d, n = domain, dp_name
                 results = await service.list_data_products(domain=d, name=n)
-                results = [r for r in results if r.version == v]
                 if not results:
                     raise DmPutError(f"No Data Product found for {d}/{n}")
                 dp_id = results[0].id
@@ -118,11 +112,10 @@ def dc(
     dp: Optional[str] = typer.Option(None, "--dp", help="Path to or ID of the parent data product."),
     domain: Optional[str] = typer.Option(None, "--domain", help="Parent data product domain."),
     dp_name: Optional[str] = typer.Option(None, "--dp_name", help="Parent data product name."),
-    dp_version: Optional[str] = typer.Option(None, "--dp_version", help="Parent data product version (default: v1.0.0)."),
 ) -> None:
     """Create or update a data contract YAML file in the data mesh."""
     try:
-        dc_id = asyncio.run(_put_dc(path, dp, domain, dp_name, dp_version))
+        dc_id = asyncio.run(_put_dc(path, dp, domain, dp_name))
         typer.echo(dc_id)
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)

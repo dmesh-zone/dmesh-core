@@ -48,13 +48,11 @@ def dps() -> None:
         raise typer.Exit(code=1)
 
 
-async def _list_dcs(domain: Optional[str], dp_name: Optional[str], dp_version: Optional[str]):
+async def _list_dcs(domain: Optional[str], dp_name: Optional[str]):
     async with get_service() as service:
         dp_ids = None
-        if domain or dp_name or dp_version:
+        if domain or dp_name:
             dps = await service.list_data_products(domain=domain, name=dp_name, include_metadata=True)
-            if dp_version:
-                dps = [dp for dp in dps if dp.version == dp_version]
             dp_ids = [dp.id for dp in dps]
             if not dp_ids:
                 typer.echo("No data contracts found (no matching data products).")
@@ -98,11 +96,10 @@ async def _list_dcs(domain: Optional[str], dp_name: Optional[str], dp_version: O
 def dcs(
     domain: Optional[str] = typer.Option(None, "--domain", help="Filter by data product domain."),
     dp_name: Optional[str] = typer.Option(None, "--dp_name", help="Filter by data product name."),
-    dp_version: Optional[str] = typer.Option(None, "--dp_version", help="Filter by data product version."),
 ) -> None:
     """List data contracts with optional data product filters."""
     try:
-        asyncio.run(_list_dcs(domain, dp_name, dp_version))
+        asyncio.run(_list_dcs(domain, dp_name))
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)

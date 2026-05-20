@@ -35,8 +35,7 @@ def get_dc(
     spec = resp.json()
     domain = spec.get("domain", "unknown")
     dp_name = spec.get("name", "unknown")
-    dp_version = spec.get("version", "v1.0.0")
-    out = Path(f"{domain}_{dp_name}_{dp_version}_{dc_id}.yaml")
+    out = Path(f"{domain}_{dp_name}_{dc_id}.yaml")
     with out.open("w") as f:
         yaml.dump(spec, f, default_flow_style=False, allow_unicode=True)
     typer.echo(str(out))

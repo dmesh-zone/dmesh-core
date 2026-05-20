@@ -339,6 +339,10 @@ class AsyncSDK:
         if tier != "sourceAligned":
             return
             
+        suppressed = self.get_custom_property_value(dp_spec, "dataSourceSupressed") or self.get_custom_property_value(dp_spec, "dataSourceSuppressed")
+        if suppressed in ("true", True) or (isinstance(suppressed, str) and suppressed.lower() == "true"):
+            return
+            
         # Create Data Source DP
         source_dp_name = dp_spec["name"] + " data source"
         custom_properties = [

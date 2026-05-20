@@ -139,9 +139,8 @@ async def _get_dc(dc_id: Optional[str], output: str):
         parent_dp = await service.get_data_product(dc_obj.data_product_id, include_metadata=True)
         domain = parent_dp.domain if parent_dp else "unknown"
         dp_name = parent_dp.name if parent_dp else "unknown"
-        dp_version = parent_dp.version if parent_dp else "v1.0.0"
         
-        filename = Path(f"{domain}_{dp_name}_{dp_version}_{dc_id}.yaml")
+        filename = Path(f"{domain}_{dp_name}_{dc_id}.yaml")
         _handle_output(dc_obj.specification, output, filename)
 
 
