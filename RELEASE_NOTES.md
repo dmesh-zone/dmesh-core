@@ -4,6 +4,24 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.4.0] - 2026-05-20
+
+### ✨ Highlights
+This release strengthens relational isolation at the database layer by enforcing strict schema-level routing, simplifies CLI fetching by completely deprecating legacy `dp_version` qualifiers, and introduces selective suppression controls for automated data source replication.
+
+### 🏛️ Database & Schema Security
+- **Enforced Session Schema Routing**: Configured default `search_path` options at the `psycopg` connection pool level and permanently altered database role search paths. Any unqualified queries or third-party connections now resolve cleanly to the `dmesh` schema, completely preventing table-level leakage to the `public` schema.
+- **Unified Test Schema Defaults**: Upgraded all API and SDK integration test suite connection parameters to match session-level routing standards.
+
+### ⚙️ SDK & Core Logic
+- **Selective Data Source Suppression**: Introduced the `dataSourceSupressed` (and `dataSourceSuppressed`) custom property flag on source-aligned data products, giving developers the ability to cleanly opt-out of automated data source generation.
+
+### 🖥️ CLI Enhancements & DX
+- **Deprecation of legacy `dp_version`**: Fully purged `dp_version` parameters, options, and filters across `get`, `get_dc`, `put`, and `list` commands.
+- **Refined Filename Formats**: Fetching commands now save configurations to clean, versionless filename layouts in the format `{domain}_{dp_name}_{dc_id}.yaml`.
+
+---
+
 ## 🚀 [v0.3.0] - 2026-05-13
 
 ### ✨ Highlights
