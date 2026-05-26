@@ -52,9 +52,9 @@ def parse_mermaid_mesh(spec: str):
             if not line or line.startswith("<<"): continue
             
             # Match attr: value or prop: type
-            match = re.match(r"([a-zA-Z0-9_.-]+)\s*:\s*([a-zA-Z0-9_.-]+)", line)
+            match = re.match(r"([a-zA-Z0-9_.-]+)\s*:\s*(.+)", line)
             if match:
-                k, v = match.group(1), match.group(2)
+                k, v = match.group(1), match.group(2).strip()
                 attrs[k] = v
                 props.append({"name": k, "type": v})
         

@@ -12,6 +12,7 @@ classDiagram
     sap_fi --> accounting_document_line_items : exposes
     class sap_fi{
         <<data-product>>
+        dataProductBusinessName : SAP FI
         dataProductTier : sourceAligned
     }
     class accounting_document_line_items{
@@ -23,6 +24,7 @@ classDiagram
     account_receivables_ledger --> customer_open_items : exposes
     class account_receivables_ledger{
         <<data-product>>
+        dataProductBusinessName : Account Receivables Ledger
         dataProductTier : curated
     }
     class customer_open_items {
@@ -36,6 +38,7 @@ classDiagram
     360_finance --> financial_overview_report : exposes
     class 360_finance{
         <<data-product>>
+        dataProductBusinessName : 360 Finance
         dataProductTier : consumerAligned
     }
     class financial_overview_report{
@@ -46,6 +49,7 @@ classDiagram
     %% APPLICATION DATA PRODUCT
     class 360_finance_application {
         <<data-product>>
+        dataProductBusinessName : 360 Finance Application
         dataProductTier : application
     }
     sap_fi --> account_receivables_ledger : provides
