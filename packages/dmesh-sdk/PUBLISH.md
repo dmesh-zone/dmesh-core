@@ -9,19 +9,19 @@ The version is defined in `packages/dmesh-sdk/pyproject.toml`. Ensure it is incr
 ```toml
 [project]
 name = "dmesh-sdk"
-version = "0.1.1"  # <--- Update this
+version = "0.0.0"  # <--- Update this
 ```
 
 For the following commands, set an environment variable to avoid hardcoding:
 
 **Windows (PowerShell):**
 ```powershell
-$env:SDK_VERSION = "0.1.1"
+$env:SDK_VERSION = "0.0.0"
 ```
 
 **Linux / macOS:**
 ```bash
-export SDK_VERSION="0.1.1"
+export SDK_VERSION="0.0.0"
 ```
 
 ## 1. Build the Package
