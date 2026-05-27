@@ -13,7 +13,8 @@ async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(s
     spec = {"domain": "finance", "name": "ledger", 
         "customProperties": [
             {"property": "dataProductTier", "value": "sourceAligned"},
-            {"property": "dataSourceTechnology", "value": "sap"}
+            {"property": "dataSourceTechnology", "value": "sap"},
+            {"property": "dataProductBusinessName", "value": "SAP FI"}
         ]
     }
     # Assert auto creation upon source aligned dp creation default configuration is true
@@ -31,6 +32,7 @@ async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(s
     
     custom_properties = {p["property"]: p["value"] for p in data_source_dp["customProperties"]}
     assert custom_properties["dataProductTier"] == "dataSource"
+    assert custom_properties["dataProductBusinessName"] == "SAP FI data source"
     assert custom_properties["dataUsageAgreements"] == [{
         "info": {
             "active": True,

@@ -360,6 +360,9 @@ class AsyncSDK:
         tech = self.get_custom_property_value(dp_spec, "dataSourceTechnology")
         if tech:
             custom_properties.append({"property": "technology", "value": tech})
+        business_name = self.get_custom_property_value(dp_spec, "dataProductBusinessName")
+        if business_name:
+            custom_properties.append({"property": "dataProductBusinessName", "value": business_name + " data source"})
 
         source_dp_spec = {
             "domain": dp_spec["domain"],

@@ -4,6 +4,15 @@ import os
 import pytest
 
 # This must be done at the module level to ensure it happens before any event loop is created
+
+# Automatically configure DOCKER_HOST for macOS users running Colima (to fix IDE test runs)
+if sys.platform == 'darwin' and 'DOCKER_HOST' not in os.environ:
+    colima_sock = os.path.expanduser('~/.colima/default/docker.sock')
+    if os.path.exists(colima_sock):
+        os.environ['DOCKER_HOST'] = f"unix://{colima_sock}"
+        if 'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE' not in os.environ:
+            os.environ['TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE'] = '/var/run/docker.sock'
+
 if sys.platform == 'win32':
     # On Windows, psycopg3 (and some other libs) require the SelectorEventLoop
     # instead of the default ProactorEventLoop to run async operations correctly.

@@ -4,6 +4,22 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.5.0] - 2026-05-27
+
+### ✨ Highlights
+This release improves the SDK and CLI by introducing automatic propagation of data product business names, enhancing the `testdata` command's parsing capabilities, and streamlining local testing experiences for macOS developers.
+
+### ⚙️ SDK & Core Logic
+- **Business Name Propagation**: Automated the propagation of the `dataProductBusinessName` custom property when the system auto-generates a Data Source Data Product from a Source-Aligned Data Product (the auto-generated product gets the business name with a " data source" suffix).
+
+### 🖥️ CLI Enhancements & DX
+- **Robust Mermaid Parsing**: Improved the `dmesh testdata` command to correctly parse custom properties (like `dataProductBusinessName`) that contain spaces, while preserving their exact casing.
+
+### 🛠️ Developer Experience (DX) & Testing
+- **Colima Docker Socket Fallback**: Implemented an automated fallback in the test suite for macOS users running Colima, seamlessly detecting `~/.colima/default/docker.sock` and setting `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` to resolve Ryuk mount errors without requiring manual IDE run configuration.
+
+---
+
 ## 🚀 [v0.4.0] - 2026-05-20
 
 ### ✨ Highlights
