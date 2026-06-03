@@ -25,14 +25,7 @@ class DottedIDGenerator:
         consumer_id = spec.get("consumer", {}).get("dataProductId", "unknown")
         return uuid.uuid5(CUSTOM_NS, f"{provider_id}->{consumer_id}")
 
-@pytest.fixture
-async def factory():
-    factory = RepositoryFactory().create(db_type="memory")
-    yield factory
 
-@pytest.fixture
-async def sdk(factory):
-    return AsyncSDK(factory)
 
 @pytest.mark.asyncio
 async def test_custom_id_generator_hook(factory):

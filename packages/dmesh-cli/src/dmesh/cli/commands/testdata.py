@@ -198,8 +198,11 @@ def main(
         spec = _strip_mermaid_markers(file.read_text())
     
     try:
+        import time
+        start = time.perf_counter()
         asyncio.run(_generate_testdata(spec))
-        typer.echo("Test data generation complete.")
+        elapsed = time.perf_counter() - start
+        typer.echo(f"Test data generation complete in {elapsed:.4f} seconds.")
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         import traceback

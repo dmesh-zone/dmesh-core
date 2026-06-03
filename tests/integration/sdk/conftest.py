@@ -69,10 +69,12 @@ async def clean_database(postgres_container, setup_schema):
         await conn.commit()
     yield
 
-@pytest.fixture
-async def factory(postgres_container, setup_schema):
-    """Create a repository factory connected to the test database."""
-    factory = RepositoryFactory().create(
+@pytest.fixture(params=["postgres", "rest"])
+async def factory(request, postgres_container, setup_schema):
+    """Create a repository factory connected to the test database or the REST API."""
+    backend = request.param
+    
+    pg_factory = RepositoryFactory().create(
         db_type="postgres",
         pg_host=postgres_container.get_container_host_ip(),
         pg_port=postgres_container.get_exposed_port(5432),
@@ -80,9 +82,36 @@ async def factory(postgres_container, setup_schema):
         pg_password=postgres_container.password,
         pg_db=postgres_container.dbname
     )
-    await factory.open()
-    yield factory
-    await factory.close()
+    await pg_factory.open()
+
+    if backend == "postgres":
+        yield pg_factory
+        await pg_factory.close()
+        
+    elif backend == "rest":
+        from dmesh.api.main import app
+        import dmesh.api.dependencies
+        from httpx import AsyncClient, ASGITransport
+        from dmesh.sdk.persistency.rest_persistency import HttpRepositoryFactory
+        from unittest.mock import patch
+        
+        original_factory = dmesh.api.dependencies._factory
+        dmesh.api.dependencies._factory = pg_factory
+        
+        transport = ASGITransport(app=app)
+        
+        class MockAsyncClient(AsyncClient):
+            def __init__(self, *args, **kwargs):
+                kwargs["transport"] = transport
+                kwargs["base_url"] = "http://test"
+                super().__init__(*args, **kwargs)
+                
+        with patch("dmesh.sdk.persistency.rest_persistency.httpx.AsyncClient", new=MockAsyncClient):
+            rest_factory = HttpRepositoryFactory(api_url="http://test/dmesh")
+            yield rest_factory
+            
+        dmesh.api.dependencies._factory = original_factory
+        await pg_factory.close()
 
 @pytest.fixture
 def sdk(factory):

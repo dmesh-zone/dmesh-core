@@ -68,8 +68,11 @@ class ApiSettings(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = False
+    base_path: str = "dmesh"
 
 class SdkSettings(BaseModel):
+    rest_persistency_proxy: bool = False
+    rest_persistency_proxy_url: str = "http://0.0.0.0:8000"
     single_data_contract_per_product: bool = True
     dua_start_date_default: str = "2026-01-01"
     dua_purpose_default: str = "Unknown purpose"

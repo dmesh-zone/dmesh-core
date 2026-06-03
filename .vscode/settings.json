@@ -6,7 +6,11 @@
     "python.testing.pytestEnabled": true,
     "python.testing.promptToConfigure": false,
     "python.testing.cwd": "${workspaceFolder}",
-    "python.testing.pytestArgs": [],
+    "python.testing.pytestArgs": [
+        "--run-perf",
+        "--durations=0",
+        "tests"
+    ],
     "python.testing.pytestEnvVars": {},
     "python.testing.debugJustMyCode": false,
     "python.analysis.extraPaths": [

@@ -56,6 +56,14 @@ class RepositoryFactory:
         """
         Creates a repository factory using a Settings object from dmesh.sdk.config.
         """
+        if getattr(settings.sdk, "rest_persistency_proxy", False):
+            from dmesh.sdk.persistency.rest_persistency import HttpRepositoryFactory
+            base_path = getattr(settings.api, "base_path", "dmesh").strip("/")
+            api_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000").rstrip("/")
+            if base_path:
+                api_url = f"{api_url}/{base_path}"
+            return HttpRepositoryFactory(api_url)
+
         return self.create(
             db_type=db_type,
             pg_host=settings.db.host,

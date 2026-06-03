@@ -386,7 +386,10 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `host` | `DMESH_API__HOST` | `"0.0.0.0"` | API server host |
 | `port` | `DMESH_API__PORT` | `8000` | API server port |
 | `debug` | `DMESH_API__DEBUG` | `false` | Enable API debug mode |
+| `base_path` | `DMESH_API__BASE_PATH` | `"dmesh"` | Base path for API routing |
 | **SDK (`sdk`)** | | | |
+| `rest_persistency_proxy` | `DMESH_SDK__REST_PERSISTENCY_PROXY` | `false` | Toggle to use the API as a backend instead of direct DB access |
+| `rest_persistency_proxy_url` | `DMESH_SDK__REST_PERSISTENCY_PROXY_URL` | `"http://0.0.0.0:8000"` | Base URL of the API for SDK interactions |
 | `single_data_contract_per_product` | `DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT` | `true` | Restrict to one data contract per data product |
 | `dua_start_date_default` | `DMESH_SDK__DUA_START_DATE_DEFAULT` | `"2026-01-01"` | Default start date for Data Usage Agreements |
 | `dua_purpose_default` | `DMESH_SDK__DUA_PURPOSE_DEFAULT` | `"Unknown purpose"` | Default purpose for Data Usage Agreements |
