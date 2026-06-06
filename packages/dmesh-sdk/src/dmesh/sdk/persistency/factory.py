@@ -1,6 +1,9 @@
+import logging
 from typing import Any, Optional, Protocol
 from dmesh.sdk.ports.repository import DataProductRepository, DataContractRepository
-from dmesh.sdk.persistency.in_memory import AsyncInMemoryDataProductRepository, AsyncInMemoryDataContractRepository
+from dmesh.sdk.persistency.memory import AsyncInMemoryDataProductRepository, AsyncInMemoryDataContractRepository
+
+logger = logging.getLogger(__name__)
 
 class RepositoryFactory(Protocol):
     def get_data_product_repository(self) -> DataProductRepository: ...
@@ -56,8 +59,13 @@ class RepositoryFactory:
         """
         Creates a repository factory using a Settings object from dmesh.sdk.config.
         """
+        if getattr(settings.sdk, "in_memory_persistency", False):
+            logger.info("Using in_memory persistency")
+            return InMemoryRepositoryFactory()
+
         if getattr(settings.sdk, "rest_persistency_proxy", False):
-            from dmesh.sdk.persistency.rest_persistency import HttpRepositoryFactory
+            from dmesh.sdk.persistency.rest import HttpRepositoryFactory
+            logger.info("Using rest persistency")
             base_path = getattr(settings.api, "base_path", "dmesh").strip("/")
             api_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000").rstrip("/")
             if base_path:
@@ -82,6 +90,7 @@ class RepositoryFactory:
         pg_password: Optional[str] = None,
         pg_db: Optional[str] = None,
     ) -> RepositoryFactory:
+        logger.info(f"Using {db_type} persistency")
         if db_type == "memory":
             return InMemoryRepositoryFactory()
         elif db_type == "postgres":

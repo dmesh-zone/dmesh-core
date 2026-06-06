@@ -20,6 +20,8 @@ from dmesh.api.dependencies import get_factory
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import logging
+    logging.basicConfig(level=logging.INFO)
     # On Windows, verify event loop compatibility with psycopg
     if sys.platform == 'win32':
         loop = asyncio.get_running_loop()

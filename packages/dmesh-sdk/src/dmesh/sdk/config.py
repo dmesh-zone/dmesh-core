@@ -71,6 +71,7 @@ class ApiSettings(BaseModel):
     base_path: str = "dmesh"
 
 class SdkSettings(BaseModel):
+    in_memory_persistency: bool = False
     rest_persistency_proxy: bool = False
     rest_persistency_proxy_url: str = "http://0.0.0.0:8000"
     single_data_contract_per_product: bool = True

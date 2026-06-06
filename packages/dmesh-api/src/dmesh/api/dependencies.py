@@ -9,14 +9,9 @@ _factory = None
 def get_factory():
     global _factory
     if _factory is None:
-        _factory = RepositoryFactory().create(
-            db_type="postgres",
-            pg_host=os.getenv('DB_HOST', 'localhost'),
-            pg_port=int(os.getenv('DB_PORT', '5432')),
-            pg_user=os.getenv('DB_USER', 'postgres'),
-            pg_password=os.getenv('DB_PASSWORD', 'postgres'),
-            pg_db=os.getenv('DB_NAME', 'postgres')
-        )
+        from dmesh.sdk.config import get_settings
+        settings = get_settings()
+        _factory = RepositoryFactory().create_from_settings(settings, db_type=os.getenv('DB_TYPE', 'postgres'))
     return _factory
 
 async def get_dp_repo() -> DataProductRepository:

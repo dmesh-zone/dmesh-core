@@ -6,14 +6,15 @@ from dmesh.cli.setup.orchestrator import SetupOrchestrator
 
 
 def reset(
-    full: bool = typer.Option(False, "--full", help="Pass to teardown phase.")
+    full: bool = typer.Option(False, "--full", help="Pass to teardown phase."),
+    rebuild: bool = typer.Option(True, "--rebuild/--no-rebuild", help="Rebuild docker-compose.")
 ) -> None:
     """Tear down and re-setup the local data mesh environment."""
     feedback = ConsoleFeedback()
     import asyncio
     try:
         TeardownOrchestrator(feedback).run(full=full)
-        asyncio.run(SetupOrchestrator(feedback).run())
+        asyncio.run(SetupOrchestrator(feedback).run(rebuild=rebuild))
     except Exception as e:
         feedback.error(str(e))
         raise typer.Exit(code=1)

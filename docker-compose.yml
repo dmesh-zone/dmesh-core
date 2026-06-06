@@ -22,13 +22,19 @@ services:
       context: .
       dockerfile: packages/dmesh-api/Dockerfile
     environment:
-      DB_TYPE: postgres
+      DB_TYPE: ${DB_TYPE:-postgres}
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: postgres
       WS_BASE_PATH: dmesh
+      DMESH_DB__HOST: db
+      DMESH_DB__PORT: 5432
+      DMESH_DB__USER: postgres
+      DMESH_DB__PASSWORD: postgres
+      DMESH_DB__NAME: postgres
+      DMESH_SDK__IN_MEMORY_PERSISTENCY: ${DMESH_SDK__IN_MEMORY_PERSISTENCY:-false}
     ports:
       - "8000:8000"
     command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -48,6 +54,11 @@ services:
       TERM: xterm-256color
       # Override the DB host to point to the 'db' service container
       DMESH_DB__HOST: db
+      DMESH_DB__PORT: 5432
+      DMESH_DB__USER: postgres
+      DMESH_DB__PASSWORD: postgres
+      DMESH_DB__NAME: postgres
+      DMESH_SDK__REST_PERSISTENCY_PROXY_URL: http://api:8000
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres

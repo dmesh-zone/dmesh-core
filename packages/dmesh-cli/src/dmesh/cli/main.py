@@ -84,23 +84,9 @@ def repl() -> None:
 @app.callback(invoke_without_command=True)
 def main_callback(
     ctx: typer.Context,
-    interactive: bool = typer.Option(False, "--interactive", "-i", help="Launch interactive mode."),
-    backend: str = typer.Option(None, "--backend", "-b", help="Backend to use for persistence ('db' or 'rest').")
+    interactive: bool = typer.Option(False, "--interactive", "-i", help="Launch interactive mode.")
 ) -> None:
     """Data Mesh CLI."""
-    if backend:
-        if backend.lower() == "rest":
-            os.environ["DMESH_SDK__REST_PERSISTENCY_PROXY"] = "true"
-        elif backend.lower() == "db":
-            os.environ["DMESH_SDK__REST_PERSISTENCY_PROXY"] = "false"
-        else:
-            typer.echo(f"Invalid backend: {backend}. Use 'db' or 'rest'.", err=True)
-            raise typer.Exit(1)
-        
-        # Force the config loader to re-evaluate the environment variables
-        import dmesh.sdk.config
-        dmesh.sdk.config._settings = None
-
     if interactive:
         repl()
     elif ctx.invoked_subcommand is None:

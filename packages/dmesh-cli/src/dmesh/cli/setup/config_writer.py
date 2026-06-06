@@ -43,12 +43,16 @@ class ConfigWriter:
         try:
             PROJECT_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
             pg = config_dict.get("postgres", {})
+            sdk = config_dict.get("sdk", {})
             toml_content = f"""[db]
 host = "{pg.get('host', 'localhost')}"
 port = {pg.get('port', 5432)}
 user = "{pg.get('user', 'postgres')}"
 password = "{pg.get('password', 'postgres')}"
 name = "{pg.get('dbname', 'postgres')}"
+
+[sdk]
+rest_persistency_proxy = {"true" if sdk.get('rest_persistency_proxy') else "false"}
 """
             PROJECT_CONFIG_PATH.write_text(toml_content)
         except OSError:
@@ -59,7 +63,7 @@ name = "{pg.get('dbname', 'postgres')}"
         """Write ws config."""
         self.write({"ws": {"base_url": ws_base_url}})
 
-    def write_pg(self, host, port, user, password, dbname) -> None:
+    def write_pg(self, host, port, user, password, dbname, rest_persistency_proxy: bool = False) -> None:
         """Write Postgres config."""
         self.write({
             "postgres": {
@@ -68,5 +72,8 @@ name = "{pg.get('dbname', 'postgres')}"
                 "user": user,
                 "password": password,
                 "dbname": dbname
+            },
+            "sdk": {
+                "rest_persistency_proxy": rest_persistency_proxy
             }
         })

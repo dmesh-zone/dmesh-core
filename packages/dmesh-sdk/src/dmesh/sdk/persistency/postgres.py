@@ -7,6 +7,9 @@ from dmesh.sdk.models import DataProduct, DataContract
 from dmesh.sdk.ports.repository import DataProductRepository, DataContractRepository
 
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 class DMeshJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -71,6 +74,7 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
         self.pool = pool
 
     async def get(self, id: UUID) -> Optional[DataProduct]:
+        logger.info(f"get {id}")
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(DPQueries.GET, (id,))
@@ -78,6 +82,7 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
                 return self._row_to_dp(row) if row else None
 
     async def save(self, product: DataProduct) -> None:
+        logger.info(f"save {product.id}")
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(DPQueries.SAVE, (product.id, json.dumps(product.specification, cls=DMeshJSONEncoder)))
@@ -87,6 +92,7 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
                     product.updated_at = row["updated_at"]
 
     async def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
+        logger.info(f"list domain={domain} name={name}")
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 filters, params = [], []
@@ -98,6 +104,7 @@ class PostgresDataProductRepository(DataProductRepository, DPMapping):
                 return [self._row_to_dp(row) for row in rows]
 
     async def delete(self, id: UUID) -> bool:
+        logger.info(f"delete {id}")
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(DPQueries.DELETE, (id,))
@@ -114,6 +121,7 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
         self.pool = pool
 
     async def get(self, id: UUID) -> Optional[DataContract]:
+        logger.info(f"get {id}")
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(DCQueries.GET, (id,))
@@ -121,6 +129,7 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
                 return self._row_to_dc(row) if row else None
 
     async def save(self, contract: DataContract) -> None:
+        logger.info(f"save {contract.id}")
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(DCQueries.SAVE, (contract.id, contract.data_product_id, json.dumps(contract.specification, cls=DMeshJSONEncoder)))
@@ -130,6 +139,7 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
                     contract.updated_at = row["updated_at"]
 
     async def list(self, dp_id: Optional[UUID] = None) -> List[DataContract]:
+        logger.info(f"list dp_id={dp_id}")
         async with self.pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 query, params = DCQueries.LIST_BASE, []
@@ -139,6 +149,7 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
                 return [self._row_to_dc(row) for row in rows]
 
     async def delete(self, id: UUID) -> bool:
+        logger.info(f"delete {id}")
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(DCQueries.DELETE, (id,))
@@ -146,6 +157,7 @@ class PostgresDataContractRepository(DataContractRepository, DCMapping):
                 return row is not None
 
     async def truncate(self) -> None:
+        logger.info(f"truncate")
         async with self.pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("TRUNCATE dmesh.data_contracts CASCADE")

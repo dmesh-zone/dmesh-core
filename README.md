@@ -388,6 +388,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `debug` | `DMESH_API__DEBUG` | `false` | Enable API debug mode |
 | `base_path` | `DMESH_API__BASE_PATH` | `"dmesh"` | Base path for API routing |
 | **SDK (`sdk`)** | | | |
+| `in_memory_persistency` | `DMESH_SDK__IN_MEMORY_PERSISTENCY` | `false` | Enable in-memory persistency instead of PostgreSQL |
 | `rest_persistency_proxy` | `DMESH_SDK__REST_PERSISTENCY_PROXY` | `false` | Toggle to use the API as a backend instead of direct DB access |
 | `rest_persistency_proxy_url` | `DMESH_SDK__REST_PERSISTENCY_PROXY_URL` | `"http://0.0.0.0:8000"` | Base URL of the API for SDK interactions |
 | `single_data_contract_per_product` | `DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT` | `true` | Restrict to one data contract per data product |
@@ -398,6 +399,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `expand_port_adapters` | `DMESH_SDK__EXPAND_PORT_ADAPTERS` | `true` | Enable automated port adapter expansion |
 | `enrich_output_ports` | `DMESH_SDK__ENRICH_OUTPUT_PORTS` | `true` | Enable enrichment of output ports |
 | `auto_data_source_dp_creation_upon_source_aligned_dp_creation` | `DMESH_SDK__AUTO_DATA_SOURCE_DP_CREATION_UPON_SOURCE_ALIGNED_DP_CREATION` | `true` | Auto-create Data Source DP for Source Aligned DPs |
+| `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Automatically assign data product IDs to new data contracts |
 | `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Auto-populate `dataProductId` in Data Contracts |
 
 ---

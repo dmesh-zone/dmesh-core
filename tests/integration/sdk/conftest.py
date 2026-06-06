@@ -69,10 +69,14 @@ async def clean_database(postgres_container, setup_schema):
         await conn.commit()
     yield
 
-@pytest.fixture(params=["postgres", "rest"])
+@pytest.fixture(params=["postgres", "rest", "memory"])
 async def factory(request, postgres_container, setup_schema):
-    """Create a repository factory connected to the test database or the REST API."""
+    """Create a repository factory connected to the test database, the REST API, or in-memory."""
     backend = request.param
+    
+    if backend == "memory":
+        yield RepositoryFactory().create(db_type="memory")
+        return
     
     pg_factory = RepositoryFactory().create(
         db_type="postgres",
@@ -92,7 +96,7 @@ async def factory(request, postgres_container, setup_schema):
         from dmesh.api.main import app
         import dmesh.api.dependencies
         from httpx import AsyncClient, ASGITransport
-        from dmesh.sdk.persistency.rest_persistency import HttpRepositoryFactory
+        from dmesh.sdk.persistency.rest import HttpRepositoryFactory
         from unittest.mock import patch
         
         original_factory = dmesh.api.dependencies._factory
@@ -106,7 +110,7 @@ async def factory(request, postgres_container, setup_schema):
                 kwargs["base_url"] = "http://test"
                 super().__init__(*args, **kwargs)
                 
-        with patch("dmesh.sdk.persistency.rest_persistency.httpx.AsyncClient", new=MockAsyncClient):
+        with patch("dmesh.sdk.persistency.rest.httpx.AsyncClient", new=MockAsyncClient):
             rest_factory = HttpRepositoryFactory(api_url="http://test/dmesh")
             yield rest_factory
             
