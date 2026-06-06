@@ -37,7 +37,7 @@ services:
       DMESH_SDK__IN_MEMORY_PERSISTENCY: ${DMESH_SDK__IN_MEMORY_PERSISTENCY:-false}
     ports:
       - "8000:8000"
-    command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
     depends_on:
       db:
         condition: service_healthy

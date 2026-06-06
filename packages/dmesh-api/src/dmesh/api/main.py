@@ -11,7 +11,7 @@ if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from dmesh.api.routers import dps, dcs
@@ -54,6 +54,21 @@ def create_app() -> FastAPI:
     
     _BASE = os.environ.get("WS_BASE_PATH", "dmesh").strip("/") or "dmesh"
     
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        host = request.client.host if request.client else "unknown"
+        port = request.client.port if request.client else "unknown"
+        
+        # Don't log health check
+        is_health = request.url.path.endswith("/health")
+        
+        if not is_health:
+            import logging
+            logging.info(f'{host}:{port} - "{request.method} {request.url.path}"')
+            
+        response = await call_next(request)
+        return response
+
     app.include_router(dps.router, prefix=f"/{_BASE}")
     app.include_router(dcs.router, prefix=f"/{_BASE}")
     app.include_router(discover_router, prefix=f"/{_BASE}")

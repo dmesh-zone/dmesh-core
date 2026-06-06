@@ -12,11 +12,11 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         self.products = {}
 
     async def get(self, id: UUID) -> Optional[DataProduct]:
-        logger.info(f"get {id}")
+        logger.info(f"get dp {id}")
         return self.products.get(id)
 
     async def save(self, product: DataProduct) -> None:
-        logger.info(f"save {product.id}")
+        logger.info(f"save dp {product.id}")
         now = datetime.now()
         if product.id not in self.products:
             product.created_at = now
@@ -26,7 +26,7 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         self.products[product.id] = product
 
     async def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
-        logger.info(f"list domain={domain} name={name}")
+        logger.info(f"list dp domain={domain} name={name}")
         results = list(self.products.values())
         if domain:
             results = [p for p in results if p.domain == domain]
@@ -35,14 +35,14 @@ class AsyncInMemoryDataProductRepository(DataProductRepository):
         return results
 
     async def delete(self, id: UUID) -> bool:
-        logger.info(f"delete {id}")
+        logger.info(f"delete dp {id}")
         if id in self.products:
             del self.products[id]
             return True
         return False
 
-
     async def truncate(self) -> None:
+        logger.info("truncate dp")
         self.products.clear()
 
 class AsyncInMemoryDataContractRepository(DataContractRepository):
@@ -50,11 +50,11 @@ class AsyncInMemoryDataContractRepository(DataContractRepository):
         self.contracts = {}
 
     async def get(self, id: UUID) -> Optional[DataContract]:
-        logger.info(f"get {id}")
+        logger.info(f"get dc {id}")
         return self.contracts.get(id)
 
     async def save(self, contract: DataContract) -> None:
-        logger.info(f"save {contract.id}")
+        logger.info(f"save dc {contract.id}")
         now = datetime.now()
         if contract.id not in self.contracts:
             contract.created_at = now
@@ -64,19 +64,19 @@ class AsyncInMemoryDataContractRepository(DataContractRepository):
         self.contracts[contract.id] = contract
 
     async def list(self, dp_id: Optional[UUID] = None) -> List[DataContract]:
-        logger.info(f"list dp_id={dp_id}")
+        logger.info(f"list dc dp_id={dp_id}")
         results = list(self.contracts.values())
         if dp_id:
             results = [c for c in results if c.data_product_id == dp_id]
         return results
 
     async def delete(self, id: UUID) -> bool:
-        logger.info(f"delete {id}")
+        logger.info(f"delete dc {id}")
         if id in self.contracts:
             del self.contracts[id]
             return True
         return False
 
     async def truncate(self) -> None:
-        logger.info("truncate")
+        logger.info("truncate dc")
         self.contracts.clear()
