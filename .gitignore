@@ -27,3 +27,6 @@ config/
 # Test config scripts
 test_config.py
 test_required_secrets.py
+
+# API packaging
+packages/dmesh-api/requirements.txt

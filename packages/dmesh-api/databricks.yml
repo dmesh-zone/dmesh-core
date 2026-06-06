@@ -1,0 +1,11 @@
+bundle:
+  name: dmesh-api
+
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+resources:
+  apps:
+    dmesh-api:
+      name: dmesh-api
+      source_code_path: ${workspace.root_path}/src

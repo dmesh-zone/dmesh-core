@@ -1,0 +1,15 @@
+command:
+  - "sh"
+  - "-c"
+  - "python -m uvicorn dmesh.api.main:app --host 0.0.0.0 --port $DATABRICKS_APP_PORT"
+env:
+  - name: "LOG_LEVEL"
+    value: "INFO"
+  - name: "DMESH_SDK__IN_MEMORY_PERSISTENCY"
+    value: "true"
+  - name: "DB_TYPE"
+    value: "memory"
+  - name: "PYTHONPATH"
+    value: "src"
+  - name: "DMESH_DB__PASSWORD"
+    value: "dummy_password_for_memory"
