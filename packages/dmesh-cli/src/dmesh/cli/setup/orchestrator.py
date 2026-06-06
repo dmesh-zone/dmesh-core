@@ -13,24 +13,18 @@ class SetupOrchestrator:
     def __init__(self, feedback: Feedback) -> None:
         self._feedback = feedback
 
-    async def run(self, flush: bool = False, rebuild: bool = False, topology: str = "local-postgres-persistency") -> None:
+    async def run(self, flush: bool = False, rebuild: bool = False, topology: str = "docker-postgres") -> None:
         """Execute the initialisation sequence."""
         self._feedback.step("Initializing local data mesh environment...")
         
         # Check if running in test mode (pytest)
         is_test = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         
-        # Resolve shorthand topology
-        if topology == "rest-pxy-local-postgres":
-            topology = "local-rest-persistency-proxy-with-local-postgres-persistency"
-        elif topology == "rest-pxy-local-mem":
-            topology = "local-rest-persistency-proxy-with-local-in-memory-persistency"
-
         use_rest_proxy = topology in (
-            "local-rest-persistency-proxy-with-local-postgres-persistency",
-            "local-rest-persistency-proxy-with-local-in-memory-persistency"
+            "docker-rest-pxy-postgres",
+            "docker-rest-pxy-mem"
         )
-        api_in_memory = topology == "local-rest-persistency-proxy-with-local-in-memory-persistency"
+        api_in_memory = topology == "docker-rest-pxy-mem"
 
         cli_config_str = f"CLI SDK config:\n - rest_persistency_proxy: {use_rest_proxy}\n - rest_persistency_proxy_url: http://0.0.0.0:8000"
         api_config_str = f"API Container config:\n - DMESH_SDK__IN_MEMORY_PERSISTENCY: {str(api_in_memory).lower()}\n - DB_TYPE: {'memory' if api_in_memory else 'postgres'}"
@@ -99,7 +93,7 @@ class SetupOrchestrator:
         
         if is_test:
             mode = "test (in-memory)"
-        elif topology == "local-rest-persistency-proxy-with-local-in-memory-persistency":
+        elif topology == "docker-rest-pxy-mem":
             mode = "In-Memory API"
         elif use_rest_proxy:
             mode = "Postgres API"
@@ -110,12 +104,12 @@ class SetupOrchestrator:
 
         # ASCII architecture diagram
         print("\n--- Architecture Topology ---")
-        if topology == "local-postgres-persistency":
+        if topology == "docker-postgres":
             print(" [CLI + SDK (rest proxy: false)] ---> [Postgres Container] ")
             print(" [API Container (db_type: postgres, memory: false)] ---> [Postgres Container] ")
-        elif topology == "local-rest-persistency-proxy-with-local-postgres-persistency":
+        elif topology == "docker-rest-pxy-postgres":
             print(" [CLI + SDK (rest proxy: true)] ---> [API Container (db_type: postgres, memory: false)] ---> [Postgres Container] ")
-        elif topology == "local-rest-persistency-proxy-with-local-in-memory-persistency":
+        elif topology == "docker-rest-pxy-mem":
             print(" [CLI + SDK (rest proxy: true)] ---> [API Container (db_type: memory, memory: true)] ")
             print("                                      (Postgres Container is running but not used for persistency)")
         print("-----------------------------\n")

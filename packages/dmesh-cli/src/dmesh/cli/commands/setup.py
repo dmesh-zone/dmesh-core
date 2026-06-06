@@ -12,11 +12,9 @@ from dmesh.cli.setup.orchestrator import SetupOrchestrator
 from enum import Enum
 
 class TopologyChoice(str, Enum):
-    local_postgres_persistency = "local-postgres-persistency"
-    local_rest_persistency_proxy_with_local_postgres_persistency = "local-rest-persistency-proxy-with-local-postgres-persistency"
-    local_rest_persistency_proxy_with_local_in_memory_persistency = "local-rest-persistency-proxy-with-local-in-memory-persistency"
-    rest_pxy_local_postgres = "rest-pxy-local-postgres"
-    rest_pxy_local_mem = "rest-pxy-local-mem"
+    docker_postgres = "docker-postgres"
+    docker_rest_pxy_postgres = "docker-rest-pxy-postgres"
+    docker_rest_pxy_mem = "docker-rest-pxy-mem"
 
 app = typer.Typer()
 
@@ -25,7 +23,7 @@ app = typer.Typer()
 def setup(
     flush: bool = typer.Option(False, "--flush", help="Delete all data products after initialisation."),
     rebuild: bool = typer.Option(False, "--rebuild/--no-rebuild", help="Rebuild docker-compose."),
-    topology: TopologyChoice = typer.Option(TopologyChoice.local_postgres_persistency, "--topology", help="Setup topology to use.")
+    topology: TopologyChoice = typer.Option(TopologyChoice.docker_postgres, "--topology", help="Setup topology to use.")
 ) -> None:
     """Setup the data mesh environment."""
     feedback = ConsoleFeedback()
