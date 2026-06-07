@@ -67,37 +67,74 @@ Authenticate to your workspace:
 We strongly recommend using **OAuth (User-to-Machine)** rather than a Personal Access Token (PAT) to ensure you have the correct workspace permissions for file syncing.
 
 ```bash
+# First, create a .env file with your variables if you haven't already
+export DATABRICKS_WORKSPACE_URL="https://<your-databricks-workspace-url>"
 # Login via browser (recommended)
-databricks auth login --host https://<your-databricks-workspace-url>
+databricks auth login --host $DATABRICKS_WORKSPACE_URL
 ```
 > [!NOTE]
 > The `auth login` command will output a profile name when successful (e.g., `Profile dbc-XXXX was successfully saved`). Note this profile name, as you'll need to append `--profile <your-profile-name>` to subsequent commands if it differs from your default profile.
 
 ### Deployment
 
-Databricks Apps deployment requires syncing your local source code to a Databricks Workspace folder before deploying.
+To streamline the deployment process, we have provided an automated deployment script `deploy-api-as-databricks-app.sh`.
 
-Once your dependencies are resolvable and the CLI is ready, follow these steps to deploy:
+### Prerequisites
 
+Ensure the following variables are set in your `.env` file within the `dmesh-api` directory:
 ```bash
-# First, create a .env file with your variables if you haven't already
-# DATABRICKS_EMAIL="your-databricks-email"
-# DB_PROFILE="<your-databricks-profile>"
-
-# Load variables from the .env file
-source .env
-
-# 1. Create the app entity in Databricks (only needed the first time)
-databricks apps create dmesh-api --profile $DB_PROFILE
-
-# 2. Sync your local files to a folder in your Databricks workspace
-# We use --include flags to ensure requirements and wheels are not ignored by .gitignore
-databricks sync . /Workspace/Users/$DATABRICKS_EMAIL/dmesh-api --profile $DB_PROFILE \
-  --include "/requirements.txt" \
-  --include "/wheels/**"
-
-# 3. Deploy the source code from that workspace path
-databricks apps deploy dmesh-api --source-code-path /Workspace/Users/$DATABRICKS_EMAIL/dmesh-api --profile $DB_PROFILE
+DATABRICKS_EMAIL="your-databricks-email"
+DB_PROFILE="<your-databricks-profile>"
 ```
 
-Alternatively, if you use **Databricks Asset Bundles (DABs)**, you can integrate this into your existing `databricks.yml` instead of deploying manually.
+### Deploying
+
+Simply execute the deployment script. It will automatically build the `dmesh-sdk` wheel, copy it to the `dmesh-api` workspace, sync the files to Databricks, and trigger the App deployment.
+
+```bash
+./deploy-api-as-databricks-app.sh
+```
+
+## Troubleshooting
+
+### `401 Unauthorized` on Programmatic Access (Service Principals)
+
+If you have deployed the Databricks App but programmatic requests via your Service Principal are returning `401 Unauthorized`, it is highly likely that the Service Principal has not been properly granted the `CAN_USE` permission on the Databricks App itself.
+
+The Databricks UI can sometimes be misleading. It's best to verify and grant permissions using the Databricks CLI.
+
+#### 1. Check Current Permissions
+
+You can view the actual Access Control List (ACL) for the app using the `get-permissions` command.
+
+```bash
+# Verify the current permissions on the dmesh-api app
+databricks apps get-permissions dmesh-api --profile <your-databricks-profile>
+```
+
+If your Service Principal's UUID (e.g., `967ff765-514c-4024-8758-ae5087507412`) is not listed in the JSON response under `access_control_list`, it does not have permission to call the app.
+
+#### 2. Grant `CAN_USE` to the Service Principal
+
+To explicitly grant the `CAN_USE` permission to a Service Principal, you must use the `update-permissions` command with a JSON payload.
+
+1. Create a file named `update_perms.json` containing the permission update for your Service Principal's UUID:
+
+```json
+{
+  "access_control_list": [
+    {
+      "service_principal_name": "<YOUR-SERVICE-PRINCIPAL-UUID>",
+      "permission_level": "CAN_USE"
+    }
+  ]
+}
+```
+
+2. Apply the permissions:
+
+```bash
+databricks apps update-permissions dmesh-api --json @update_perms.json --profile <your-databricks-profile>
+```
+
+3. Wait 1-2 minutes for the permissions to propagate across the Databricks infrastructure, then test your programmatic access again. You can safely delete `update_perms.json` once done.

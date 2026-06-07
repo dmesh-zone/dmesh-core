@@ -4,6 +4,26 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.6.0] - 2026-06-07
+
+### ✨ Highlights
+This release introduces configurable setup topologies, optional REST proxy persistency, and logging enhancements.
+
+### ⚙️ SDK & Core Logic
+- **REST proxy persistency**: Added support for REST as a persistency proxy, supporting local as well as Databricks apps using M2M authentication.
+  - Requires setting `sdk.rest_persistency_proxy=true`, `sdk.rest_persistency_proxy_url`, and `sdk.rest_persistency_proxy_uses_databricks_m2m=true` (or their `DMESH_SDK__` environment variable equivalents), alongside standard Databricks credentials.
+- **Business Name Propagation**: Propagate `dataProductBusinessName` in SDK 
+- **Data Source Injection**: Data source technology injection using `dataSourceTechnology`.
+- **Data Source Suppression**: Added `dataSourceSuppressed` data product config.
+
+### 🏛️ Database & Schema Security
+- **Schema Usage**: Fixed `dmesh` schema not being used. Database tables now under `dmesh` schema and `dp_version` no longer a column of `data_products`.
+
+### 🛠️ Developer Experience (DX) & Chores
+- **Logging**: Enhancements to logging.
+
+---
+
 ## 🚀 [v0.5.0] - 2026-05-27
 
 ### ✨ Highlights

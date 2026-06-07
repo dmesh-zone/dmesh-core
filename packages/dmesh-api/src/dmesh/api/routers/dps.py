@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from dmesh.sdk import create_dp, update_dp, get_dp, list_dps, delete_dp
 from dmesh.api.dependencies import get_dp_repo
 from dmesh.sdk.ports.repository import DataProductRepository
@@ -10,7 +10,10 @@ router = APIRouter(tags=["Data Products"])
 @router.post("/dp", status_code=201, include_in_schema=False)
 @router.post("/data-products", status_code=201, include_in_schema=False)
 @router.post("/data-product", status_code=201, include_in_schema=False)
-async def create_data_product(spec: dict, repo: DataProductRepository = Depends(get_dp_repo)):
+async def create_data_product(
+    spec: dict = Body(..., examples=[{"name": "foo"}]),
+    repo: DataProductRepository = Depends(get_dp_repo)
+):
     try:
         return await create_dp(repo, spec)
     except Exception as e:

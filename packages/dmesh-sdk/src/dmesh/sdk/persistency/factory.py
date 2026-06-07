@@ -68,9 +68,10 @@ class RepositoryFactory:
             logger.info("Using rest persistency")
             base_path = getattr(settings.api, "base_path", "dmesh").strip("/")
             api_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000").rstrip("/")
+            use_m2m = getattr(settings.sdk, "rest_persistency_proxy_uses_databricks_m2m", False)
             if base_path:
                 api_url = f"{api_url}/{base_path}"
-            return HttpRepositoryFactory(api_url)
+            return HttpRepositoryFactory(api_url, use_m2m=use_m2m)
 
         return self.create(
             db_type=db_type,

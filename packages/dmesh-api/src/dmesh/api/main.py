@@ -52,7 +52,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    _BASE = os.environ.get("WS_BASE_PATH", "dmesh").strip("/") or "dmesh"
+    from dmesh.sdk.config import get_settings
+    _BASE = get_settings().api.base_path.strip("/")
     
     @app.middleware("http")
     async def log_requests(request: Request, call_next):

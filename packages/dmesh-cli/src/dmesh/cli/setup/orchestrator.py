@@ -17,21 +17,39 @@ class SetupOrchestrator:
         """Execute the initialisation sequence."""
         self._feedback.step("Initializing local data mesh environment...")
         
+        if topology == "databricks-rest-pxy":
+            missing = []
+            for var in ["DATABRICKS_HOST", "DATABRICKS_CLIENT_ID", "DATABRICKS_CLIENT_SECRET", "DMESH_SDK__REST_PERSISTENCY_URL"]:
+                if not os.getenv(var):
+                    missing.append(var)
+            if missing:
+                raise ValueError(f"Missing required environment variables in .env for databricks-rest-pxy: {', '.join(missing)}")
+
         # Check if running in test mode (pytest)
         is_test = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         
         use_rest_proxy = topology in (
             "docker-rest-pxy-postgres",
-            "docker-rest-pxy-mem"
+            "docker-rest-pxy-mem",
+            "databricks-rest-pxy"
         )
+        use_databricks_m2m = topology == "databricks-rest-pxy"
         api_in_memory = topology == "docker-rest-pxy-mem"
+        
+        if topology == "databricks-rest-pxy":
+            rest_url = os.getenv('DMESH_SDK__REST_PERSISTENCY_URL') or os.getenv('DMESH_SDK__REST_PERSISTENCY_PROXY_URL')
+            if not rest_url:
+                raise ValueError("Missing DMESH_SDK__REST_PERSISTENCY_URL environment variable for databricks-rest-pxy topology")
+        else:
+            rest_url = "http://0.0.0.0:8000"
 
-        cli_config_str = f"CLI SDK config:\n - rest_persistency_proxy: {use_rest_proxy}\n - rest_persistency_proxy_url: http://0.0.0.0:8000"
+        cli_config_str = f"CLI SDK config:\n - rest_persistency_proxy: {use_rest_proxy}\n - rest_persistency_proxy_uses_databricks_m2m: {use_databricks_m2m}\n - rest_persistency_proxy_url: {rest_url}"
         api_config_str = f"API Container config:\n - DMESH_SDK__IN_MEMORY_PERSISTENCY: {str(api_in_memory).lower()}\n - DB_TYPE: {'memory' if api_in_memory else 'postgres'}"
         
         print("\n--- Setup Topology ---")
         print(cli_config_str)
-        print(api_config_str)
+        if topology != "databricks-rest-pxy":
+            print(api_config_str)
 
         if not is_test:
             # Start infrastructure via docker-compose
@@ -62,7 +80,9 @@ class SetupOrchestrator:
                 user=os.getenv('DB_USER', 'postgres'),
                 password=os.getenv('DB_PASSWORD', 'postgres'),
                 dbname=os.getenv('DB_NAME', 'postgres'),
-                rest_persistency_proxy=use_rest_proxy
+                rest_persistency_proxy=use_rest_proxy,
+                rest_persistency_proxy_uses_databricks_m2m=use_databricks_m2m,
+                rest_persistency_proxy_url=rest_url
             )
 
         if is_test:
@@ -73,7 +93,9 @@ class SetupOrchestrator:
             if use_rest_proxy:
                 self._feedback.step("Initializing REST Proxy repository...")
                 from dmesh.sdk.persistency.rest import HttpRepositoryFactory
-                factory = HttpRepositoryFactory("http://localhost:8000/dmesh")
+                # For local docker topologies that don't specify an env URL, we fallback to localhost for the CLI
+                cli_api_url = f"{rest_url.rstrip('/')}/dmesh" if rest_url != "http://0.0.0.0:8000" else "http://localhost:8000/dmesh"
+                factory = HttpRepositoryFactory(cli_api_url, use_m2m=use_databricks_m2m)
             else:
                 self._feedback.step("Initializing Postgres database...")
                 factory = RepositoryFactory().create(
@@ -112,10 +134,13 @@ class SetupOrchestrator:
         elif topology == "docker-rest-pxy-mem":
             print(" [CLI + SDK (rest proxy: true)] ---> [API Container (db_type: memory, memory: true)] ")
             print("                                      (Postgres Container is running but not used for persistency)")
+        elif topology == "databricks-rest-pxy":
+            print(" [CLI + SDK (rest proxy: true, m2m: true)] ---> [Databricks App] ")
         print("-----------------------------\n")
 
         # Invalidate cached settings so subsequent commands in the same REPL session reload the new config
         import dmesh.sdk.config
         dmesh.sdk.config._settings = None
 
-        print('Run "docker-compose logs -f api" to inspect api behavior\n')
+        if topology != "databricks-rest-pxy":
+            print('Run "docker-compose logs -f api" to inspect api behavior\n')

@@ -216,6 +216,11 @@ ID                                    DOMAIN                NAME                
 uv run dmesh setup
 ```
 
+You can optionally specify a topology when setting up the environment. For example, to connect to a remote Databricks App backend using M2M authentication:
+```bash
+uv run dmesh setup --topology databricks-rest-pxy
+```
+
 **Force a clean environment (teardown + setup):**
 ```bash
 uv run dmesh reset
@@ -391,6 +396,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `in_memory_persistency` | `DMESH_SDK__IN_MEMORY_PERSISTENCY` | `false` | Enable in-memory persistency instead of PostgreSQL |
 | `rest_persistency_proxy` | `DMESH_SDK__REST_PERSISTENCY_PROXY` | `false` | Toggle to use the API as a backend instead of direct DB access |
 | `rest_persistency_proxy_url` | `DMESH_SDK__REST_PERSISTENCY_PROXY_URL` | `"http://0.0.0.0:8000"` | Base URL of the API for SDK interactions |
+| `rest_persistency_proxy_uses_databricks_m2m` | `DMESH_SDK__REST_PERSISTENCY_PROXY_USES_DATABRICKS_M2M` | `false` | Enable Databricks M2M token generation for the REST persistency proxy requests. Requires standard Databricks env vars (e.g., `DATABRICKS_HOST`, `DATABRICKS_CLIENT_ID`, `DATABRICKS_CLIENT_SECRET`). |
 | `single_data_contract_per_product` | `DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT` | `true` | Restrict to one data contract per data product |
 | `dua_start_date_default` | `DMESH_SDK__DUA_START_DATE_DEFAULT` | `"2026-01-01"` | Default start date for Data Usage Agreements |
 | `dua_purpose_default` | `DMESH_SDK__DUA_PURPOSE_DEFAULT` | `"Unknown purpose"` | Default purpose for Data Usage Agreements |
@@ -400,7 +406,6 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `enrich_output_ports` | `DMESH_SDK__ENRICH_OUTPUT_PORTS` | `true` | Enable enrichment of output ports |
 | `auto_data_source_dp_creation_upon_source_aligned_dp_creation` | `DMESH_SDK__AUTO_DATA_SOURCE_DP_CREATION_UPON_SOURCE_ALIGNED_DP_CREATION` | `true` | Auto-create Data Source DP for Source Aligned DPs |
 | `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Automatically assign data product IDs to new data contracts |
-| `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Auto-populate `dataProductId` in Data Contracts |
 
 ---
 

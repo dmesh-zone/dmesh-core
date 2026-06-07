@@ -74,6 +74,7 @@ class SdkSettings(BaseModel):
     in_memory_persistency: bool = False
     rest_persistency_proxy: bool = False
     rest_persistency_proxy_url: str = "http://0.0.0.0:8000"
+    rest_persistency_proxy_uses_databricks_m2m: bool = False
     single_data_contract_per_product: bool = True
     dua_start_date_default: str = "2026-01-01"
     dua_purpose_default: str = "Unknown purpose"

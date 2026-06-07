@@ -1,5 +1,8 @@
 import sys
 import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
 
 if sys.platform == 'win32':
     # On Windows, psycopg3 (and some other libs) require the SelectorEventLoop

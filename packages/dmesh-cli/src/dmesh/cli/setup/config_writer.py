@@ -53,6 +53,8 @@ name = "{pg.get('dbname', 'postgres')}"
 
 [sdk]
 rest_persistency_proxy = {"true" if sdk.get('rest_persistency_proxy') else "false"}
+rest_persistency_proxy_uses_databricks_m2m = {"true" if sdk.get('rest_persistency_proxy_uses_databricks_m2m') else "false"}
+rest_persistency_proxy_url = "{sdk.get('rest_persistency_proxy_url', 'http://0.0.0.0:8000')}"
 """
             PROJECT_CONFIG_PATH.write_text(toml_content)
         except OSError:
@@ -63,7 +65,7 @@ rest_persistency_proxy = {"true" if sdk.get('rest_persistency_proxy') else "fals
         """Write ws config."""
         self.write({"ws": {"base_url": ws_base_url}})
 
-    def write_pg(self, host, port, user, password, dbname, rest_persistency_proxy: bool = False) -> None:
+    def write_pg(self, host, port, user, password, dbname, rest_persistency_proxy: bool = False, rest_persistency_proxy_uses_databricks_m2m: bool = False, rest_persistency_proxy_url: str = "http://0.0.0.0:8000") -> None:
         """Write Postgres config."""
         self.write({
             "postgres": {
@@ -74,6 +76,8 @@ rest_persistency_proxy = {"true" if sdk.get('rest_persistency_proxy') else "fals
                 "dbname": dbname
             },
             "sdk": {
-                "rest_persistency_proxy": rest_persistency_proxy
+                "rest_persistency_proxy": rest_persistency_proxy,
+                "rest_persistency_proxy_uses_databricks_m2m": rest_persistency_proxy_uses_databricks_m2m,
+                "rest_persistency_proxy_url": rest_persistency_proxy_url
             }
         })
