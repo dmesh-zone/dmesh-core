@@ -7,7 +7,7 @@ import asyncio
 import typer
 import yaml
 
-from dmesh.cli.put.errors import DmPutError, ConfigMalformedError, ConfigNotFoundError
+from dmesh.cli.put.errors import DmPutError
 from dmesh.cli.put.errors import FileNotFoundError as DmFileNotFoundError
 from dmesh.cli.put.errors import YamlParseError
 from dmesh.cli.put.history import record_dp, record_dc

@@ -4,7 +4,7 @@ from typing import Optional
 
 import yaml
 
-HISTORY_PATH = Path.home() / ".dm" / "history.yaml"
+HISTORY_PATH = Path.home() / ".dmesh" / "history.yaml"
 
 
 def record_dp(dp_id: str, domain: str, name: str, version: str) -> None:

@@ -22,11 +22,7 @@ RUN uv pip install . --system
 EXPOSE 8000
 
 ENV DB_TYPE=postgres
-ENV DB_HOST=localhost
-ENV DB_PORT=5432
-ENV DB_USER=postgres
-ENV DB_PASSWORD=postgres
-ENV DB_NAME=postgres
+
 ENV WS_BASE_PATH=dmesh
 
 CMD ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

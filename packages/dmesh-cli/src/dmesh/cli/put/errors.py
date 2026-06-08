@@ -5,12 +5,7 @@ class DmPutError(Exception):
     """Base exception for dm put errors."""
 
 
-class ConfigNotFoundError(DmPutError):
-    """~/.dm/config.yaml does not exist."""
 
-
-class ConfigMalformedError(DmPutError):
-    """~/.dm/config.yaml exists but ws.base_url is absent or blank."""
 
 
 class FileNotFoundError(DmPutError):

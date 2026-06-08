@@ -24,11 +24,11 @@ import os
 WS_BASE_PATH = os.environ.get("WS_BASE_PATH", "dmesh").strip("/")  # default base path — configurable via WS_BASE_PATH env var
 
 WS_ENVIRONMENT = {
-    "DB_HOST": "dmesh-db",
-    "DB_PORT": "5432",
-    "DB_USER": "postgres",
-    "DB_PASSWORD": "postgres",
-    "DB_NAME": "postgres",
+    "DMESH_DB__HOST": "dmesh-db",
+    "DMESH_DB__PORT": "5432",
+    "DMESH_DB__USER": "postgres",
+    "DMESH_DB__PASSWORD": "postgres",
+    "DMESH_DB__NAME": "postgres",
     "WS_BASE_PATH": WS_BASE_PATH,
 }
 

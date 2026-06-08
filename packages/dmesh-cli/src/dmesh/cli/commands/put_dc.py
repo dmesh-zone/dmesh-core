@@ -6,8 +6,8 @@ import httpx
 import typer
 import yaml
 
-from dmesh.cli.put.config_reader import ConfigReader
-from dmesh.cli.put.errors import ConfigMalformedError, ConfigNotFoundError, DmPutError
+from dmesh.cli.put.errors import DmPutError
+from dmesh.sdk.config import get_settings
 from dmesh.cli.put.errors import FileNotFoundError as DmFileNotFoundError
 from dmesh.cli.put.errors import YamlParseError
 
@@ -50,8 +50,11 @@ def put_dc(
     """Create or update a data contract YAML file in the data mesh."""
     try:
         dc_spec = _read_yaml(path)
-        config = ConfigReader().read()
-        ws = config.ws_base_url
+        settings = get_settings()
+        rest_url = settings.sdk.rest_persistency_proxy_url
+        ws = f"{rest_url.rstrip('/')}/{settings.api.base_path.strip('/')}"
+        if rest_url == "http://0.0.0.0:8000":
+            ws = f"http://localhost:8000/{settings.api.base_path.strip('/')}"
 
         dc_id = dc_spec.get("id")
 
@@ -105,8 +108,5 @@ def put_dc(
         typer.echo(resp.json().get("id", ""))
 
     except (DmPutError, DmFileNotFoundError, YamlParseError) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1)
-    except (ConfigNotFoundError, ConfigMalformedError) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)

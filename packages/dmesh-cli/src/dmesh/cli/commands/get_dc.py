@@ -5,22 +5,22 @@ import httpx
 import typer
 import yaml
 
-from dmesh.cli.put.config_reader import ConfigReader
-from dmesh.cli.put.errors import ConfigMalformedError, ConfigNotFoundError, DmPutError
+from dmesh.cli.put.errors import DmPutError
+from dmesh.sdk.config import get_settings
 
 
 def get_dc(
     dc_id: str = typer.Argument(..., help="Data contract ID."),
 ) -> None:
     """Fetch a data contract by ID and write it to a YAML file."""
-    try:
-        config = ConfigReader().read()
-    except (ConfigNotFoundError, ConfigMalformedError) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1)
+    settings = get_settings()
+    rest_url = settings.sdk.rest_persistency_proxy_url
+    ws = f"{rest_url.rstrip('/')}/{settings.api.base_path.strip('/')}"
+    if rest_url == "http://0.0.0.0:8000":
+        ws = f"http://localhost:8000/{settings.api.base_path.strip('/')}"
 
     try:
-        resp = httpx.get(f"{config.ws_base_url}/dcs/{dc_id}", timeout=30)
+        resp = httpx.get(f"{ws}/dcs/{dc_id}", timeout=30)
     except httpx.RequestError as e:
         typer.echo(f"Error: WS layer is unreachable: {e}", err=True)
         raise typer.Exit(code=1)

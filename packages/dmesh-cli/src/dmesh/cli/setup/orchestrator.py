@@ -3,10 +3,11 @@
 import os
 import sys
 from pathlib import Path
-from dmesh.cli.setup.config_writer import ConfigWriter, CONFIG_PATH
+from dmesh.cli.setup.config_writer import ConfigWriter, PROJECT_CONFIG_PATH
 from dmesh.cli.setup.feedback import Feedback
 from dmesh.sdk import AsyncSDK
 from dmesh.sdk.persistency.factory import RepositoryFactory
+from dmesh.sdk.config import get_settings
 
 
 class SetupOrchestrator:
@@ -71,15 +72,15 @@ class SetupOrchestrator:
                 raise Exception("Docker Compose failed") from e
 
         # Ensure config directory exists
-        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        PROJECT_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
         
         if not is_test:
             ConfigWriter(self._feedback).write_pg(
-                host=os.getenv('DB_HOST', 'localhost'),
-                port=int(os.getenv('DB_PORT', '5432')),
-                user=os.getenv('DB_USER', 'postgres'),
-                password=os.getenv('DB_PASSWORD', 'postgres'),
-                dbname=os.getenv('DB_NAME', 'postgres'),
+                host=os.getenv('DMESH_DB__HOST', 'localhost'),
+                port=int(os.getenv('DMESH_DB__PORT', '5432')),
+                user=os.getenv('DMESH_DB__USER', 'postgres'),
+                password=os.getenv('DMESH_DB__PASSWORD', 'postgres'),
+                dbname=os.getenv('DMESH_DB__NAME', 'postgres'),
                 rest_persistency_proxy=use_rest_proxy,
                 rest_persistency_proxy_uses_databricks_m2m=use_databricks_m2m,
                 rest_persistency_proxy_url=rest_url
@@ -98,13 +99,14 @@ class SetupOrchestrator:
                 factory = HttpRepositoryFactory(cli_api_url, use_m2m=use_databricks_m2m)
             else:
                 self._feedback.step("Initializing Postgres database...")
+                settings = get_settings()
                 factory = RepositoryFactory().create(
                     db_type="postgres",
-                    pg_host=os.getenv('DB_HOST', 'localhost'),
-                    pg_port=int(os.getenv('DB_PORT', '5432')),
-                    pg_user=os.getenv('DB_USER', 'postgres'),
-                    pg_password=os.getenv('DB_PASSWORD', 'postgres'),
-                    pg_db=os.getenv('DB_NAME', 'postgres')
+                    pg_host=settings.db.host,
+                    pg_port=settings.db.port,
+                    pg_user=settings.db.user,
+                    pg_password=settings.db.password,
+                    pg_db=settings.db.name
                 )
         
         async with AsyncSDK(factory) as sdk:

@@ -23,11 +23,6 @@ services:
       dockerfile: packages/dmesh-api/Dockerfile
     environment:
       DB_TYPE: ${DB_TYPE:-postgres}
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: postgres
       WS_BASE_PATH: dmesh
       DMESH_DB__HOST: db
       DMESH_DB__PORT: 5432
@@ -59,11 +54,6 @@ services:
       DMESH_DB__PASSWORD: postgres
       DMESH_DB__NAME: postgres
       DMESH_SDK__REST_PERSISTENCY_PROXY_URL: http://api:8000
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: postgres
     depends_on:
       db:
         condition: service_healthy
