@@ -130,6 +130,7 @@ async def _generate_testdata(spec: str):
                     })
                 
                 dp_obj = await sdk.put_data_product(dp_spec, include_metadata=True)
+                dp_id_str = str(dp_obj.id) if not isinstance(dp_obj, dict) else str(dp_obj.get("id"))
                 
                 dc_tasks = []
                 for schema_name in info["schemas"]:
@@ -153,12 +154,12 @@ async def _generate_testdata(spec: str):
                             }
                         ]
                     }
-                    dc_tasks.append(sdk.put_data_contract(dc_spec, dp_id=str(dp_obj.id)))
+                    dc_tasks.append(sdk.put_data_contract(dc_spec, dp_id=dp_id_str))
                 
                 if dc_tasks:
                     await asyncio.gather(*dc_tasks)
                     
-                return name, str(dp_obj.id)
+                return name, dp_id_str
                 
         dp_tasks = [create_dp(name, info) for name, info in dps_info.items()]
         results = await asyncio.gather(*dp_tasks)
