@@ -4,6 +4,20 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.6.1] - 2026-06-09
+
+### ✨ Highlights
+This release focuses on massive performance improvements and concurrency bug fixes for the SDK and CLI tools, particularly when interacting with remote Databricks Apps.
+
+### ⚙️ SDK & Core Logic
+- **HTTP Connection Pooling**: Refactored the HTTP REST proxy repository to utilize a single shared `httpx.AsyncClient` with custom limits (`max_keepalive_connections=20`, `max_connections=100`). This completely resolves "TCP connection exhaustion" errors during high-throughput workloads.
+
+### 🖥️ CLI Enhancements & DX
+- **Parallel Test Data Generation**: Overhauled the `dmesh testdata` command. It now uses asynchronous gathering and a concurrency semaphore (up to 20 concurrent requests) to parallelize Data Product, Contract creation. This results in a >10x speedup when inserting large mock workloads.
+- **Type Safety**: Addressed type-safety and linting issues around SDK return signatures, guaranteeing safer ID extraction when interacting with the REST proxy.
+
+---
+
 ## 🚀 [v0.6.0] - 2026-06-07
 
 ### ✨ Highlights
