@@ -30,3 +30,4 @@ test_required_secrets.py
 
 # API packaging
 packages/dmesh-api/requirements.txt
+packages/dmesh-api/update_perms.json

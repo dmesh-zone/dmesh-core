@@ -134,7 +134,7 @@ To explicitly grant the `CAN_USE` permission to a Service Principal, you must us
 2. Apply the permissions:
 
 ```bash
-databricks apps update-permissions dmesh-api --json @update_perms.json --profile <your-databricks-profile>
+databricks apps update-permissions dmesh-api --json @update_perms.json --profile $DB_PROFILE
 ```
 
 3. Wait 1-2 minutes for the permissions to propagate across the Databricks infrastructure, then test your programmatic access again. You can safely delete `update_perms.json` once done.

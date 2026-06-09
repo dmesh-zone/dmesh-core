@@ -104,82 +104,93 @@ async def _generate_testdata(spec: str):
     
     async with get_service() as sdk:
         dp_id_map = {} # name -> id
+        semaphore = asyncio.Semaphore(20)
         
-        # Step 1: Create Data Products
-        for name, info in dps_info.items():
-            typer.echo(f"Creating Data Product: {info['domain']}.{name} ({info['tier']})")
-            
-            dp_spec = {
-                "domain": info["domain"],
-                "name": name,
-                "customProperties": [
-                    {"property": "dataProductTier", "value": info["tier"]}
-                ],
-                "outputPorts": []
-            }
-            
-            # Add other attributes to customProperties
-            for k, v in info["attributes"].items():
-                if k != "dataProductTier":
-                    dp_spec["customProperties"].append({"property": k, "value": v})
-            
-            # Add output ports
-            for schema_name in info["schemas"]:
-                dp_spec["outputPorts"].append({
-                    "name": schema_name,
-                    "version": "v1"
-                })
-            
-            dp_obj = await sdk.put_data_product(dp_spec, include_metadata=True)
-            dp_id_map[name] = str(dp_obj.id)
-            
-            # Step 2: Create Data Contracts
-            for schema_name in info["schemas"]:
-                s_info = schemas_info.get(schema_name)
-                if not s_info: continue
+        async def create_dp(name, info):
+            async with semaphore:
+                typer.echo(f"Creating Data Product: {info['domain']}.{name} ({info['tier']})")
                 
-                typer.echo(f"  Creating Data Contract for schema: {schema_name}")
-                dc_spec = {
-                    "schema": [
-                        {
-                            "name": schema_name,
-                            "physicalName": schema_name,
-                            "physicalType": "table",
-                            "properties": [
-                                {
-                                    "name": p["name"],
-                                    "physicalName": p["name"],
-                                    "logicalType": p["type"]
-                                } for p in s_info["properties"]
-                            ]
-                        }
-                    ]
+                dp_spec = {
+                    "domain": info["domain"],
+                    "name": name,
+                    "customProperties": [
+                        {"property": "dataProductTier", "value": info["tier"]}
+                    ],
+                    "outputPorts": []
                 }
-                await sdk.put_data_contract(dc_spec, dp_id=str(dp_obj.id))
-
-        # Step 3: Create Data Usage Agreements (consumption)
-        for u, v, t in edges:
-            if t == "provides":
-                # u provides to v. u is producer, v is consumer.
-                prod_id = dp_id_map.get(u)
-                cons_id = dp_id_map.get(v)
                 
-                if prod_id and cons_id:
-                    typer.echo(f"Creating edge: {u} -> {v}")
-                    patch_spec = {
-                        "customProperties": [
+                for k, v in info["attributes"].items():
+                    if k != "dataProductTier":
+                        dp_spec["customProperties"].append({"property": k, "value": v})
+                
+                for schema_name in info["schemas"]:
+                    dp_spec["outputPorts"].append({
+                        "name": schema_name,
+                        "version": "v1"
+                    })
+                
+                dp_obj = await sdk.put_data_product(dp_spec, include_metadata=True)
+                
+                dc_tasks = []
+                for schema_name in info["schemas"]:
+                    s_info = schemas_info.get(schema_name)
+                    if not s_info: continue
+                    
+                    typer.echo(f"  Creating Data Contract for schema: {schema_name}")
+                    dc_spec = {
+                        "schema": [
                             {
-                                "property": "dataUsageAgreements",
-                                "value": [
+                                "name": schema_name,
+                                "physicalName": schema_name,
+                                "physicalType": "table",
+                                "properties": [
                                     {
-                                        "info": {"active": True},
-                                        "consumer": {"dataProductId": cons_id}
-                                    }
+                                        "name": p["name"],
+                                        "physicalName": p["name"],
+                                        "logicalType": p["type"]
+                                    } for p in s_info["properties"]
                                 ]
                             }
                         ]
                     }
-                    await sdk.patch_data_product(patch_spec, id=prod_id)
+                    dc_tasks.append(sdk.put_data_contract(dc_spec, dp_id=str(dp_obj.id)))
+                
+                if dc_tasks:
+                    await asyncio.gather(*dc_tasks)
+                    
+                return name, str(dp_obj.id)
+                
+        dp_tasks = [create_dp(name, info) for name, info in dps_info.items()]
+        results = await asyncio.gather(*dp_tasks)
+        for name, dp_id in results:
+            dp_id_map[name] = dp_id
+
+        async def create_edge(u, v, t):
+            if t == "provides":
+                prod_id = dp_id_map.get(u)
+                cons_id = dp_id_map.get(v)
+                
+                if prod_id and cons_id:
+                    async with semaphore:
+                        typer.echo(f"Creating edge: {u} -> {v}")
+                        patch_spec = {
+                            "customProperties": [
+                                {
+                                    "property": "dataUsageAgreements",
+                                    "value": [
+                                        {
+                                            "info": {"active": True},
+                                            "consumer": {"dataProductId": cons_id}
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                        await sdk.patch_data_product(patch_spec, id=prod_id)
+                        
+        edge_tasks = [create_edge(u, v, t) for u, v, t in edges]
+        if edge_tasks:
+            await asyncio.gather(*edge_tasks)
 
 @app.callback(invoke_without_command=True)
 def main(

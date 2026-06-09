@@ -11,7 +11,6 @@ from dmesh.sdk.ports.repository import DataProductRepository, DataContractReposi
 def _parse_datetime(dt_str: Optional[str]) -> Optional[datetime]:
     if not dt_str:
         return None
-    # Assuming ISO format with potential Z at the end
     try:
         return datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
     except Exception:
@@ -28,12 +27,20 @@ class AsyncHttpDataProductRepository:
     def __init__(self, api_url: str, use_m2m: bool = False):
         self.api_url = api_url.rstrip("/")
         self.use_m2m = use_m2m
+        self._dbx_config = None
+        
+        # Use a single shared client, increasing connection limits.
+        limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
+        self._client = httpx.AsyncClient(limits=limits)
+        
+        if self.use_m2m:
+            from databricks.sdk.core import Config
+            self._dbx_config = Config()
 
     def _get_headers(self) -> dict:
         headers = {"Accept": "application/json"}
-        if self.use_m2m:
-            from databricks.sdk.core import Config
-            auth_headers = Config().authenticate()
+        if self.use_m2m and self._dbx_config:
+            auth_headers = self._dbx_config.authenticate()
             if callable(auth_headers):
                 auth_headers = auth_headers()
             if isinstance(auth_headers, dict):
@@ -56,36 +63,33 @@ class AsyncHttpDataProductRepository:
             )
 
     async def get(self, id: UUID) -> Optional[DataProduct]:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.api_url}/dps/{id}?include_metadata=true", headers=self._get_headers())
-            if response.status_code == 404:
-                return None
-            response.raise_for_status()
-            return self._to_dp(response.json())
+        response = await self._client.get(f"{self.api_url}/dps/{id}?include_metadata=true", headers=self._get_headers())
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return self._to_dp(response.json())
 
     async def save(self, product: DataProduct) -> None:
-        async with httpx.AsyncClient() as client:
-            # We must serialize the UUIDs and Datetimes 
-            class APIEncoder(json.JSONEncoder):
-                def default(self, o):
-                    if isinstance(o, (UUID, datetime)):
-                        return str(o)
-                    return super().default(o)
+        class APIEncoder(json.JSONEncoder):
+            def default(self, o):
+                if isinstance(o, (UUID, datetime)):
+                    return str(o)
+                return super().default(o)
 
-            payload = json.loads(json.dumps(dataclasses.asdict(product), cls=APIEncoder))
-            
-            response = await client.put(
-                f"{self.api_url}/dps/{product.id}",
-                json=payload,
-                headers=self._get_headers()
-            )
-            response.raise_for_status()
-            
-            data = response.json()
-            if data.get("created_at"):
-                product.created_at = _parse_datetime(data["created_at"])
-            if data.get("updated_at"):
-                product.updated_at = _parse_datetime(data["updated_at"])
+        payload = json.loads(json.dumps(dataclasses.asdict(product), cls=APIEncoder))
+        
+        response = await self._client.put(
+            f"{self.api_url}/dps/{product.id}",
+            json=payload,
+            headers=self._get_headers()
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        if data.get("created_at"):
+            product.created_at = _parse_datetime(data["created_at"])
+        if data.get("updated_at"):
+            product.updated_at = _parse_datetime(data["updated_at"])
 
     async def list(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[DataProduct]:
         params = {"include_metadata": "true"}
@@ -94,36 +98,41 @@ class AsyncHttpDataProductRepository:
         if name:
             params["name"] = name
             
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.api_url}/dps", params=params, headers=self._get_headers())
-            response.raise_for_status()
-            data = response.json()
-            return [self._to_dp(item) for item in data]
+        response = await self._client.get(f"{self.api_url}/dps", params=params, headers=self._get_headers())
+        response.raise_for_status()
+        data = response.json()
+        return [self._to_dp(item) for item in data]
 
     async def delete(self, id: UUID) -> bool:
-        async with httpx.AsyncClient() as client:
-            response = await client.delete(f"{self.api_url}/dps/{id}", headers=self._get_headers())
-            if response.status_code == 404:
-                return False
-            response.raise_for_status()
-            return True
+        response = await self._client.delete(f"{self.api_url}/dps/{id}", headers=self._get_headers())
+        if response.status_code == 404:
+            return False
+        response.raise_for_status()
+        return True
 
     async def truncate(self) -> None:
-        async with httpx.AsyncClient() as client:
-            response = await client.delete(f"{self.api_url}/admin/truncate_dps", headers=self._get_headers())
-            response.raise_for_status()
+        response = await self._client.delete(f"{self.api_url}/admin/truncate_dps", headers=self._get_headers())
+        response.raise_for_status()
 
 
 class AsyncHttpDataContractRepository:
     def __init__(self, api_url: str, use_m2m: bool = False):
         self.api_url = api_url.rstrip("/")
         self.use_m2m = use_m2m
+        self._dbx_config = None
+        
+        # Use a single shared client, increasing connection limits.
+        limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
+        self._client = httpx.AsyncClient(limits=limits)
+        
+        if self.use_m2m:
+            from databricks.sdk.core import Config
+            self._dbx_config = Config()
 
     def _get_headers(self) -> dict:
         headers = {"Accept": "application/json"}
-        if self.use_m2m:
-            from databricks.sdk.core import Config
-            auth_headers = Config().authenticate()
+        if self.use_m2m and self._dbx_config:
+            auth_headers = self._dbx_config.authenticate()
             if callable(auth_headers):
                 auth_headers = auth_headers()
             if isinstance(auth_headers, dict):
@@ -147,59 +156,54 @@ class AsyncHttpDataContractRepository:
             )
 
     async def get(self, id: UUID) -> Optional[DataContract]:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.api_url}/dcs/{id}?include_metadata=true", headers=self._get_headers())
-            if response.status_code == 404:
-                return None
-            response.raise_for_status()
-            return self._to_dc(response.json())
+        response = await self._client.get(f"{self.api_url}/dcs/{id}?include_metadata=true", headers=self._get_headers())
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return self._to_dc(response.json())
 
     async def save(self, contract: DataContract) -> None:
-        async with httpx.AsyncClient() as client:
-            class APIEncoder(json.JSONEncoder):
-                def default(self, o):
-                    if isinstance(o, (UUID, datetime)):
-                        return str(o)
-                    return super().default(o)
+        class APIEncoder(json.JSONEncoder):
+            def default(self, o):
+                if isinstance(o, (UUID, datetime)):
+                    return str(o)
+                return super().default(o)
 
-            payload = json.loads(json.dumps(dataclasses.asdict(contract), cls=APIEncoder))
-            
-            response = await client.put(
-                f"{self.api_url}/dcs/{contract.id}",
-                json=payload,
-                headers=self._get_headers()
-            )
-            response.raise_for_status()
-            
-            data = response.json()
-            if data.get("created_at"):
-                contract.created_at = _parse_datetime(data["created_at"])
-            if data.get("updated_at"):
-                contract.updated_at = _parse_datetime(data["updated_at"])
+        payload = json.loads(json.dumps(dataclasses.asdict(contract), cls=APIEncoder))
+        
+        response = await self._client.put(
+            f"{self.api_url}/dcs/{contract.id}",
+            json=payload,
+            headers=self._get_headers()
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        if data.get("created_at"):
+            contract.created_at = _parse_datetime(data["created_at"])
+        if data.get("updated_at"):
+            contract.updated_at = _parse_datetime(data["updated_at"])
 
     async def list(self, dp_id: Optional[UUID] = None) -> List[DataContract]:
         params = {"include_metadata": "true"}
         if dp_id:
             params["dp_id"] = str(dp_id)
             
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.api_url}/dcs", params=params, headers=self._get_headers())
-            response.raise_for_status()
-            data = response.json()
-            return [self._to_dc(item) for item in data]
+        response = await self._client.get(f"{self.api_url}/dcs", params=params, headers=self._get_headers())
+        response.raise_for_status()
+        data = response.json()
+        return [self._to_dc(item) for item in data]
 
     async def delete(self, id: UUID) -> bool:
-        async with httpx.AsyncClient() as client:
-            response = await client.delete(f"{self.api_url}/dcs/{id}", headers=self._get_headers())
-            if response.status_code == 404:
-                return False
-            response.raise_for_status()
-            return True
+        response = await self._client.delete(f"{self.api_url}/dcs/{id}", headers=self._get_headers())
+        if response.status_code == 404:
+            return False
+        response.raise_for_status()
+        return True
 
     async def truncate(self) -> None:
-        async with httpx.AsyncClient() as client:
-            response = await client.delete(f"{self.api_url}/admin/truncate_dcs", headers=self._get_headers())
-            response.raise_for_status()
+        response = await self._client.delete(f"{self.api_url}/admin/truncate_dcs", headers=self._get_headers())
+        response.raise_for_status()
 
 
 class HttpRepositoryFactory:
