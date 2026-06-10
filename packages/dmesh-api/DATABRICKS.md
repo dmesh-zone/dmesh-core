@@ -4,12 +4,12 @@ To deploy the `dmesh-api` (which is a FastAPI application) as a Databricks App, 
 
 Here are the steps to get it deployed:
 
-## 1. Review the `app.yaml` Configuration File
+## 1. Review the Configuration Files
 
-The `app.yaml` file is already provided in the root of the `dmesh-api` package. This file tells Databricks what command to run to start your server. 
+The deployment configurations are provided in the root of the `dmesh-api` package. Depending on your target database, you will use either `app-mem.yaml` (for an in-memory database) or `app-lakebase.yaml` (for a lakebase database). These files tell Databricks what command to run to start your server and which environment variables to set.
 
 ```yaml
-# packages/dmesh-api/app.yaml
+# packages/dmesh-api/app-mem.yaml
 command:
   - "python"
   - "-m"
@@ -89,10 +89,14 @@ DB_PROFILE="<your-databricks-profile>"
 
 ### Deploying
 
-Simply execute the deployment script. It will automatically build the `dmesh-sdk` wheel, copy it to the `dmesh-api` workspace, sync the files to Databricks, and trigger the App deployment.
+Simply execute the deployment script with your desired target (`mem` or `lakebase`). It will automatically build the `dmesh-sdk` wheel, copy the appropriate configuration to `app.yaml`, sync the files to Databricks, and trigger the App deployment.
 
 ```bash
-./deploy-api-as-databricks-app.sh
+# To deploy with the in-memory database configuration
+./deploy-api-as-databricks-app.sh mem
+
+# To deploy with the lakebase configuration
+./deploy-api-as-databricks-app.sh lakebase
 ```
 
 ## Troubleshooting

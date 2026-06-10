@@ -11,6 +11,36 @@ set -e
 # Navigate to the directory of this script (dmesh-api)
 cd "$(dirname "$0")"
 
+# Process arguments
+if [ -z "$1" ]; then
+  echo "Usage: ./deploy-api-as-databricks-app.sh <target>"
+  echo "Targets:"
+  echo "  mem      - Deploy using the in-memory configuration (app-mem.yaml)"
+  echo "  lakebase - Deploy using the lakebase configuration (app-lakebase.yaml)"
+  exit 1
+fi
+
+DEPLOY_TARGET="$1"
+
+if [ "$DEPLOY_TARGET" != "mem" ] && [ "$DEPLOY_TARGET" != "lakebase" ]; then
+  echo "Error: Invalid deployment target '$DEPLOY_TARGET'. Must be 'mem' or 'lakebase'."
+  exit 1
+fi
+
+echo "=========================================="
+echo " Preparing deployment for target: $DEPLOY_TARGET"
+echo "=========================================="
+
+APP_YAML_FILE="app-${DEPLOY_TARGET}.yaml"
+
+if [ ! -f "$APP_YAML_FILE" ]; then
+  echo "Error: $APP_YAML_FILE not found in dmesh-api directory!"
+  exit 1
+fi
+
+# Copy the selected config to app.yaml so Databricks uses it
+cp "$APP_YAML_FILE" app.yaml
+
 if [ ! -f .env ]; then
   echo "Error: .env file not found in dmesh-api directory!"
   exit 1
@@ -47,3 +77,6 @@ echo "=========================================="
 databricks apps deploy dmesh-api --source-code-path "/Workspace/Users/$DATABRICKS_EMAIL/dmesh-api" --profile "$DB_PROFILE"
 
 echo "Deployment complete! You can view the status in the Databricks UI."
+
+# Clean up temporary config file
+rm -f app.yaml

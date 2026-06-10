@@ -7,7 +7,15 @@ from dmesh.cli.utils import get_service
 
 app = typer.Typer()
 
-SPEC_FILE = Path(__file__).parent / "testdata" / "testdata_finance_mermaid.md"
+TESTDATA_DIR = Path(__file__).parent / "testdata"
+SPEC_FILE = TESTDATA_DIR / "testdata_finance_mermaid.md"
+
+def get_available_files_text() -> str:
+    if TESTDATA_DIR.exists():
+        files = [f.name for f in TESTDATA_DIR.glob("*.md")]
+        if files:
+            return "Available testdata files in default directory:\n" + "\n".join(f"  - {f}" for f in files)
+    return "No testdata files found in default directory."
 
 def _strip_mermaid_markers(text: str) -> str:
     text = text.strip()
@@ -193,10 +201,10 @@ async def _generate_testdata(spec: str):
         if edge_tasks:
             await asyncio.gather(*edge_tasks)
 
-@app.callback(invoke_without_command=True)
+@app.callback(invoke_without_command=True, epilog=get_available_files_text())
 def main(
     ctx: typer.Context,
-    file: Optional[Path] = typer.Option(None, "--file", "-f", help="Path to a mermaid spec file."),
+    file: Optional[Path] = typer.Option(None, "--file", "-f", help="Path to a mermaid spec file. Can be a filename from the default testdata directory."),
 ):
     """Generate test data from a mermaid spec."""
     if ctx.invoked_subcommand:
@@ -205,8 +213,12 @@ def main(
     spec = get_default_spec()
     if file:
         if not file.exists():
-            typer.echo(f"Error: File {file} not found.", err=True)
-            raise typer.Exit(1)
+            testdata_file = TESTDATA_DIR / file.name
+            if testdata_file.exists():
+                file = testdata_file
+            else:
+                typer.echo(f"Error: File {file} not found.", err=True)
+                raise typer.Exit(1)
         spec = _strip_mermaid_markers(file.read_text())
     
     try:

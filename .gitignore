@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 test_venv/
+.test_venv/
 
 # project specific
 sandbox/
@@ -31,3 +32,4 @@ test_required_secrets.py
 # API packaging
 packages/dmesh-api/requirements.txt
 packages/dmesh-api/update_perms.json
+packages/dmesh-api/app.yaml

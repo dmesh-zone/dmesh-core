@@ -13,3 +13,5 @@ env:
     value: "src"
   - name: "DMESH_DB__PASSWORD"
     value: "dummy_password_for_memory"
+  - name: "WB_BASE_PATH"
+    value: "dmesh"

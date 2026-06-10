@@ -4,6 +4,19 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.7.0] - 2026-06-10
+
+### ✨ Highlights
+This release introduces support for deploying the API with a Lakebase/Postgres database backend on Databricks Apps, along with usability improvements to the CLI testdata generation tool.
+
+### 🖥️ CLI Enhancements & DX
+- **Testdata Discovery & Convenience**: The `dmesh testdata` command's help text now automatically lists the default test specification files available out-of-the-box. Additionally, the `--file` argument now seamlessly resolves plain filenames against the default `testdata` directory without requiring full absolute paths.
+
+### ☁️ Infrastructure & Deployment
+- **Databricks Apps Dual-Backend Support**: Upgraded the automated Databricks deployment script (`deploy-api-as-databricks-app.sh`) to support multiple target environments (`mem` and `lakebase`).
+- **Lakebase/Postgres Configurations**: Segmented the base `app.yaml` configuration into dedicated `app-mem.yaml` and `app-lakebase.yaml` manifests. The Lakebase manifest is configured to wire `postgres` as the `DB_TYPE` and inject database credentials directly from Databricks Apps secrets (e.g., `DB_HOST`, `DB_USER`, etc.).
+
+---
 ## 🚀 [v0.6.1] - 2026-06-09
 
 ### ✨ Highlights
