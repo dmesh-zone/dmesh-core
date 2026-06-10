@@ -24,3 +24,6 @@ CREATE TABLE IF NOT EXISTS dmesh.data_contracts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_data_contracts_data_product_id 
+    ON dmesh.data_contracts (data_product_id);
