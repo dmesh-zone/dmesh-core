@@ -83,7 +83,8 @@ class SetupOrchestrator:
                 dbname=os.getenv('DMESH_DB__NAME', 'postgres'),
                 rest_persistency_proxy=use_rest_proxy,
                 rest_persistency_proxy_uses_databricks_m2m=use_databricks_m2m,
-                rest_persistency_proxy_url=rest_url
+                rest_persistency_proxy_url=rest_url,
+                topology=topology
             )
 
         if is_test:
@@ -117,12 +118,8 @@ class SetupOrchestrator:
         
         if is_test:
             mode = "test (in-memory)"
-        elif topology == "docker-rest-pxy-mem":
-            mode = "In-Memory API"
-        elif use_rest_proxy:
-            mode = "Postgres API"
         else:
-            mode = "Postgres"
+            mode = topology
             
         self._feedback.success(f"Data mesh initialised and ready ({mode} mode).")
 
