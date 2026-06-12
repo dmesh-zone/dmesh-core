@@ -23,8 +23,8 @@ app = typer.Typer()
 @app.command()
 def setup(
     flush: bool = typer.Option(False, "--flush", help="Delete all data products after initialisation."),
-    rebuild: bool = typer.Option(False, "--rebuild/--no-rebuild", help="Rebuild docker-compose."),
-    topology: TopologyChoice = typer.Option(TopologyChoice.docker_postgres, "--topology", help="Setup topology to use.")
+    rebuild: bool = typer.Option(False, "-r", "--rebuild/--no-rebuild", help="Rebuild docker-compose."),
+    topology: TopologyChoice = typer.Option(TopologyChoice.docker_postgres, "-t", "--topology", help="Setup topology to use.")
 ) -> None:
     """Setup the data mesh environment."""
     feedback = ConsoleFeedback()
