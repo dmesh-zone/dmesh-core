@@ -30,9 +30,10 @@ services:
       DMESH_DB__PASSWORD: postgres
       DMESH_DB__NAME: postgres
       DMESH_SDK__IN_MEMORY_PERSISTENCY: ${DMESH_SDK__IN_MEMORY_PERSISTENCY:-false}
+      LOG_LEVEL: debug
     ports:
       - "8000:8000"
-    command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+    command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
     depends_on:
       db:
         condition: service_healthy

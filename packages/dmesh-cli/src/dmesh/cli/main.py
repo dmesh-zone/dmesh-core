@@ -63,8 +63,18 @@ def repl() -> None:
     
     while True:
         try:
+            from dmesh.sdk.config import get_settings
+            settings = get_settings()
+            if settings.sdk.rest_persistency_proxy:
+                if settings.sdk.rest_persistency_proxy_uses_databricks_m2m:
+                    mode = "databricks-rest-pxy"
+                else:
+                    mode = "docker-rest-pxy"
+            else:
+                mode = "docker-postgres"
+                
             # We use prompt_toolkit to support command history (up/down arrows)
-            line = session.prompt(HTML(f"<ansigreen><b>{CLI_NAME}&gt;</b></ansigreen> ")).strip()
+            line = session.prompt(HTML(f"<ansigreen><b>{CLI_NAME}</b></ansigreen> <ansigray>({mode})</ansigray><ansigreen><b>&gt;</b></ansigreen> ")).strip()
             if not line:
                 continue
             if line.lower() in ("exit", "quit"):
