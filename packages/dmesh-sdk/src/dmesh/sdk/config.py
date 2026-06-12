@@ -61,7 +61,7 @@ class DatabaseSettings(BaseModel):
     host: str = "localhost"
     port: int = 5432
     user: str = "postgres"
-    password: str = Field(..., min_length=1) # Required secret
+    password: str = "postgres"
     name: str = "postgres"
 
 class ApiSettings(BaseModel):
@@ -76,6 +76,7 @@ class SdkSettings(BaseModel):
     rest_persistency_proxy: bool = False
     rest_persistency_proxy_url: str = "http://0.0.0.0:8000"
     rest_persistency_proxy_uses_databricks_m2m: bool = False
+    rest_persistency_proxy_ssl_verify: bool = False
     single_data_contract_per_product: bool = True
     dua_start_date_default: str = "2026-01-01"
     dua_purpose_default: str = "Unknown purpose"

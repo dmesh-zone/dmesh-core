@@ -385,7 +385,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `host` | `DMESH_DB__HOST` | `"localhost"` | PostgreSQL host |
 | `port` | `DMESH_DB__PORT` | `5432` | PostgreSQL port |
 | `user` | `DMESH_DB__USER` | `"postgres"` | PostgreSQL user |
-| `password` | `DMESH_DB__PASSWORD` | **Required** | PostgreSQL password |
+| `password` | `DMESH_DB__PASSWORD` | `"postgres"` | PostgreSQL password |
 | `name` | `DMESH_DB__NAME` | `"postgres"` | PostgreSQL database name |
 | **API (`api`)** | | | |
 | `host` | `DMESH_API__HOST` | `"0.0.0.0"` | API server host |
@@ -397,6 +397,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `rest_persistency_proxy` | `DMESH_SDK__REST_PERSISTENCY_PROXY` | `false` | Toggle to use the API as a backend instead of direct DB access |
 | `rest_persistency_proxy_url` | `DMESH_SDK__REST_PERSISTENCY_PROXY_URL` | `"http://0.0.0.0:8000"` | Base URL of the API for SDK interactions |
 | `rest_persistency_proxy_uses_databricks_m2m` | `DMESH_SDK__REST_PERSISTENCY_PROXY_USES_DATABRICKS_M2M` | `false` | Enable Databricks M2M token generation for the REST persistency proxy requests. Requires standard Databricks env vars (e.g., `DATABRICKS_HOST`, `DATABRICKS_CLIENT_ID`, `DATABRICKS_CLIENT_SECRET`). |
+| `rest_persistency_proxy_ssl_verify` | `DMESH_SDK__REST_PERSISTENCY_PROXY_SSL_VERIFY` | `false` | Enable SSL certificate verification for REST proxy requests |
 | `single_data_contract_per_product` | `DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT` | `true` | Restrict to one data contract per data product |
 | `dua_start_date_default` | `DMESH_SDK__DUA_START_DATE_DEFAULT` | `"2026-01-01"` | Default start date for Data Usage Agreements |
 | `dua_purpose_default` | `DMESH_SDK__DUA_PURPOSE_DEFAULT` | `"Unknown purpose"` | Default purpose for Data Usage Agreements |

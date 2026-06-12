@@ -1,3 +1,4 @@
+from anyio import lowlevel
 import httpx
 from typing import List, Optional, Any
 from uuid import UUID
@@ -24,14 +25,14 @@ def _parse_uuid(val: Any) -> UUID:
     raise ValueError(f"Cannot parse UUID from {val}")
 
 class AsyncHttpDataProductRepository:
-    def __init__(self, api_url: str, use_m2m: bool = False):
+    def __init__(self, api_url: str, use_m2m: bool = False, ssl_verify: bool = False):
         self.api_url = api_url.rstrip("/")
         self.use_m2m = use_m2m
         self._dbx_config = None
         
         # Use a single shared client, increasing connection limits.
         limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
-        self._client = httpx.AsyncClient(limits=limits)
+        self._client = httpx.AsyncClient(limits=limits, verify=ssl_verify)
         
         if self.use_m2m:
             from databricks.sdk.core import Config
@@ -116,14 +117,14 @@ class AsyncHttpDataProductRepository:
 
 
 class AsyncHttpDataContractRepository:
-    def __init__(self, api_url: str, use_m2m: bool = False):
+    def __init__(self, api_url: str, use_m2m: bool = False, ssl_verify: bool = False):
         self.api_url = api_url.rstrip("/")
         self.use_m2m = use_m2m
         self._dbx_config = None
         
         # Use a single shared client, increasing connection limits.
         limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
-        self._client = httpx.AsyncClient(limits=limits)
+        self._client = httpx.AsyncClient(limits=limits, verify=ssl_verify)
         
         if self.use_m2m:
             from databricks.sdk.core import Config
@@ -207,9 +208,9 @@ class AsyncHttpDataContractRepository:
 
 
 class HttpRepositoryFactory:
-    def __init__(self, api_url: str, use_m2m: bool = False):
-        self._dp_repo = AsyncHttpDataProductRepository(api_url, use_m2m=use_m2m)
-        self._dc_repo = AsyncHttpDataContractRepository(api_url, use_m2m=use_m2m)
+    def __init__(self, api_url: str, use_m2m: bool = False, ssl_verify: bool = False):
+        self._dp_repo = AsyncHttpDataProductRepository(api_url, use_m2m=use_m2m, ssl_verify=ssl_verify)
+        self._dc_repo = AsyncHttpDataContractRepository(api_url, use_m2m=use_m2m, ssl_verify=ssl_verify)
 
     def get_data_product_repository(self) -> DataProductRepository:
         return self._dp_repo

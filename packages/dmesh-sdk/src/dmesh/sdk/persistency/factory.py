@@ -69,9 +69,10 @@ class RepositoryFactory:
             base_path = getattr(settings.api, "base_path", "dmesh").strip("/")
             api_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000").rstrip("/")
             use_m2m = getattr(settings.sdk, "rest_persistency_proxy_uses_databricks_m2m", False)
+            ssl_verify = getattr(settings.sdk, "rest_persistency_proxy_ssl_verify", False)
             if base_path:
                 api_url = f"{api_url}/{base_path}"
-            return HttpRepositoryFactory(api_url, use_m2m=use_m2m)
+            return HttpRepositoryFactory(api_url, use_m2m=use_m2m, ssl_verify=ssl_verify)
 
         return self.create(
             db_type=db_type,
