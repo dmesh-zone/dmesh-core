@@ -42,6 +42,9 @@ class DefaultIDGenerator:
         domain = spec.get("domain", "")
         name = spec.get("name", "")
         version = spec.get("version", "v1.0.0")
+        
+        if not name:
+            return uuid.uuid4()
 
         scheme = self._scheme("DP_ID_SCHEME", DEFAULT_DP_SCHEME)
         try:

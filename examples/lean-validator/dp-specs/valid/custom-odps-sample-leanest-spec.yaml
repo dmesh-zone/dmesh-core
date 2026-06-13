@@ -1,0 +1,3 @@
+outputPorts:
+   - name: studies
+   - name: compounds

@@ -1,0 +1,27 @@
+inputPorts:
+  - name: compounds
+    customProperties:
+      - property: publishToS3
+        value:
+          sourceTable: <my-source-table>
+          targetTable: <my-target-table>
+          _insertFrom: commonPublishAttributes
+  - name: studies
+    customProperties:
+      - property: publishToS3
+        value:
+          sourceTable: <my-source-table>
+          targetTable: <my-target-table>
+          _insertFrom: commonPublishAttributes
+
+customProperties:
+  - property: enterpriseDataProduct
+    value: false
+  - property: publishToS3_inserts
+    value:
+      - _insertId: commonPublishAttributes
+        sourceCatalog: <my-source-catalog>
+        sourceSchema: <my-source-schema>
+        location: s3://<bucket-name>/<folder-name>
+        trigger: schedule
+        schedule: "0 0 * * * *"

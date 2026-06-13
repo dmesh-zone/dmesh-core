@@ -20,6 +20,18 @@ class InMemoryRepositoryFactory:
     def get_data_contract_repository(self) -> DataContractRepository:
         return self._dc_repo
 
+class FilesystemRepositoryFactory:
+    def __init__(self, root_dir: str):
+        from dmesh.sdk.persistency.filesystem import AsyncFilesystemDataProductRepository, AsyncFilesystemDataContractRepository
+        self._dp_repo = AsyncFilesystemDataProductRepository(root_dir)
+        self._dc_repo = AsyncFilesystemDataContractRepository(root_dir)
+
+    def get_data_product_repository(self) -> DataProductRepository:
+        return self._dp_repo
+
+    def get_data_contract_repository(self) -> DataContractRepository:
+        return self._dc_repo
+
 
 class PostgresRepositoryFactory:
     def __init__(self, pool):
@@ -63,6 +75,11 @@ class RepositoryFactory:
             logger.info("Using in_memory persistency")
             return InMemoryRepositoryFactory()
 
+        if getattr(settings.sdk, "filesystem_persistency", False):
+            logger.info("Using filesystem persistency")
+            root_dir = getattr(settings.sdk, "data_products_filesystem_root", None) or "tmp/data_products_filesystem_root"
+            return FilesystemRepositoryFactory(root_dir)
+
         if getattr(settings.sdk, "rest_persistency_proxy", False):
             from dmesh.sdk.persistency.rest import HttpRepositoryFactory
             logger.info("Using rest persistency")
@@ -95,6 +112,8 @@ class RepositoryFactory:
         logger.info(f"Using {db_type} persistency")
         if db_type == "memory":
             return InMemoryRepositoryFactory()
+        elif db_type == "filesystem":
+            return FilesystemRepositoryFactory("tmp/data_products_filesystem_root")
         elif db_type == "postgres":
             if not all([pg_host, pg_user, pg_password, pg_db]):
                 raise ValueError("Postgres connection parameters required")

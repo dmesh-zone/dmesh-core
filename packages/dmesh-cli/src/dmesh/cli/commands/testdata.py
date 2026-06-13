@@ -107,9 +107,56 @@ def parse_mermaid_mesh(spec: str):
 
     return dps, schemas, edges
 
-async def _generate_testdata(spec: str):
+def _resolve_schema_ref(schema: dict, root_schema: dict) -> dict:
+    while isinstance(schema, dict) and "$ref" in schema:
+        ref = schema["$ref"]
+        if ref.startswith("#/$defs/"):
+            def_name = ref.split("/")[-1]
+            schema = root_schema.get("$defs", {}).get(def_name, {})
+        else:
+            break
+    return schema
+
+def _filter_by_schema(data: Any, schema: dict, root_schema: dict) -> Any:
+    schema = _resolve_schema_ref(schema, root_schema)
+    
+    if isinstance(data, dict):
+        if not isinstance(schema, dict):
+            return data
+            
+        required = schema.get("required", [])
+        filtered = {}
+        for k, v in data.items():
+            if k in required:
+                prop_schema = schema.get("properties", {}).get(k, {})
+                filtered[k] = _filter_by_schema(v, prop_schema, root_schema)
+        return filtered
+    elif isinstance(data, list):
+        if isinstance(schema, dict):
+            items_schema = schema.get("items", {})
+            if items_schema:
+                return [_filter_by_schema(item, items_schema, root_schema) for item in data]
+        return data
+    else:
+        return data
+
+async def _generate_testdata(spec: str, lean: bool = False):
     dps_info, schemas_info, edges = parse_mermaid_mesh(spec)
     
+    root_schema = None
+    if lean:
+        from dmesh.sdk.config import get_settings
+        from dmesh.sdk.lean_validator.validator import load_schema
+        settings = get_settings()
+        schema_path = getattr(settings.sdk, "lean_validation_data_product_schema", None)
+        if not schema_path:
+            schema_path = "examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json"
+        try:
+            root_schema = load_schema(schema_path)
+        except Exception as e:
+            typer.echo(f"Warning: failed to load lean schema {schema_path}: {e}", err=True)
+            root_schema = None
+
     async with get_service() as sdk:
         dp_id_map = {} # name -> id
         semaphore = asyncio.Semaphore(20)
@@ -131,38 +178,50 @@ async def _generate_testdata(spec: str):
                     if k != "dataProductTier":
                         dp_spec["customProperties"].append({"property": k, "value": v})
                 
-                for schema_name in info["schemas"]:
-                    dp_spec["outputPorts"].append({
-                        "name": schema_name,
-                        "version": "v1"
-                    })
+                if not lean:
+                    for schema_name in info["schemas"]:
+                        dp_spec["outputPorts"].append({
+                            "name": schema_name,
+                            "version": "v1"
+                        })
                 
-                dp_obj = await sdk.put_data_product(dp_spec, include_metadata=True)
+                if lean and root_schema is not None:
+                    dp_spec = _filter_by_schema(dp_spec, root_schema, root_schema)
+                    
+                    # Ensure only required attributes are generated for outputPorts
+                    dp_spec["outputPorts"] = []
+                    for schema_name in info["schemas"]:
+                        dp_spec["outputPorts"].append({"name": schema_name})
+                        
+                    dp_spec["_folder_name"] = name
+                
+                dp_obj = await sdk.put_data_product(dp_spec, include_metadata=True, enrich=not lean, validate=not lean)
                 dp_id_str = str(dp_obj.id) if not isinstance(dp_obj, dict) else str(dp_obj.get("id"))
                 
                 dc_tasks = []
-                for schema_name in info["schemas"]:
-                    s_info = schemas_info.get(schema_name)
-                    if not s_info: continue
-                    
-                    typer.echo(f"  Creating Data Contract for schema: {schema_name}")
-                    dc_spec = {
-                        "schema": [
-                            {
-                                "name": schema_name,
-                                "physicalName": schema_name,
-                                "physicalType": "table",
-                                "properties": [
-                                    {
-                                        "name": p["name"],
-                                        "physicalName": p["name"],
-                                        "logicalType": p["type"]
-                                    } for p in s_info["properties"]
-                                ]
-                            }
-                        ]
-                    }
-                    dc_tasks.append(sdk.put_data_contract(dc_spec, dp_id=dp_id_str))
+                if not lean:
+                    for schema_name in info["schemas"]:
+                        s_info = schemas_info.get(schema_name)
+                        if not s_info: continue
+                        
+                        typer.echo(f"  Creating Data Contract for schema: {schema_name}")
+                        dc_spec = {
+                            "schema": [
+                                {
+                                    "name": schema_name,
+                                    "physicalName": schema_name,
+                                    "physicalType": "table",
+                                    "properties": [
+                                        {
+                                            "name": p["name"],
+                                            "physicalName": p["name"],
+                                            "logicalType": p["type"]
+                                        } for p in s_info["properties"]
+                                    ]
+                                }
+                            ]
+                        }
+                        dc_tasks.append(sdk.put_data_contract(dc_spec, dp_id=dp_id_str))
                 
                 if dc_tasks:
                     await asyncio.gather(*dc_tasks)
@@ -175,6 +234,8 @@ async def _generate_testdata(spec: str):
             dp_id_map[name] = dp_id
 
         async def create_edge(u, v, t):
+            if lean:
+                return
             if t == "provides":
                 prod_id = dp_id_map.get(u)
                 cons_id = dp_id_map.get(v)
@@ -205,6 +266,7 @@ async def _generate_testdata(spec: str):
 def main(
     ctx: typer.Context,
     file: Optional[Path] = typer.Option(None, "--file", "-f", help="Path to a mermaid spec file. Can be a filename from the default testdata directory."),
+    lean: bool = typer.Option(False, "--lean", "-l", help="Filter properties to only those required by the validation schema.")
 ):
     """Generate test data from a mermaid spec."""
     if ctx.invoked_subcommand:
@@ -224,7 +286,7 @@ def main(
     try:
         import time
         start = time.perf_counter()
-        asyncio.run(_generate_testdata(spec))
+        asyncio.run(_generate_testdata(spec, lean=lean))
         elapsed = time.perf_counter() - start
         typer.echo(f"Test data generation complete in {elapsed:.4f} seconds.")
     except Exception as e:

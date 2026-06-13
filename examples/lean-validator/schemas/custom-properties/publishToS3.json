@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "properties": {
+    "sourceTable": {
+      "type": "string"
+    },
+    "targetTable": {
+      "type": "string"
+    },
+    "sourceCatalog": {
+      "type": "string"
+    },
+    "sourceSchema": {
+      "type": "string"
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "deltaLake"
+      ],
+      "default": "deltaLake"
+    },
+    "location": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "schedule"
+      ]
+    },
+    "schedule": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "sourceTable",
+    "targetTable",
+    "sourceCatalog",
+    "sourceSchema",
+    "format",
+    "location"
+  ]
+}

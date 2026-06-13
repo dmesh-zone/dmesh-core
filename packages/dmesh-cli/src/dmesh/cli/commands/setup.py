@@ -16,6 +16,7 @@ class TopologyChoice(str, Enum):
     docker_rest_pxy_postgres = "docker-rest-pxy-postgres"
     docker_rest_pxy_mem = "docker-rest-pxy-mem"
     databricks_rest_pxy = "databricks-rest-pxy"
+    filesystem = "filesystem"
 
 app = typer.Typer()
 

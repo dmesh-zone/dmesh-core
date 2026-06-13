@@ -49,7 +49,7 @@ class SetupOrchestrator:
         
         print("\n--- Setup Topology ---")
         print(cli_config_str)
-        if topology != "databricks-rest-pxy":
+        if topology not in ("databricks-rest-pxy", "filesystem"):
             print(api_config_str)
 
         if not is_test:
@@ -84,7 +84,8 @@ class SetupOrchestrator:
                 rest_persistency_proxy=use_rest_proxy,
                 rest_persistency_proxy_uses_databricks_m2m=use_databricks_m2m,
                 rest_persistency_proxy_url=rest_url,
-                topology=topology
+                topology=topology,
+                filesystem_persistency=(topology == "filesystem")
             )
 
         if is_test:
@@ -92,7 +93,13 @@ class SetupOrchestrator:
             self._feedback.step("Initializing in-memory repository for tests...")
             factory = RepositoryFactory().create(db_type="memory")
         else:
-            if use_rest_proxy:
+            if topology == "filesystem":
+                self._feedback.step("Initializing filesystem repository...")
+                settings = get_settings()
+                root_dir = getattr(settings.sdk, "data_products_filesystem_root", None) or "tmp/data_products_filesystem_root"
+                from dmesh.sdk.persistency.factory import FilesystemRepositoryFactory
+                factory = FilesystemRepositoryFactory(root_dir)
+            elif use_rest_proxy:
                 self._feedback.step("Initializing REST Proxy repository...")
                 from dmesh.sdk.persistency.rest import HttpRepositoryFactory
                 # For local docker topologies that don't specify an env URL, we fallback to localhost for the CLI
@@ -135,11 +142,13 @@ class SetupOrchestrator:
             print("                                      (Postgres Container is running but not used for persistency)")
         elif topology == "databricks-rest-pxy":
             print(" [CLI + SDK (rest proxy: true, m2m: true)] ---> [Databricks App] ")
+        elif topology == "filesystem":
+            print(" [CLI + SDK (filesystem persistency: true)] ---> [Local Filesystem] ")
         print("-----------------------------\n")
 
         # Invalidate cached settings so subsequent commands in the same REPL session reload the new config
         import dmesh.sdk.config
         dmesh.sdk.config._settings = None
 
-        if topology != "databricks-rest-pxy":
+        if topology not in ("databricks-rest-pxy", "filesystem"):
             print('Run "docker-compose logs -f api" to inspect api behavior\n')

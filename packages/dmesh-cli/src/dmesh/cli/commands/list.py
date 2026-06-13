@@ -21,35 +21,31 @@ async def _list_dps():
             x.get("version", "") if isinstance(x, dict) else x.version
         ))
 
-        col_w = {"id": 36, "domain": 20, "name": 30, "version": 12, "status": 12}
+        col_w = {"domain": 20, "name": 30, "id": 36}
         header = (
-            f"{'ID':<{col_w['id']}}  "
             f"{'DOMAIN':<{col_w['domain']}}  "
             f"{'NAME':<{col_w['name']}}  "
-            f"{'VERSION':<{col_w['version']}}  "
-            f"{'STATUS':<{col_w['status']}}"
+            f"{'ID':<{col_w['id']}}"
         )
         typer.echo(header)
         typer.echo("-" * len(header))
 
         for item in sorted_items:
             if isinstance(item, dict):
-                i_id = item.get("id", "")
                 i_domain = item.get("domain", "")
                 i_name = item.get("name", "")
-                i_version = item.get("version", "")
+                i_id = item.get("id", "")
             else:
-                i_id = item.id
                 i_domain = item.domain
                 i_name = item.name
-                i_version = item.version
+                i_id = item.id
+                
+            i_domain_str = str(i_domain) if i_domain else "undefined"
                 
             typer.echo(
-                f"{str(i_id):<{col_w['id']}}  "
-                f"{str(i_domain):<{col_w['domain']}}  "
+                f"{i_domain_str:<{col_w['domain']}}  "
                 f"{str(i_name):<{col_w['name']}}  "
-                f"{str(i_version):<{col_w['version']}}  "
-                f"{'ACTIVE':<{col_w['status']}}"
+                f"{str(i_id):<{col_w['id']}}"
             )
 
 

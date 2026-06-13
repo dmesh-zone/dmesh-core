@@ -17,6 +17,7 @@ dependencies = [
     "psycopg[binary,pool]",
     "httpx",
     "databricks-sdk",
+    "referencing>=0.30.2",
 ]
 
 [tool.hatch.build.targets.wheel]

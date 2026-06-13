@@ -12,7 +12,11 @@ def get_service() -> AsyncSDK:
     # Default to postgres if host is provided, else in-memory
     db_type = "postgres" if settings.db.host else "memory"
     
-    if getattr(settings.sdk, "rest_persistency_proxy", False):
+    if getattr(settings.sdk, "filesystem_persistency", False):
+        import typer
+        root_dir = getattr(settings.sdk, "data_products_filesystem_root", "tmp/data_products_filesystem_root")
+        typer.echo(f"📁 Using Filesystem Backend ({root_dir})")
+    elif getattr(settings.sdk, "rest_persistency_proxy", False):
         import typer
         proxy_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000")
         typer.echo(f"🔌 Using REST API Backend ({proxy_url})")

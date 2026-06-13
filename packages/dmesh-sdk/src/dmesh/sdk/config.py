@@ -86,6 +86,10 @@ class SdkSettings(BaseModel):
     enrich_output_ports: bool = True
     auto_data_source_dp_creation_upon_source_aligned_dp_creation: bool = True
     auto_data_product_id_in_data_contract: bool = True
+    filesystem_persistency: bool = False
+    data_products_filesystem_root: Optional[str] = None
+    lean_validation_data_product_schema: Optional[str] = "examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json"
+    lean_validation_custom_properties_path: Optional[str] = "examples/lean-validator/schemas/custom-properties"
 
 class Settings(BaseSettings):
     # Field names match the nesting in TOML and env vars

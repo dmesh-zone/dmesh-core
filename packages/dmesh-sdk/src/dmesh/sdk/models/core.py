@@ -17,7 +17,7 @@ class DataProduct:
 
     @property
     def name(self) -> str:
-        return self.specification.get("name", "")
+        return self.specification.get("name") or getattr(self, "_folder_name", "")
 
     @property
     def version(self) -> str:

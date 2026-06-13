@@ -89,7 +89,20 @@ async def _get_dp(
             else:
                 p = Path(path)
                 if not p.exists():
-                    raise ValueError(f"File not found: {path}")
+                    # Try finding by name
+                    results = await service.list_data_products(name=path)
+                    if results:
+                        first = results[0]
+                        spec = first if isinstance(first, dict) else first.specification
+                        domain_str = first.get("domain", "unknown") if isinstance(first, dict) else first.domain
+                        name_str = first.get("name", "unknown") if isinstance(first, dict) else first.name
+                        version_str = first.get("version", "v1.0.0") if isinstance(first, dict) else first.version
+                        
+                        _handle_output(spec, output, Path(f"{domain_str}_{name_str}_{version_str}.yaml"))
+                        return
+                    else:
+                        raise ValueError(f"File or Data Product name not found: {path}")
+                        
                 existing = yaml.safe_load(p.read_text()) or {}
                 d = existing.get("domain", "")
                 n = existing.get("name", "")

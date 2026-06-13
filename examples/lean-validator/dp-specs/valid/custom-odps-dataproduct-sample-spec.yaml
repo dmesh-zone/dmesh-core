@@ -1,0 +1,22 @@
+outputPorts:
+  - name: studies
+  - name: patients
+    customProperties:
+      - property: portAdapter
+        value: odata
+      - property: filters
+        value:
+          defaultBehavior: noRowsReturned
+          filterSelectExpressions:
+            - name: selectAll
+              expression: age, gender, height
+          filterAssemblies:
+            - users:
+                - APP1_{env}_0001
+              filterSelectExpressions: selectAll
+          environmentVariables:
+            - var: env
+              values:
+                dev: D
+                qa: Q
+                prod: P
