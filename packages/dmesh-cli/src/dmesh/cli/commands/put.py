@@ -30,13 +30,24 @@ async def _put_dp(path: Path):
     spec = read_yaml_spec(path)
     async with get_service() as service:
         dp_obj = await service.put_data_product(spec, include_metadata=True)
+        if isinstance(dp_obj, dict):
+            dp_id = dp_obj.get("id")
+            domain = dp_obj.get("domain")
+            name = dp_obj.get("name")
+            version = dp_obj.get("version")
+        else:
+            dp_id = dp_obj.id
+            domain = dp_obj.domain
+            name = dp_obj.name
+            version = dp_obj.version
+            
         record_dp(
-            dp_id=dp_obj.id,
-            domain=dp_obj.domain,
-            name=dp_obj.name,
-            version=dp_obj.version,
+            dp_id=str(dp_id) if dp_id else "unknown",
+            domain=str(domain) if domain else "unknown",
+            name=str(name) if name else "unknown",
+            version=str(version) if version else "unknown",
         )
-        return dp_obj.id
+        return str(dp_id) if dp_id else "unknown"
 
 
 @app.command("dp")
@@ -80,30 +91,51 @@ async def _put_dc(
                     results = await service.list_data_products(domain=d, name=n)
                     if not results:
                         raise DmPutError(f"No Data Product found for {d}/{n}")
-                    dp_id = results[0].id
+                    
+                    first = results[0]
+                    dp_id = first.get("id") if isinstance(first, dict) else first.id
             elif domain and dp_name:
                 d, n = domain, dp_name
                 results = await service.list_data_products(domain=d, name=n)
                 if not results:
                     raise DmPutError(f"No Data Product found for {d}/{n}")
-                dp_id = results[0].id
+                
+                first = results[0]
+                dp_id = first.get("id") if isinstance(first, dict) else first.id
             else:
                 if dc_id:
                     raise DmPutError(f"Data contract {dc_id} not found")
                 raise DmPutError("Provide --dp <dp-id-or-path> or --domain and --dp_name for new data contracts.")
 
         # Create or Update
-        new_dc = await service.put_data_contract(dc_spec, dp_id=dp_id, include_metadata=True)
+        new_dc = await service.put_data_contract(dc_spec, dp_id=str(dp_id) if dp_id else None, include_metadata=True)
         
-        parent_dp = await service.get_data_product(new_dc.data_product_id, include_metadata=True)
+        dc_id = new_dc.get("id") if isinstance(new_dc, dict) else new_dc.id
+        dc_dp_id = new_dc.get("data_product_id") if isinstance(new_dc, dict) else new_dc.data_product_id
+        
+        parent_dp = await service.get_data_product(str(dc_dp_id) if dc_dp_id else "", include_metadata=True)
+        
+        if isinstance(parent_dp, dict):
+            dp_domain = parent_dp.get("domain", "unknown")
+            dp_name = parent_dp.get("name", "unknown")
+            dp_version = parent_dp.get("version", "v1.0.0")
+        elif parent_dp:
+            dp_domain = parent_dp.domain
+            dp_name = parent_dp.name
+            dp_version = parent_dp.version
+        else:
+            dp_domain = "unknown"
+            dp_name = "unknown"
+            dp_version = "v1.0.0"
+            
         # Record in history
         record_dc(
-            dc_id=new_dc.id,
-            domain=parent_dp.domain if parent_dp else "unknown",
-            name=parent_dp.name if parent_dp else "unknown",
-            version=parent_dp.version if parent_dp else "v1.0.0",
+            dc_id=str(dc_id) if dc_id else "unknown",
+            domain=str(dp_domain) if dp_domain else "unknown",
+            name=str(dp_name) if dp_name else "unknown",
+            version=str(dp_version) if dp_version else "unknown",
         )
-        return new_dc.id
+        return str(dc_id) if dc_id else "unknown"
 
 
 @app.command("dc")

@@ -52,10 +52,13 @@ async def _get_dp(
         if domain and name:
             ver = version or DEFAULT_VERSION
             results = await service.list_data_products(domain=domain, name=name)
-            results = [r for r in results if r["version"] == ver]
+            results = [r for r in results if (r.get("version") if isinstance(r, dict) else r.version) == ver]
             if not results:
                 raise ValueError(f"No data product found for domain={domain} name={name} version={ver}")
-            _handle_output(results[0], output, Path(f"{domain}_{name}_{ver}.yaml"))
+            
+            first = results[0]
+            spec = first if isinstance(first, dict) else first.specification
+            _handle_output(spec, output, Path(f"{domain}_{name}_{ver}.yaml"))
             return
 
         if path is not None:
@@ -70,7 +73,18 @@ async def _get_dp(
                 dp_obj = await service.get_data_product(path, include_metadata=True)
                 if not dp_obj:
                     raise ValueError(f"Data product {path} not found.")
-                _handle_output(dp_obj.specification, output, Path(f"{dp_obj.domain}_{dp_obj.name}_{dp_obj.version}.yaml"))
+                if isinstance(dp_obj, dict):
+                    spec = dp_obj.get("specification", dp_obj)
+                    domain_str = dp_obj.get("domain", "unknown")
+                    name_str = dp_obj.get("name", "unknown")
+                    version_str = dp_obj.get("version", "v1.0.0")
+                else:
+                    spec = dp_obj.specification
+                    domain_str = dp_obj.domain
+                    name_str = dp_obj.name
+                    version_str = dp_obj.version
+                
+                _handle_output(spec, output, Path(f"{domain_str}_{name_str}_{version_str}.yaml"))
                 return
             else:
                 p = Path(path)
@@ -85,15 +99,18 @@ async def _get_dp(
                 
                 results = await service.list_data_products(domain=d, name=n)
                 # results are specs if include_metadata=False
-                results = [r for r in results if r["version"] == ver]
+                results = [r for r in results if (r.get("version") if isinstance(r, dict) else r.version) == ver]
                 if not results:
                     raise ValueError(f"No data product found for domain={d} name={n} version={ver}")
                 
+                first = results[0]
+                spec = first if isinstance(first, dict) else first.specification
+                
                 if output == "file":
-                    _write_spec(results[0], p)
+                    _write_spec(spec, p)
                     typer.echo(str(p))
                 else:
-                    _handle_output(results[0], output, p)
+                    _handle_output(spec, output, p)
                 return
 
         entry = last_dp()
@@ -105,7 +122,18 @@ async def _get_dp(
         if not dp_obj:
             raise ValueError(f"Data product {dp_id} not found in repository.")
             
-        _handle_output(dp_obj.specification, output, Path(f"{dp_obj.domain}_{dp_obj.name}_{dp_obj.version}.yaml"))
+        if isinstance(dp_obj, dict):
+            spec = dp_obj.get("specification", dp_obj)
+            domain_str = dp_obj.get("domain", "unknown")
+            name_str = dp_obj.get("name", "unknown")
+            version_str = dp_obj.get("version", "v1.0.0")
+        else:
+            spec = dp_obj.specification
+            domain_str = dp_obj.domain
+            name_str = dp_obj.name
+            version_str = dp_obj.version
+            
+        _handle_output(spec, output, Path(f"{domain_str}_{name_str}_{version_str}.yaml"))
 
 
 @app.command("dp")
@@ -136,12 +164,23 @@ async def _get_dc(dc_id: Optional[str], output: str):
         if not dc_obj:
             raise ValueError(f"Data contract {dc_id} not found.")
 
-        parent_dp = await service.get_data_product(dc_obj.data_product_id, include_metadata=True)
-        domain = parent_dp.domain if parent_dp else "unknown"
-        dp_name = parent_dp.name if parent_dp else "unknown"
+        dc_dp_id = dc_obj.get("data_product_id") if isinstance(dc_obj, dict) else dc_obj.data_product_id
+        parent_dp = await service.get_data_product(str(dc_dp_id) if dc_dp_id else "", include_metadata=True)
+        
+        if isinstance(parent_dp, dict):
+            domain = parent_dp.get("domain", "unknown")
+            dp_name = parent_dp.get("name", "unknown")
+        elif parent_dp:
+            domain = parent_dp.domain
+            dp_name = parent_dp.name
+        else:
+            domain = "unknown"
+            dp_name = "unknown"
         
         filename = Path(f"{domain}_{dp_name}_{dc_id}.yaml")
-        _handle_output(dc_obj.specification, output, filename)
+        
+        spec = dc_obj.get("specification", dc_obj) if isinstance(dc_obj, dict) else dc_obj.specification
+        _handle_output(spec, output, filename)
 
 
 @app.command("dc")
