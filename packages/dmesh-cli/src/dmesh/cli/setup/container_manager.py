@@ -3,8 +3,8 @@
 import docker
 import docker.errors
 
-from dmesh.cli.init.errors import ContainerStartError, ImageBuildError, ImagePullError
-from dmesh.cli.init.feedback import Feedback
+from dmesh.cli.setup.errors import ContainerStartError, ImageBuildError, ImagePullError
+from dmesh.cli.setup.feedback import Feedback
 
 DB_IMAGE = "dmesh-db:latest"
 DB_CONTAINER = "dmesh-db"

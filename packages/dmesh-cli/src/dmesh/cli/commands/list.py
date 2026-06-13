@@ -15,7 +15,11 @@ async def _list_dps():
             typer.echo("No data products found.")
             return
 
-        sorted_items = sorted(items, key=lambda x: (x.domain, x.name, x.version))
+        sorted_items = sorted(items, key=lambda x: (
+            x.get("domain", "") if isinstance(x, dict) else x.domain,
+            x.get("name", "") if isinstance(x, dict) else x.name,
+            x.get("version", "") if isinstance(x, dict) else x.version
+        ))
 
         col_w = {"id": 36, "domain": 20, "name": 30, "version": 12, "status": 12}
         header = (
@@ -29,11 +33,22 @@ async def _list_dps():
         typer.echo("-" * len(header))
 
         for item in sorted_items:
+            if isinstance(item, dict):
+                i_id = item.get("id", "")
+                i_domain = item.get("domain", "")
+                i_name = item.get("name", "")
+                i_version = item.get("version", "")
+            else:
+                i_id = item.id
+                i_domain = item.domain
+                i_name = item.name
+                i_version = item.version
+                
             typer.echo(
-                f"{str(item.id):<{col_w['id']}}  "
-                f"{item.domain:<{col_w['domain']}}  "
-                f"{item.name:<{col_w['name']}}  "
-                f"{item.version:<{col_w['version']}}  "
+                f"{str(i_id):<{col_w['id']}}  "
+                f"{str(i_domain):<{col_w['domain']}}  "
+                f"{str(i_name):<{col_w['name']}}  "
+                f"{str(i_version):<{col_w['version']}}  "
                 f"{'ACTIVE':<{col_w['status']}}"
             )
 
@@ -52,8 +67,19 @@ async def _list_dcs(domain: Optional[str], dp_name: Optional[str]):
     async with get_service() as service:
         dp_ids = None
         if domain or dp_name:
-            dps = await service.list_data_products(domain=domain, name=dp_name, include_metadata=True)
-            dp_ids = [dp.id for dp in dps]
+            kwargs: dict = {"include_metadata": True}
+            if domain is not None:
+                kwargs["domain"] = domain
+            if dp_name is not None:
+                kwargs["name"] = dp_name
+            dps = await service.list_data_products(**kwargs)
+            
+            dp_ids = []
+            for dp in dps:
+                dp_id = dp.get("id") if isinstance(dp, dict) else dp.id
+                if dp_id is not None:
+                    dp_ids.append(str(dp_id))
+                    
             if not dp_ids:
                 typer.echo("No data contracts found (no matching data products).")
                 return
@@ -81,14 +107,30 @@ async def _list_dcs(domain: Optional[str], dp_name: Optional[str]):
         typer.echo(header)
         typer.echo("-" * len(header))
         for dc in all_dcs:
-            parent_dp = await service.get_data_product(dc.data_product_id, include_metadata=True)
+            dc_dp_id = dc.get("data_product_id") if isinstance(dc, dict) else dc.data_product_id
+            dc_id = dc.get("id") if isinstance(dc, dict) else dc.id
+            parent_dp = await service.get_data_product(str(dc_dp_id) if dc_dp_id else "", include_metadata=True)
+            
+            if isinstance(parent_dp, dict):
+                dp_domain = parent_dp.get("domain", "unknown")
+                dp_name = parent_dp.get("name", "unknown")
+                dp_version = parent_dp.get("version", "v1.0.0")
+            elif parent_dp:
+                dp_domain = parent_dp.domain
+                dp_name = parent_dp.name
+                dp_version = parent_dp.version
+            else:
+                dp_domain = "unknown"
+                dp_name = "unknown"
+                dp_version = "v1.0.0"
+                
             typer.echo(
-                f"{str(dc.data_product_id):<{col_w['dp_id']}}  "
-                f"{parent_dp.domain if parent_dp else 'unknown':<{col_w['domain']}}  "
-                f"{parent_dp.name if parent_dp else 'unknown':<{col_w['name']}}  "
-                f"{parent_dp.version if parent_dp else 'v1.0.0':<{col_w['version']}}  "
+                f"{str(dc_dp_id):<{col_w['dp_id']}}  "
+                f"{str(dp_domain):<{col_w['domain']}}  "
+                f"{str(dp_name):<{col_w['name']}}  "
+                f"{str(dp_version):<{col_w['version']}}  "
                 f"{'ACTIVE':<{col_w['status']}}  "
-                f"{str(dc.id):<{col_w['dc_id']}}"
+                f"{str(dc_id):<{col_w['dc_id']}}"
             )
 
 
