@@ -1,6 +1,0 @@
-apiVersion: v1.0.0
-domain: finance
-kind: DataProduct
-name: transactions
-status: proposed
-version: v1.0.1

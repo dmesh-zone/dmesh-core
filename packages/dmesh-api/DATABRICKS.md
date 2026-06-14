@@ -2,29 +2,62 @@
 
 To deploy the `dmesh-api` (which is a FastAPI application) as a Databricks App, you can use the Databricks Apps feature. Since your project uses FastAPI and `uvicorn`, the process is quite straightforward, though you'll need to account for how local workspace dependencies are structured.
 
-Here are the steps to get it deployed:
+> Note that if you just want to use Lakebase (postgres) as the dmesh backend you can just connect directly to postgres using `db_type=postgres` configuration. The dmesh-api is only recommended if you prefer to use REST/HTTP instead of postgres connection as your transport protocol.
+
+Here are the steps to get dmesh-api deployed as a Databricks App:
 
 ## 1. Review the Configuration Files
 
-The deployment configurations are provided in the root of the `dmesh-api` package. Depending on your target database, you will use either `app-mem.yaml` (for an in-memory database) or `app-lakebase.yaml` (for a lakebase database). These files tell Databricks what command to run to start your server and which environment variables to set.
+The deployment configurations are provided in the root of the `dmesh-api` package. The **recommended setup** is with Lakebase (`app-lakebase.yaml`). An in-memory configuration (`app-mem.yaml`) is also provided for testing purposes only, which is particularly useful since Databricks free accounts do not support Lakebase. These files tell Databricks what command to run to start your server and which environment variables to set.
 
 ```yaml
-# packages/dmesh-api/app-mem.yaml
+# packages/dmesh-api/app-lakebase.yaml
 command:
-  - "python"
-  - "-m"
-  - "uvicorn"
-  - "dmesh.api.main:app"
-  - "--host"
-  - "0.0.0.0"
-  - "--port"
-  - "${DATABRICKS_APP_PORT}"
+  - "sh"
+  - "-c"
+  - "python -m uvicorn dmesh.api.main:app --host 0.0.0.0 --port $DATABRICKS_APP_PORT"
 env:
   - name: "LOG_LEVEL"
     value: "INFO"
-# Add any other required environment variables here
+  - name: "DMESH_SDK__IN_MEMORY_PERSISTENCY"
+    value: "false"
+  - name: "DB_TYPE"
+    value: "postgres"
+  - name: "PYTHONPATH"
+    value: "src"
+  - name: "WB_BASE_PATH"
+    value: "dmesh"
+  - name: "DB_HOST"
+    valueFrom: "db-host"
+  - name: "DB_USER"
+    valueFrom: "db-user"
+  - name: "DB_PASSWORD"
+    valueFrom: "db-password"
+  - name: "DB_NAME"
+    valueFrom: "db-name"
+  - name: "DB_PORT"
+    valueFrom: "db-port"
 ```
-
+```yaml
+# packages/dmesh-api/app-mem.yaml
+command:
+  - "sh"
+  - "-c"
+  - "python -m uvicorn dmesh.api.main:app --host 0.0.0.0 --port $DATABRICKS_APP_PORT"
+env:
+  - name: "LOG_LEVEL"
+    value: "INFO"
+  - name: "DMESH_SDK__IN_MEMORY_PERSISTENCY"
+    value: "true"
+  - name: "DB_TYPE"
+    value: "memory"
+  - name: "PYTHONPATH"
+    value: "src"
+  - name: "DMESH_DB__PASSWORD"
+    value: "dummy_password_for_memory"
+  - name: "WB_BASE_PATH"
+    value: "dmesh"
+```
 > [!NOTE]
 > Databricks automatically injects the correct port via the `${DATABRICKS_APP_PORT}` environment variable, so it's critical to bind `uvicorn` to it.
 
@@ -92,11 +125,12 @@ DB_PROFILE="<your-databricks-profile>"
 Simply execute the deployment script with your desired target (`mem` or `lakebase`). It will automatically build the `dmesh-sdk` wheel, copy the appropriate configuration to `app.yaml`, sync the files to Databricks, and trigger the App deployment.
 
 ```bash
+# To deploy with the lakebase configuration
+./deploy-api-as-databricks-app.sh lakebase
+
 # To deploy with the in-memory database configuration
 ./deploy-api-as-databricks-app.sh mem
 
-# To deploy with the lakebase configuration
-./deploy-api-as-databricks-app.sh lakebase
 ```
 
 ## Troubleshooting

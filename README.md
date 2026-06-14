@@ -23,14 +23,12 @@ graph TD
         SDK[dmesh-sdk]
         
         subgraph SDK_Internals [SDK Internals]
-            Logic[Core Logic / Enrichers]
-            Factory{Repository Factory}
+            Factory["Repository Factory<br><small>optional rest proxy using dmesh-api<br>rest_persistency_proxy=True"] 
         end
         
         CLI --> SDK
         API --> SDK
-        SDK --> Logic
-        Logic --> Factory
+        SDK --> Factory
     end
     
     User --> CLI
@@ -38,10 +36,12 @@ graph TD
     Client --> SDK
     Viewer --> API
     
-    Factory --> PG[(PostgreSQL)]
-    Factory --> MEM[(In-Memory)]
-    
+    Factory -- "db_type=postgres" --> PG[(PostgreSQL)]
+    Factory -- "in_memory_persistency=True" --> MEM[(In-Memory)]
+    Factory -- "filesystem_persistency=True" --> FS[(Filesystem)]
+
 ```
+For integration with Databricks Apps see dmesh-api [DATABRICKS.md](./packages/dmesh-api/DATABRICKS.md)
 
 ---
 
