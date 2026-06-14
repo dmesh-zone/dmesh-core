@@ -4,6 +4,29 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.8.0] - 2026-06-14
+
+### ✨ Highlights
+This major release introduces the **Filesystem Persistency** mode, allowing users to read data product and data contract data from the filestystem 
+
+### 💾 Filesystem & Topology
+- **Filesystem Persistency**: Added a fully functioning filesystem-backed repository implementation for Data Products and Data Contracts, managed via the `DMESH_SDK__FILESYSTEM_PERSISTENCY` configuration flag.
+- **Configurable Topology**: Replaced hardcoded proxy logic with a unified and configurable topology setting in the SDK and CLI.
+
+### 🖥️ CLI Enhancements & DX
+- **Setup Command Flags**: Added convenient short flags `-r` (rest proxy) and `-t` (topology type) to the `dmesh setup` command.
+- **Logging Visibility**: Improved logging by enabling configurable log levels, significantly reducing operational noise, and natively displaying the active persistency mode in the CLI upon startup.
+
+### ☁️ Infrastructure & Security
+- **REST SSL Verification**: Added support for SSL certificate verification (`DMESH_SDK__REST_PERSISTENCY_PROXY_SSL_VERIFY`) when operating the REST persistency proxy.
+- **Proxy Environment Injection**: Proxy environment variables and build arguments are now transparently injected into all `docker-compose` services.
+
+### ⚡ Performance & Stability
+- **PostgreSQL Connection Pool Sizing**: Fine-tuned the connection pool size in `PostgresRepositoryFactory` to prevent starvation and improve throughput.
+- **Database Indexing**: Added a database index to the `data_product_id` column in the `data_contracts` table to speed up lookup operations.
+
+---
+
 ## 🚀 [v0.7.0] - 2026-06-10
 
 ### ✨ Highlights

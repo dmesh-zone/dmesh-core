@@ -407,7 +407,10 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `enrich_output_ports` | `DMESH_SDK__ENRICH_OUTPUT_PORTS` | `true` | Enable enrichment of output ports |
 | `auto_data_source_dp_creation_upon_source_aligned_dp_creation` | `DMESH_SDK__AUTO_DATA_SOURCE_DP_CREATION_UPON_SOURCE_ALIGNED_DP_CREATION` | `true` | Auto-create Data Source DP for Source Aligned DPs |
 | `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Automatically assign data product IDs to new data contracts |
-
+| `filesystem_persistency` | `DMESH_SDK__FILESYSTEM_PERSISTENCY` | `true` | Enable filesystem persistency instead of PostgreSQL |
+| `data_products_filesystem_root` | `DMESH_SDK__DATA_PRODUCTS_FILESYSTEM_ROOT` | `"tmp/data_products_filesystem_root"` | Root directory path for filesystem persistency |
+| `lean_validation_data_product_schema` | `DMESH_SDK__LEAN_VALIDATION_DATA_PRODUCT_SCHEMA` | `"examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json"` | JSON schema used for data product validation |
+| `lean_validation_custom_properties_path` | `DMESH_SDK__LEAN_VALIDATION_CUSTOM_PROPERTIES_PATH` | `"examples/lean-validator/schemas/custom-properties"` | Path to the custom properties schema definitions |
 ---
 
 ### VSCode Setup
