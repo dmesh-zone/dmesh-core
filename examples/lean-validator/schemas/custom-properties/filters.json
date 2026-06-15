@@ -2,7 +2,11 @@
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "type": "object",
   "properties": {
-    "defaultBehavior": { "type": "string" },
+    "defaultBehavior": {
+      "type": "string",
+      "enum": ["noRowsReturned", "allRowsAndColumnsReturned"],
+      "default": "allRowsAndColumnsReturned"
+    },
     "filterSelectExpressions": {
       "type": "array",
       "items": {

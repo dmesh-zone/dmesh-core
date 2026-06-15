@@ -21,7 +21,10 @@
       ],
       "default": "deltaLake"
     },
-    "location": {
+    "s3Uri": {
+      "type": "string"
+    },
+    "s3Region": {
       "type": "string"
     },
     "trigger": {
@@ -40,6 +43,7 @@
     "sourceCatalog",
     "sourceSchema",
     "format",
-    "location"
+    "s3Uri",
+    "s3Region"
   ]
 }

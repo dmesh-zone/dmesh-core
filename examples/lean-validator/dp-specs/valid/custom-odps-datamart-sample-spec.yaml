@@ -22,6 +22,7 @@ customProperties:
       - _insertId: commonPublishAttributes
         sourceCatalog: <my-source-catalog>
         sourceSchema: <my-source-schema>
-        location: s3://<bucket-name>/<folder-name>
+        s3Uri: s3://<bucket>/<path>
+        s3Region: <s3-region>
         trigger: schedule
         schedule: "0 0 * * * *"
