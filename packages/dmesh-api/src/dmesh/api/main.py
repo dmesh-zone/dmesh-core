@@ -93,6 +93,37 @@ def create_app() -> FastAPI:
             "platform": sys.platform
         }
         
+    viewer_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "viewer")
+    if os.path.isdir(viewer_dir):
+        from fastapi.staticfiles import StaticFiles
+        from fastapi.responses import FileResponse, RedirectResponse
+        from fastapi import HTTPException
+        
+        # Mount the static assets under /dmesh-viewer/assets
+        assets_dir = os.path.join(viewer_dir, "assets")
+        if os.path.isdir(assets_dir):
+            app.mount("/dmesh-viewer/assets", StaticFiles(directory=assets_dir), name="assets")
+        
+        @app.get("/dmesh-viewer")
+        @app.get("/dmesh-viewer/")
+        async def serve_spa_root():
+            return FileResponse(os.path.join(viewer_dir, "index.html"))
+
+        @app.get("/dmesh-viewer/{catchall:path}")
+        async def serve_spa_catchall(request: Request, catchall: str):
+            if catchall.startswith(_BASE):
+                raise HTTPException(status_code=404, detail="Not Found")
+            
+            file_path = os.path.join(viewer_dir, catchall)
+            if os.path.isfile(file_path):
+                return FileResponse(file_path)
+                
+            return FileResponse(os.path.join(viewer_dir, "index.html"))
+
+        @app.get("/")
+        async def root_redirect():
+            return RedirectResponse(url="/dmesh-viewer/")
+
     return app
 
 app = create_app()

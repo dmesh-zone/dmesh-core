@@ -34,3 +34,4 @@ test_required_secrets.py
 packages/dmesh-api/requirements.txt
 packages/dmesh-api/update_perms.json
 packages/dmesh-api/app.yaml
+packages/dmesh-api/viewer/

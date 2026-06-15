@@ -110,7 +110,9 @@ databricks auth login --host $DATABRICKS_WORKSPACE_URL
 
 ### Deployment
 
-To streamline the deployment process, we have provided an automated deployment script `deploy-api-as-databricks-app.sh`.
+To streamline the deployment process, we have provided two automated deployment scripts:
+- `deploy-api-as-databricks-app.sh`: Deploys only the API.
+- `deploy-api-and-viewer-as-databricks-app.sh`: Deploys the API and automatically builds/bundles the `dmesh-viewer` UI so that both are served by the same Databricks App. This expects the `dmesh-viewer` directory to be present in `../dmesh-viewer` relative to the root of this project.
 
 ### Prerequisites
 
@@ -122,11 +124,14 @@ DB_PROFILE="<your-databricks-profile>"
 
 ### Deploying
 
-Simply execute the deployment script with your desired target (`mem` or `lakebase`). It will automatically build the `dmesh-sdk` wheel, copy the appropriate configuration to `app.yaml`, sync the files to Databricks, and trigger the App deployment.
+Simply execute the desired deployment script with your target (`mem` or `lakebase`). It will automatically build the `dmesh-sdk` wheel, (optionally build the viewer UI), copy the appropriate configuration to `app.yaml`, sync the files to Databricks, and trigger the App deployment.
 
 ```bash
-# To deploy with the lakebase configuration
+# To deploy the API ONLY with the lakebase configuration
 ./deploy-api-as-databricks-app.sh lakebase
+
+# To deploy the API + Viewer UI with the lakebase configuration
+./deploy-api-and-viewer-as-databricks-app.sh lakebase
 
 # To deploy with the in-memory database configuration
 ./deploy-api-as-databricks-app.sh mem
