@@ -4,7 +4,10 @@
   "properties": {
     "defaultBehavior": {
       "type": "string",
-      "enum": ["noRowsReturned", "allRowsAndColumnsReturned"],
+      "enum": [
+        "noRowsReturned",
+        "allRowsAndColumnsReturned"
+      ],
       "default": "allRowsAndColumnsReturned"
     },
     "filterSelectExpressions": {
@@ -12,10 +15,35 @@
       "items": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "expression": { "type": "string" }
+          "name": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          }
         },
-        "required": ["name", "expression"]
+        "required": [
+          "name",
+          "expression"
+        ]
+      }
+    },
+    "filterWhereExpressions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "expression"
+        ]
       }
     },
     "filterAssemblies": {
@@ -25,11 +53,32 @@
         "properties": {
           "users": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           },
-          "filterSelectExpressions": { "type": "string" }
+          "filterSelectExpression": {
+            "type": "string"
+          },
+          "filterWhereExpression": {
+            "type": "string"
+          }
         },
-        "required": ["users", "filterSelectExpressions"]
+        "required": [
+          "users"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "filterSelectExpression"
+            ]
+          },
+          {
+            "required": [
+              "filterWhereExpression"
+            ]
+          }
+        ]
       }
     },
     "environmentVariables": {
@@ -37,15 +86,38 @@
       "items": {
         "type": "object",
         "properties": {
-          "var": { "type": "string" },
+          "var": {
+            "type": "string"
+          },
           "values": {
             "type": "object",
-            "additionalProperties": { "type": "string" }
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
-        "required": ["var", "values"]
+        "required": [
+          "var",
+          "values"
+        ]
       }
     }
   },
-  "required": ["defaultBehavior", "filterSelectExpressions", "filterAssemblies", "environmentVariables"]
+  "required": [
+    "defaultBehavior",
+    "filterAssemblies",
+    "environmentVariables"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "filterSelectExpressions"
+      ]
+    },
+    {
+      "required": [
+        "filterWhereExpressions"
+      ]
+    }
+  ]
 }

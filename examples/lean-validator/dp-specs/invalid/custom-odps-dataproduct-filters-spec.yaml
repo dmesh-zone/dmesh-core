@@ -1,0 +1,17 @@
+outputPorts:
+  - name: patients
+    customProperties:
+      - property: filters
+        value:
+          defaultBehavior: noRowsReturned
+          filterAssemblies:
+            - users:
+                - APP1_{env}_0001
+              filterSelectExpression: ageAndGender
+              filterWhereExpression: ukOnly
+          environmentVariables:
+            - var: env
+              values:
+                dev: D
+                qa: Q
+                prod: P

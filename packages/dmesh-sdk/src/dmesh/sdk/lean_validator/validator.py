@@ -1,6 +1,9 @@
 import argparse
+import logging
 import json
 import yaml
+
+logger = logging.getLogger(__name__)
 import jsonschema
 from jsonschema import validate, ValidationError
 import sys
@@ -49,6 +52,7 @@ class Validator:
         return processed_data
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(description="Validate JSON/YAML data against a JSON Schema.")
     parser.add_argument("data_file", help="Path to the JSON or YAML data file to validate.")
     parser.add_argument("--schema", default="examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json", help="Path to the JSON schema file (default: examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json).")
@@ -60,12 +64,13 @@ def main():
         data = load_data(args.data_file)
         validator = Validator(schema_path=args.schema, custom_properties_dir=args.custom_properties_dir)
     except Exception as e:
-        print(f"Error loading files: {e}", file=sys.stderr)
+        logger.error(f"Error loading files: {e}")
         sys.exit(1)
 
     try:
         processed_data = validator.validate_data(data)
-        print(f"✅ Validation successful! '{args.data_file}' is valid against '{args.schema}'.")
+        logger.info(f"✅ Validation successful! '{args.data_file}' is valid against '{args.schema}'.")
+        sys.exit(0)
     except ValidationError as e:
         path_list = list(e.absolute_path)
         is_custom_property = False
@@ -90,25 +95,25 @@ def main():
                             supported_vals = ", ".join(str(v) for v in e.validator_value)
                         else:
                             supported_vals = str(e.validator_value)
-                        msg = f"ERROR: Specification {args.data_file} customProperty {property_name} {field_name} has an invalid value ({invalid_val}) supported values are ({supported_vals}). Please correct: {json_path}"
-                        print(msg, file=sys.stderr)
+                        msg = f"Specification {args.data_file} customProperty {property_name} {field_name} has an invalid value ({invalid_val}) supported values are ({supported_vals}). Please correct: {json_path}"
+                        logger.error(msg)
                         is_custom_property = True
                     else:
-                        msg = f"ERROR: Specification {args.data_file} customProperty {property_name} error: {e.message}. Please correct: {json_path}"
-                        print(msg, file=sys.stderr)
+                        msg = f"Specification {args.data_file} customProperty {property_name} error: {e.message}. Please correct: {json_path}"
+                        logger.error(msg)
                         is_custom_property = True
                 except Exception:
                     pass
                     
         if not is_custom_property:
-            print(f"❌ Validation failed!", file=sys.stderr)
-            print(f"Message: {e.message}", file=sys.stderr)
-            print(f"Path: {' -> '.join(str(p) for p in e.absolute_path)}", file=sys.stderr)
+            logger.error(f"❌ Validation failed!")
+            logger.error(f"Message: {e.message}")
+            logger.error(f"Path: {' -> '.join(str(p) for p in e.absolute_path)}")
             
         sys.exit(1)
     except jsonschema.exceptions.SchemaError as e:
-        print(f"❌ Schema error! The provided schema is invalid.", file=sys.stderr)
-        print(f"Message: {e.message}", file=sys.stderr)
+        logger.error(f"❌ Schema error! The provided schema is invalid.")
+        logger.error(f"Message: {e.message}")
         sys.exit(1)
 
 if __name__ == "__main__":

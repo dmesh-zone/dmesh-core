@@ -1,21 +1,22 @@
 outputPorts:
-  - name: studies
   - name: patients
     customProperties:
-      - property: portAdapterOdata
-        value: True
-      - property: portAdapterIceberg
-        value: True
       - property: filters
         value:
           defaultBehavior: noRowsReturned
           filterSelectExpressions:
-            - name: selectAll
-              expression: age, gender, height
+            - name: ageAndGender
+              expression: age, gender
+          filterWhereExpressions:
+            - name: ukOnly
+              expression: country in ('UK')
+            - name: frOnly
+              expression: country in ('FR')
           filterAssemblies:
             - users:
                 - APP1_{env}_0001
-              filterSelectExpressions: selectAll
+              filterSelectExpression: ageAndGender
+              filterWhereExpression: ukOnly
           environmentVariables:
             - var: env
               values:

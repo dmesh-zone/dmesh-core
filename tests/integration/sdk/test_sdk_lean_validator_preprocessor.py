@@ -3,9 +3,9 @@ from dmesh.sdk.lean_validator.validator import load_data
 from dmesh.sdk.lean_validator.preprocessor import preprocess
 import json
 
-def test_preprocessor_datamart_sample():
+def test_preprocessor_publish_to_s3_spec():
     # Load the example file
-    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-datamart-sample-spec.yaml")
+    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-dataproduct-publish-to-s3-spec.yaml")
     
     # Run the preprocessor
     processed_data = preprocess(data)
@@ -23,11 +23,11 @@ def test_preprocessor_datamart_sample():
     # Ensure _insertFrom is removed
     assert "_insertFrom" not in value
     
-    # Ensure properties from publishToS3Inserts are injected
+    # Ensure properties from publishToS3_inserts are injected
     assert value["sourceCatalog"] == "<my-source-catalog>"
     assert value["sourceSchema"] == "<my-source-schema>"
-    assert value["format"] == "deltaLake"
-    assert value["location"] == "s3://<bucket-name>/<folder-name>"
+    assert value["s3Uri"] == "s3://<bucket>/<path>"
+    assert value["s3Region"] == "<s3-region>"
     assert value["trigger"] == "schedule"
     assert value["schedule"] == "0 0 * * * *"
     

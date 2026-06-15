@@ -22,7 +22,7 @@ def find_property_value(data, prop_name):
 
 def test_fill_defaults_from_schema():
     # Load the YAML which now explicitly omits the 'format' field
-    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-datamart-sample-spec.yaml")
+    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-dataproduct-publish-to-s3-spec.yaml")
     
     # Process the data (expands _inserts and applies schema defaults)
     processed_data = preprocess(data)
@@ -39,13 +39,13 @@ def test_fill_defaults_from_schema():
     assert value["format"] == "deltaLake", f"Expected format 'deltaLake', got {value['format']}"
 
 def test_enterprise_data_product_datamart():
-    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-datamart-sample-spec.yaml")
+    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-dataproduct-publish-to-s3-spec.yaml")
     processed = preprocess(data)
     val = find_property_value(processed, "enterpriseDataProduct")
     assert val is False, f"Expected False, got {val}"
 
 def test_enterprise_data_product_dataproduct():
-    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-dataproduct-sample-spec.yaml")
+    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-dataproduct-source-aligned.yaml")
     processed = preprocess(data)
     val = find_property_value(processed, "enterpriseDataProduct")
     assert val is True, f"Expected True, got {val}"

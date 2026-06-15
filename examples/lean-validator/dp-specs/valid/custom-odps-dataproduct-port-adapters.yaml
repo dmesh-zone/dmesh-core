@@ -1,0 +1,8 @@
+outputPorts:
+  - name: studies
+  - name: patients
+    customProperties:
+      - property: portAdapterOdata
+        value: True
+      - property: portAdapterIceberg
+        value: True

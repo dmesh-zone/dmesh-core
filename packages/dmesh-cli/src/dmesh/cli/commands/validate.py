@@ -2,39 +2,50 @@
 import typer
 import asyncio
 import sys
+from typing import Optional
 from jsonschema.exceptions import ValidationError
 
 from dmesh.sdk.config import get_settings
 from dmesh.sdk.persistency.filesystem import AsyncFilesystemDataProductRepository
 from dmesh.sdk.lean_validator.validator import Validator
 
-def validate() -> None:
+def validate(
+    root: Optional[str] = typer.Option(None, "--root", "-r", help="Data products filesystem root path."),
+    schema: Optional[str] = typer.Option(None, "--schema", "-s", help="Path to the JSON schema file."),
+    custom_props: Optional[str] = typer.Option(None, "--custom-props", "-c", help="Path to the directory containing custom properties schemas.")
+) -> None:
     """Validate all data products in the filesystem."""
     try:
-        asyncio.run(_validate_dps())
+        asyncio.run(_validate_dps(root, schema, custom_props))
     except typer.Exit:
         raise
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
 
-async def _validate_dps():
+async def _validate_dps(root: Optional[str] = None, schema: Optional[str] = None, custom_props: Optional[str] = None):
     settings = get_settings()
     
     if getattr(settings.sdk, "filesystem_persistency", False) is False:
         typer.echo("Error: Validation is only supported when filesystem_persistency is enabled.", err=True)
         raise typer.Exit(code=1)
         
-    root_dir = getattr(settings.sdk, "data_products_filesystem_root", None) or "tmp/data_products_filesystem_root"
+    root_dir = root or getattr(settings.sdk, "data_products_filesystem_root", None) or "tmp/data_products_filesystem_root"
+    schema_path = schema or getattr(settings.sdk, "lean_validation_data_product_schema", None)
+    custom_props_dir = custom_props or getattr(settings.sdk, "lean_validation_custom_properties_path", None)
+    
+    typer.echo(f"Validation settings:")
+    typer.echo(f"  - root: {root_dir}")
+    typer.echo(f"  - schema: {schema_path}")
+    typer.echo(f"  - custom-props: {custom_props_dir}")
+    typer.echo("-" * 40)
+
     repo = AsyncFilesystemDataProductRepository(root_dir)
     dps = await repo.list()
     
     if not dps:
         typer.echo(f"No data products found in {root_dir}.")
         return
-
-    schema_path = getattr(settings.sdk, "lean_validation_data_product_schema", None)
-    custom_props_dir = getattr(settings.sdk, "lean_validation_custom_properties_path", None)
     
     kwargs = {}
     if schema_path:
