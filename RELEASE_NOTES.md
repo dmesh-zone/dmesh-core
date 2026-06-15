@@ -4,6 +4,24 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.9.0] - yyyy-mm-dd
+
+### ✨ Highlights
+This release consolidates the deployment strategy for Databricks Apps, migrates the default application port, and brings numerous stability and type-safety fixes to the SDK and CLI tools.
+
+### ☁️ Infrastructure & Deployment
+- **Consolidated Databricks Apps Deployment**: Added a new deployment script (`deploy-api-and-viewer-as-databricks-app.sh`) that automatically builds the `dmesh-viewer` UI and bundles it with the `dmesh-api` to be served by a single Databricks App. 
+
+### ⚙️ SDK & Core Logic
+- **JSON Schema Validation Robustness**: Addressed deprecation warnings for `jsonschema` and integrated the `referencing` library to properly handle schema validation dependencies and registries, resolving `ModuleNotFoundError` and `Validator` runtime errors.
+- **Dependency Management**: Fixed missing package declarations by explicitly including `httpx` and `referencing` dependencies into the SDK requirements.
+
+### 🖥️ CLI Enhancements & DX
+- **CLI Setup Modules**: Resolved missing module import errors for `errors` and `feedback` during the CLI's `container_manager` initialization.
+- **Type Safety**: Addressed type-incompatibility and attribute errors in the `list` and `put` SDK/CLI commands, ensuring optional arguments (like `domain`, `dp_name`) are properly cast to strings and properties are safely accessed.
+
+---
+
 ## 🚀 [v0.8.0] - 2026-06-14
 
 ### ✨ Highlights
