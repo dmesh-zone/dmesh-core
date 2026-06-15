@@ -4,7 +4,7 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
-## 🚀 [v0.9.0] - yyyy-mm-dd
+## 🚀 [v0.9.0] - 2026-06-15
 
 ### ✨ Highlights
 This release consolidates the deployment strategy for Databricks Apps, migrates the default application port, and brings numerous stability and type-safety fixes to the SDK and CLI tools.
