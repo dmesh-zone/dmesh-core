@@ -67,7 +67,7 @@
       "type": "array",
       "description": "A list of key/value pairs for custom properties.",
       "items": {
-        "$ref": "#/$defs/CustomProperty"
+        "$ref": "#/$defs/RootCustomProperty"
       }
     },
     "tags": {
@@ -163,7 +163,127 @@
       "properties": {
         "property": {
           "type": "string",
-          "description": "The name of the key. Names should be in camel case, the same as if they were permanent properties in the contract."
+          "description": "The name of the key. Names should be in camel case, the same as if they were permanent properties in the contract.",
+          "not": {
+            "enum": [
+              "enterpriseDataProduct",
+              "dataProductTier",
+              "portAdapterOdata",
+              "portAdapterIceberg",
+              "filters",
+              "publishToS3",
+              "dataSourceSuppressed",
+              "dataSourceTechnology"
+            ]
+          }
+        },
+        "value": {
+          "description": "The value of the key."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description."
+        }
+      },
+      "required": ["property", "value"]
+    },
+    "RootCustomProperty": {
+      "type": "object",
+      "description": "A key/value pair for custom properties.",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string",
+          "description": "The name of the key. Names should be in camel case, the same as if they were permanent properties in the contract.",
+          "not": {
+            "enum": [
+              "portAdapterOdata",
+              "portAdapterIceberg",
+              "filters",
+              "publishToS3"
+            ]
+          }
+        },
+        "value": {
+          "description": "The value of the key."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description."
+        }
+      },
+      "required": ["property", "value"],
+      "allOf": [
+        {
+          "if": { "properties": { "property": { "const": "enterpriseDataProduct" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/enterpriseDataProduct.json" } } }
+        },
+        {
+          "if": { "properties": { "property": { "const": "dataProductTier" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/dataProductTier.json" } } }
+        },
+        {
+          "if": { "properties": { "property": { "const": "dataSourceSuppressed" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/dataSourceSuppressed.json" } } }
+        },
+        {
+          "if": { "properties": { "property": { "const": "dataSourceTechnology" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/dataSourceTechnology.json" } } }
+        }
+      ]
+    },
+    "InputPortCustomProperty": {
+      "type": "object",
+      "description": "A key/value pair for custom properties.",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string",
+          "description": "The name of the key. Names should be in camel case, the same as if they were permanent properties in the contract.",
+          "not": {
+            "enum": [
+              "enterpriseDataProduct",
+              "dataProductTier",
+              "portAdapterOdata",
+              "portAdapterIceberg",
+              "filters",
+              "dataSourceSuppressed",
+              "dataSourceTechnology"
+            ]
+          }
+        },
+        "value": {
+          "description": "The value of the key."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description."
+        }
+      },
+      "required": ["property", "value"],
+      "allOf": [
+        {
+          "if": { "properties": { "property": { "const": "publishToS3" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/publishToS3.json" } } }
+        }
+      ]
+    },
+    "OutputPortCustomProperty": {
+      "type": "object",
+      "description": "A key/value pair for custom properties.",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string",
+          "description": "The name of the key. Names should be in camel case, the same as if they were permanent properties in the contract.",
+          "not": {
+            "enum": [
+              "enterpriseDataProduct",
+              "dataProductTier",
+              "dataSourceSuppressed",
+              "dataSourceTechnology"
+            ]
+          }
         },
         "value": {
           "description": "The value of the key."
@@ -179,22 +299,17 @@
           "if": { "properties": { "property": { "const": "publishToS3" } } },
           "then": { "properties": { "value": { "$ref": "custom-properties/publishToS3.json" } } }
         },
-
         {
-          "if": { "properties": { "property": { "const": "enterpriseDataProduct" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/enterpriseDataProduct.json" } } }
+          "if": { "properties": { "property": { "const": "portAdapterOdata" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/portAdapterOdata.json" } } }
         },
         {
-          "if": { "properties": { "property": { "const": "portAdapter" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/portAdapter.json" } } }
+          "if": { "properties": { "property": { "const": "portAdapterIceberg" } } },
+          "then": { "properties": { "value": { "$ref": "custom-properties/portAdapterIceberg.json" } } }
         },
         {
           "if": { "properties": { "property": { "const": "filters" } } },
           "then": { "properties": { "value": { "$ref": "custom-properties/filters.json" } } }
-        },
-        {
-          "if": { "properties": { "property": { "const": "dataProductTier" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/dataProductTier.json" } } }
         }
       ]
     },
@@ -249,7 +364,7 @@
           "type": "array",
           "description": "Custom properties block.",
           "items": {
-            "$ref": "#/$defs/CustomProperty"
+            "$ref": "#/$defs/InputPortCustomProperty"
           }
         },
         "authoritativeDefinitions": {
@@ -310,7 +425,7 @@
           "type": "array",
           "description": "Custom properties block.",
           "items": {
-            "$ref": "#/$defs/CustomProperty"
+            "$ref": "#/$defs/OutputPortCustomProperty"
           }
         },
         "authoritativeDefinitions": {

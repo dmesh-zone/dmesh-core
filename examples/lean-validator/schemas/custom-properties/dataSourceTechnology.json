@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "string",
+  "enum": [
+    "oracle",
+    "rdsoracle",
+    "rdsaurora",
+    "rdsmariadb",
+    "rdsmysql",
+    "rdspostgresql",
+    "rdssqlserver",
+    "sharepoint",
+    "reltio",
+    "veevavault",
+    "ftp",
+    "salesforce",
+    "sap",
+    "s3",
+    "redshift",
+    "atlassian",
+    "jira",
+    "googleanalytics",
+    "servicenow",
+    "deltalake",
+    "odata",
+    "snowflake",
+    "tibcodv12n",
+    "api",
+    "iceberg",
+    "kafka",
+    "kinesis"
+  ]
+}

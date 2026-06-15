@@ -2,8 +2,10 @@ outputPorts:
   - name: studies
   - name: patients
     customProperties:
-      - property: portAdapter
-        value: odata
+      - property: portAdapterOdata
+        value: True
+      - property: portAdapterIceberg
+        value: True
       - property: filters
         value:
           defaultBehavior: noRowsReturned

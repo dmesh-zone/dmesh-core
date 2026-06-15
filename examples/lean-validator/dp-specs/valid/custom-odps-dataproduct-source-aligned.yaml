@@ -1,0 +1,5 @@
+customProperties:
+  - property: dataProductTier
+    value: sourceAligned
+  - property: dataSourceSuppressed
+    value: True
