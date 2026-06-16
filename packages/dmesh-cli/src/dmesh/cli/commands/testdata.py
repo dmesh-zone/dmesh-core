@@ -146,11 +146,11 @@ async def _generate_testdata(spec: str, lean: bool = False):
     root_schema = None
     if lean:
         from dmesh.sdk.config import get_settings
-        from dmesh.sdk.lean_validator.validator import load_schema
+        from dmesh.sdk.custom_validator.validator import load_schema
         settings = get_settings()
-        schema_path = getattr(settings.sdk, "lean_validation_data_product_schema", None)
+        schema_path = getattr(settings.sdk, "custom_validation_data_product_schema", None)
         if not schema_path:
-            schema_path = "examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json"
+            schema_path = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
         try:
             root_schema = load_schema(schema_path)
         except Exception as e:

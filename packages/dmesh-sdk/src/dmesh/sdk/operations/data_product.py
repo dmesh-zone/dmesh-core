@@ -1,5 +1,5 @@
 from typing import Any, List, Optional, Union
-from dmesh.sdk.models import DataProduct
+from dmesh.sdk.models import DataProduct, DataProductValidity
 from dmesh.sdk.ports.repository import DataProductRepository
 from dmesh.sdk.sdk import AsyncSDK, _RepoWrapper
 
@@ -51,3 +51,11 @@ async def list_dps(
 async def delete_dp(repo: DataProductRepository, id: str) -> bool:
     """Delete a data product by ID."""
     return await AsyncSDK(_RepoWrapper(dp_repo=repo)).delete_data_product(id)
+
+async def validate_dps(
+    repo: DataProductRepository,
+    domain: Optional[str] = None,
+    name: Optional[str] = None
+) -> List['DataProductValidity']:
+    """Validate data products."""
+    return await AsyncSDK(_RepoWrapper(dp_repo=repo)).validate_data_products(domain=domain, name=name)

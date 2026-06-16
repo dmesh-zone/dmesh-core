@@ -1,11 +1,11 @@
 import pytest
-from dmesh.sdk.lean_validator.validator import load_data
-from dmesh.sdk.lean_validator.preprocessor import preprocess
+from dmesh.sdk.custom_validator.validator import load_data
+from dmesh.sdk.custom_validator.preprocessor import preprocess
 import json
 
 def test_preprocessor_publish_to_s3_spec():
     # Load the example file
-    data = load_data("examples/lean-validator/dp-specs/valid/custom-odps-dataproduct-publish-to-s3-spec.yaml")
+    data = load_data("examples/custom-validation/dp-specs/valid/custom-odps-dataproduct-publish-to-s3-spec.yaml")
     
     # Run the preprocessor
     processed_data = preprocess(data)

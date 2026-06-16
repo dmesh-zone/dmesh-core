@@ -31,3 +31,12 @@ class DataContract:
     specification: Dict[str, Any]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+@dataclass
+class DataProductValidity:
+    id: UUID
+    name: str
+    domain: str
+    valid: bool
+    error: Optional[str] = None

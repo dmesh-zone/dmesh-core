@@ -7,7 +7,8 @@ from dmesh.sdk.models import (
     DataProduct, 
     DataContract, 
     DataProductValidationError, 
-    DataContractValidationError
+    DataContractValidationError,
+    DataProductValidity
 )
 from dmesh.sdk.core.enricher import enrich_dp_spec, enrich_dc_spec
 from dmesh.sdk.core.validator import validate_spec
@@ -239,6 +240,82 @@ class AsyncSDK:
         if include_metadata:
             return results
         return [dp.specification if isinstance(dp, DataProduct) else dp for dp in results]
+
+    async def validate_data_products(self, domain: Optional[str] = None, name: Optional[str] = None) -> List['DataProductValidity']:
+        if hasattr(self.dp_repo, "validate"):
+            return await self.dp_repo.validate(domain=domain, name=name)
+            
+        from dmesh.sdk.custom_validator.validator import Validator
+        from jsonschema.exceptions import ValidationError
+        from dmesh.sdk.models.core import DataProductValidity, DataProduct
+        from dmesh.sdk.config import get_settings
+
+        dps = await self.list_data_products(domain=domain, name=name, include_metadata=True)
+        
+        settings = self.settings or get_settings()
+        
+        schema_path = getattr(settings.sdk, "custom_validation_data_product_schema", None) if settings and hasattr(settings, "sdk") else None
+        custom_props_dir = getattr(settings.sdk, "custom_validation_properties_path", None) if settings and hasattr(settings, "sdk") else None
+        
+        kwargs = {}
+        if schema_path:
+            kwargs["schema_path"] = schema_path
+        if custom_props_dir:
+            kwargs["custom_properties_dir"] = custom_props_dir
+            
+        validator = Validator(**kwargs)
+        
+        results = []
+        for dp in dps:
+            # Type guard for pyright
+            if not isinstance(dp, DataProduct):
+                continue
+                
+            dp_name = dp.name
+            dp_domain = dp.domain
+            try:
+                validator.validate_data(dp.specification)
+                results.append(DataProductValidity(id=dp.id, name=dp_name, domain=dp_domain, valid=True, error=None))
+            except ValidationError as e:
+                path_list = list(e.absolute_path)
+                is_custom_property = False
+                msg = None
+                
+                if "customProperties" in path_list:
+                    idx = path_list.index("customProperties")
+                    if len(path_list) > idx + 1 and isinstance(path_list[idx + 1], int):
+                        curr: Any = dp.specification
+                        try:
+                            for p in path_list[:idx + 2]:
+                                curr = curr[p]
+                            property_name = curr.get("property", "unknown")
+                            
+                            path_list[idx + 1] = property_name
+                            json_path = " -> ".join(str(p) for p in path_list)
+                            
+                            if e.validator == "enum":
+                                field_name = path_list[-1]
+                                invalid_val = e.instance
+                                if isinstance(e.validator_value, (list, tuple)):
+                                    supported_vals = ", ".join(str(v) for v in e.validator_value)
+                                else:
+                                    supported_vals = str(e.validator_value)
+                                msg = f"ERROR: Specification for data product {dp_name} customProperty {property_name} {field_name} has an invalid value ({invalid_val}) supported values are ({supported_vals}). Please correct: {json_path}"
+                                is_custom_property = True
+                            else:
+                                msg = f"ERROR: Specification for data product {dp_name} customProperty {property_name} error: {e.message}. Please correct: {json_path}"
+                                is_custom_property = True
+                        except Exception:
+                            pass
+                            
+                if not is_custom_property or not msg:
+                    msg = f"Message: {e.message} Path: {' -> '.join(str(p) for p in e.absolute_path)}"
+                    
+                results.append(DataProductValidity(id=dp.id, name=dp_name, domain=dp_domain, valid=False, error=msg))
+            except Exception as e:
+                results.append(DataProductValidity(id=dp.id, name=dp_name, domain=dp_domain, valid=False, error=str(e)))
+        
+        return results
 
     async def _update_data_product(self, id: Union[str, UUID], enriched_spec: dict[str, Any], include_metadata: bool = False) -> Union[dict, DataProduct]:
         if isinstance(id, str):

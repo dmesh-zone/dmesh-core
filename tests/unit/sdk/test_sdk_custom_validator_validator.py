@@ -1,14 +1,14 @@
 import pytest
 import jsonschema
-from dmesh.sdk.lean_validator.validator import load_data, Validator
+from dmesh.sdk.custom_validator.validator import load_data, Validator
 import glob
 
 def get_valid_example_files():
-    files = glob.glob("examples/lean-validator/dp-specs/valid/*.yaml") + glob.glob("examples/lean-validator/dp-specs/valid/*.yml") + glob.glob("examples/lean-validator/dp-specs/valid/*.json")
+    files = glob.glob("examples/custom-validation/dp-specs/valid/*.yaml") + glob.glob("examples/custom-validation/dp-specs/valid/*.yml") + glob.glob("examples/custom-validation/dp-specs/valid/*.json")
     return sorted(files)
 
 def get_invalid_example_files():
-    files = glob.glob("examples/lean-validator/dp-specs/invalid/*.yaml") + glob.glob("examples/lean-validator/dp-specs/invalid/*.yml") + glob.glob("examples/lean-validator/dp-specs/invalid/*.json")
+    files = glob.glob("examples/custom-validation/dp-specs/invalid/*.yaml") + glob.glob("examples/custom-validation/dp-specs/invalid/*.yml") + glob.glob("examples/custom-validation/dp-specs/invalid/*.json")
     return sorted(files)
 
 @pytest.fixture(scope="module")

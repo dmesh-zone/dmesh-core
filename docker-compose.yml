@@ -46,6 +46,10 @@ services:
       LOG_LEVEL: debug
     ports:
       - "8000:8000"
+    working_dir: /app
+    volumes:
+      - ./tmp:/app/tmp
+      - ./examples:/app/examples
     command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
     depends_on:
       db:

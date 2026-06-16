@@ -115,6 +115,31 @@ class AsyncHttpDataProductRepository:
         response = await self._client.delete(f"{self.api_url}/admin/truncate_dps", headers=self._get_headers())
         response.raise_for_status()
 
+    async def validate(self, domain: Optional[str] = None, name: Optional[str] = None) -> List[Any]:
+        from dmesh.sdk.config import get_settings
+        from dmesh.sdk.models.core import DataProductValidity
+        
+        settings = get_settings()
+        params = {}
+        if domain:
+            params["domain"] = domain
+        if name:
+            params["name"] = name
+            
+        root = getattr(settings.sdk, "data_products_filesystem_root", None)
+        schema = getattr(settings.sdk, "custom_validation_data_product_schema", None)
+        custom_props = getattr(settings.sdk, "custom_validation_properties_path", None)
+        
+        if root: params["root"] = root
+        if schema: params["schema"] = schema
+        if custom_props: params["custom-props"] = custom_props
+            
+        response = await self._client.get(f"{self.api_url}/dps-validate", params=params, headers=self._get_headers())
+        response.raise_for_status()
+        
+        data = response.json()
+        return [DataProductValidity(**item) for item in data]
+
 
 class AsyncHttpDataContractRepository:
     def __init__(self, api_url: str, use_m2m: bool = False, ssl_verify: bool = False):

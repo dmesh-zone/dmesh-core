@@ -182,3 +182,69 @@ class TestApiIntegration:
         none_resp = await api_client.get("/dmesh/discover?domain=marketing")
         assert_that(none_resp.status_code).is_equal_to(200)
         assert_that(none_resp.json()).is_empty()
+
+    async def test_validate_data_products(self, api_client):
+        """Verify the /dps-validate endpoint validates data products."""
+        # 1. Create a data product
+        spec = {
+            "domain": "finance", 
+            "name": "ledger", 
+            "version": "v1.0.0"
+        }
+        await api_client.post("/dmesh/dps", json=spec)
+        
+        # 2. Call the validation endpoint
+        resp = await api_client.get("/dmesh/dps-validate?domain=finance")
+        
+        # 3. Verify response
+        assert_that(resp.status_code).is_equal_to(200)
+        items = resp.json()
+        assert_that(items).is_type_of(list)
+        assert_that(len(items)).is_equal_to(1)
+        
+        item = items[0]
+        assert_that(item["domain"]).is_equal_to("finance")
+        assert_that(item["name"]).is_equal_to("ledger")
+        assert_that(item["valid"]).is_true()
+        assert_that(item["error"]).is_none()
+
+    async def test_validate_data_products_invalid(self, api_client):
+        """Verify the /dps-validate endpoint correctly identifies invalid data products."""
+        # Configure global settings for the test
+        from dmesh.sdk.config import get_settings
+        settings = get_settings()
+        original_schema = getattr(settings.sdk, "custom_validation_data_product_schema", None)
+        original_custom_props = getattr(settings.sdk, "custom_validation_properties_path", None)
+        
+        settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
+        settings.sdk.custom_validation_properties_path = "examples/custom-validation/schemas/custom-properties"
+        
+        try:
+            # 1. Create a data product that has an invalid enum value for custom properties
+            spec = {
+                "domain": "finance", 
+                "name": "invalid-api-ledger", 
+                "version": "v1.0.0",
+                "customProperties": [
+                    {"property": "dataProductTier", "value": "inexistent"}
+                ]
+            }
+            await api_client.post("/dmesh/dps", json=spec)
+            
+            # 2. Call the validation endpoint
+            resp = await api_client.get("/dmesh/dps-validate?domain=finance&name=invalid-api-ledger")
+            
+            # 3. Verify response
+            assert_that(resp.status_code).is_equal_to(200)
+            items = resp.json()
+            assert_that(items).is_type_of(list)
+            assert_that(len(items)).is_equal_to(1)
+            
+            item = items[0]
+            assert_that(item["domain"]).is_equal_to("finance")
+            assert_that(item["name"]).is_equal_to("invalid-api-ledger")
+            assert_that(item["valid"]).is_false()
+            assert_that(item["error"]).contains("ERROR: Specification for data product invalid-api-ledger customProperty dataProductTier value has an invalid value")
+        finally:
+            settings.sdk.custom_validation_data_product_schema = original_schema
+            settings.sdk.custom_validation_properties_path = original_custom_props

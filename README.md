@@ -409,8 +409,8 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Automatically assign data product IDs to new data contracts |
 | `filesystem_persistency` | `DMESH_SDK__FILESYSTEM_PERSISTENCY` | `true` | Enable filesystem persistency instead of PostgreSQL |
 | `data_products_filesystem_root` | `DMESH_SDK__DATA_PRODUCTS_FILESYSTEM_ROOT` | `"tmp/data_products_filesystem_root"` | Root directory path for filesystem persistency |
-| `lean_validation_data_product_schema` | `DMESH_SDK__LEAN_VALIDATION_DATA_PRODUCT_SCHEMA` | `"examples/lean-validator/schemas/custom-odps-json-schema-v1.0.0.json"` | JSON schema used for data product validation |
-| `lean_validation_custom_properties_path` | `DMESH_SDK__LEAN_VALIDATION_CUSTOM_PROPERTIES_PATH` | `"examples/lean-validator/schemas/custom-properties"` | Path to the custom properties schema definitions |
+| `custom_validation_data_product_schema` | `DMESH_SDK__CUSTOM_VALIDATION_DATA_PRODUCT_SCHEMA` | `"examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"` | JSON schema used for data product validation |
+| `custom_validation_properties_path` | `DMESH_SDK__CUSTOM_VALIDATION_PROPERTIES_PATH` | `"examples/custom-validation/schemas/custom-properties"` | Path to the custom properties schema definitions |
 ---
 
 ### VSCode Setup

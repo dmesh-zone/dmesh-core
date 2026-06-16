@@ -17,7 +17,7 @@ def get_custom_properties(data, results=None):
             
     return results
 
-def preprocess(data, schema_dir="examples/lean-validator/schemas/custom-properties"):
+def preprocess(data, schema_dir="examples/custom-validation/schemas/custom-properties"):
     """
     Traverses the data dictionary to find `customProperties` arrays.
     It builds a lookup of all 'Inserts' properties (e.g. `publishToS3Inserts`),

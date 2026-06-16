@@ -22,7 +22,7 @@ from dmesh.cli.commands.list import app as list_app
 from dmesh.cli.commands.delete import app as delete_app
 from dmesh.cli.commands.testdata import app as testdata_app
 from dmesh.cli.commands.clean import clean
-from dmesh.cli.commands.validate import validate
+from dmesh.cli.commands.validate import app as validate_app
 
 import os
 CLI_NAME = os.environ.get("DMESH_CLI_NAME", "dmesh")
@@ -31,7 +31,7 @@ app.command("setup")(setup)
 app.command("teardown")(teardown)
 app.command("reset")(reset)
 app.command("clean")(clean)
-app.command("validate")(validate)
+app.add_typer(validate_app, name="validate")
 app.add_typer(testdata_app, name="testdata")
 app.add_typer(put_app, name="put")
 app.add_typer(get_app, name="get")

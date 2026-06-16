@@ -1,4 +1,4 @@
-from .core import DataProduct, DataContract
+from .core import DataProduct, DataContract, DataProductValidity
 from .exceptions import (
     OpenDataMeshError,
     DataProductValidationError,
@@ -8,6 +8,7 @@ from .exceptions import (
 __all__ = [
     "DataProduct",
     "DataContract",
+    "DataProductValidity",
     "OpenDataMeshError",
     "DataProductValidationError",
     "DataContractValidationError",

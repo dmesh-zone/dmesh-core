@@ -225,3 +225,46 @@ async def test_delete_dp_valid(sdk):
     dp = await sdk.put_data_product({"domain": "d", "name": "n", "version": "v"})
     assert await sdk.delete_data_product(UUID(dp["id"])) is True
     assert await sdk.get_data_product(id=dp["id"]) is None
+
+@pytest.mark.asyncio
+async def test_validate_data_products(sdk):
+    await sdk.put_data_product({"domain": "finance", "name": "ledger"})
+    
+    # Temporarily set schema validation settings to None to avoid actual external file loading issues
+    # But since we just want to test the wrapper method, we can test that it returns the validation object
+    # The default validator with no schema should pass minimal dp.
+    
+    results = await sdk.validate_data_products(domain="finance")
+    assert len(results) == 1
+    assert results[0].domain == "finance"
+    assert results[0].name == "ledger"
+    assert results[0].valid is True
+    assert results[0].error is None
+
+@pytest.mark.asyncio
+async def test_validate_data_products_invalid(sdk):
+    spec = {
+        "domain": "finance", 
+        "name": "invalid-ledger",
+        "customProperties": [
+            {"property": "dataProductTier", "value": "inexistent"}
+        ]
+    }
+    await sdk.put_data_product(spec)
+    
+    from dmesh.sdk.config import get_settings
+    settings = sdk.settings or get_settings()
+    
+    # Configure the SDK with the custom schema so that it validates the dataProductTier enum
+    settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
+    settings.sdk.custom_validation_properties_path = "examples/custom-validation/schemas/custom-properties"
+    
+    results = await sdk.validate_data_products(domain="finance", name="invalid-ledger")
+    
+    assert len(results) == 1
+    assert results[0].domain == "finance"
+    assert results[0].name == "invalid-ledger"
+    assert results[0].valid is False
+    assert results[0].error is not None
+    assert "ERROR: Specification for data product invalid-ledger customProperty dataProductTier value has an invalid value" in results[0].error
+    assert "inexistent" in results[0].error

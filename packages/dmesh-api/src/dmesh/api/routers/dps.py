@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
-from dmesh.sdk import create_dp, update_dp, get_dp, list_dps, delete_dp
+from dmesh.sdk import create_dp, update_dp, get_dp, list_dps, delete_dp, validate_dps
 from dmesh.api.dependencies import get_dp_repo
 from dmesh.sdk.ports.repository import DataProductRepository
 
@@ -57,6 +57,39 @@ async def truncate_data_products(repo: DataProductRepository = Depends(get_dp_re
         return {"status": "truncated"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/dps-validate")
+async def api_validate_dps(
+    domain: str = Query(None),
+    name: str = Query(None),
+    root: str = Query(None, alias="root"),
+    schema: str = Query(None, alias="schema"),
+    custom_props: str = Query(None, alias="custom-props"),
+    repo: DataProductRepository = Depends(get_dp_repo)
+):
+    try:
+        from dmesh.sdk.config import get_settings
+        settings = get_settings()
+        
+        if root:
+            from dmesh.sdk.persistency.filesystem import AsyncFilesystemDataProductRepository
+            repo = AsyncFilesystemDataProductRepository(root)
+            
+        original_schema = getattr(settings.sdk, "custom_validation_data_product_schema", None)
+        original_custom_props = getattr(settings.sdk, "custom_validation_properties_path", None)
+        
+        if schema:
+            settings.sdk.custom_validation_data_product_schema = schema
+        if custom_props:
+            settings.sdk.custom_validation_properties_path = custom_props
+            
+        try:
+            return await validate_dps(repo, domain=domain, name=name)
+        finally:
+            settings.sdk.custom_validation_data_product_schema = original_schema
+            settings.sdk.custom_validation_properties_path = original_custom_props
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/dps")
 @router.get("/dp", include_in_schema=False)

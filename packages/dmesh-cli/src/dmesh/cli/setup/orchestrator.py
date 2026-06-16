@@ -32,10 +32,12 @@ class SetupOrchestrator:
         use_rest_proxy = topology in (
             "docker-rest-pxy-postgres",
             "docker-rest-pxy-mem",
+            "docker-rest-pxy-filesystem",
             "databricks-rest-pxy"
         )
         use_databricks_m2m = topology == "databricks-rest-pxy"
         api_in_memory = topology == "docker-rest-pxy-mem"
+        api_filesystem = topology == "docker-rest-pxy-filesystem"
         
         if topology == "databricks-rest-pxy":
             rest_url = os.getenv('DMESH_SDK__REST_PERSISTENCY_URL') or os.getenv('DMESH_SDK__REST_PERSISTENCY_PROXY_URL')
@@ -45,7 +47,13 @@ class SetupOrchestrator:
             rest_url = "http://0.0.0.0:8000"
 
         cli_config_str = f"CLI SDK config:\n - rest_persistency_proxy: {use_rest_proxy}\n - rest_persistency_proxy_uses_databricks_m2m: {use_databricks_m2m}\n - rest_persistency_proxy_url: {rest_url}"
-        api_config_str = f"API Container config:\n - DMESH_SDK__IN_MEMORY_PERSISTENCY: {str(api_in_memory).lower()}\n - DB_TYPE: {'memory' if api_in_memory else 'postgres'}"
+        
+        if api_filesystem:
+            db_type_str = "filesystem"
+        else:
+            db_type_str = 'memory' if api_in_memory else 'postgres'
+            
+        api_config_str = f"API Container config:\n - DMESH_SDK__IN_MEMORY_PERSISTENCY: {str(api_in_memory).lower()}\n - DMESH_SDK__FILESYSTEM_PERSISTENCY: {str(api_filesystem).lower()}\n - DB_TYPE: {db_type_str}"
         
         print("\n--- Setup Topology ---")
         print(cli_config_str)
@@ -63,7 +71,8 @@ class SetupOrchestrator:
                 
                 env = os.environ.copy()
                 env["DMESH_SDK__IN_MEMORY_PERSISTENCY"] = str(api_in_memory).lower()
-                env["DB_TYPE"] = "memory" if api_in_memory else "postgres"
+                env["DMESH_SDK__FILESYSTEM_PERSISTENCY"] = str(api_filesystem).lower()
+                env["DB_TYPE"] = db_type_str
 
                 subprocess.run(cmd, check=True, capture_output=True, env=env)
                 self._feedback.success("Infrastructure started.")
