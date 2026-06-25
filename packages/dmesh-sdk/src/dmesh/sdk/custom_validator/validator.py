@@ -61,8 +61,16 @@ def main():
     args = parser.parse_args()
 
     try:
-        data = load_data(args.data_file)
         validator = Validator(schema_path=args.schema, custom_properties_dir=args.custom_properties_dir)
+        data = load_data(args.data_file)
+        if data is None:
+            required_fields = validator.schema.get("required", [])
+            if required_fields:
+                req_str = ", ".join(f"'{r}'" for r in required_fields)
+                logger.error(f"❌ Validation failed! The file '{args.data_file}' is empty. It must contain an object with the required properties: {req_str}")
+            else:
+                logger.error(f"❌ Validation failed! The file '{args.data_file}' is empty. It must contain a valid JSON/YAML object.")
+            sys.exit(1)
     except Exception as e:
         logger.error(f"Error loading files: {e}")
         sys.exit(1)
@@ -99,15 +107,52 @@ def main():
                         logger.error(msg)
                         is_custom_property = True
                     else:
-                        msg = f"Specification {args.data_file} customProperty {property_name} error: {e.message}. Please correct: {json_path}"
+                        def format_validation_error(err):
+                            if err.context:
+                                sub_errors = []
+                                for sub_err in err.context:
+                                    sub_errors.append(format_validation_error(sub_err))
+                                sub_errors = list(dict.fromkeys(sub_errors))
+                                if len(sub_errors) == 1:
+                                    return sub_errors[0]
+                                return " or ".join(f"({e})" for e in sub_errors)
+                            if err.validator == "required":
+                                reqs = err.validator_value
+                                if isinstance(reqs, list):
+                                    reqs_str = ", ".join(f"'{r}'" for r in reqs)
+                                else:
+                                    reqs_str = f"'{reqs}'"
+                                return f"missing required property {reqs_str}"
+                            return err.message
+
+                        custom_msg = format_validation_error(e)
+                        msg = f"Specification {args.data_file} customProperty {property_name} error: {custom_msg}. Please correct: {json_path}"
                         logger.error(msg)
                         is_custom_property = True
                 except Exception:
                     pass
                     
         if not is_custom_property:
+            def format_validation_error(err):
+                if err.context:
+                    sub_errors = []
+                    for sub_err in err.context:
+                        sub_errors.append(format_validation_error(sub_err))
+                    sub_errors = list(dict.fromkeys(sub_errors))
+                    if len(sub_errors) == 1:
+                        return sub_errors[0]
+                    return " or ".join(f"({e})" for e in sub_errors)
+                if err.validator == "required":
+                    reqs = err.validator_value
+                    if isinstance(reqs, list):
+                        reqs_str = ", ".join(f"'{r}'" for r in reqs)
+                    else:
+                        reqs_str = f"'{reqs}'"
+                    return f"missing required property {reqs_str}"
+                return err.message
+
             logger.error(f"❌ Validation failed!")
-            logger.error(f"Message: {e.message}")
+            logger.error(f"Message: {format_validation_error(e)}")
             logger.error(f"Path: {' -> '.join(str(p) for p in e.absolute_path)}")
             
         sys.exit(1)

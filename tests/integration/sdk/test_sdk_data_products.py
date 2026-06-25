@@ -228,7 +228,7 @@ async def test_delete_dp_valid(sdk):
 
 @pytest.mark.asyncio
 async def test_validate_data_products(sdk):
-    await sdk.put_data_product({"domain": "finance", "name": "ledger"})
+    await sdk.put_data_product({"domain": "finance", "name": "ledger", "outputPorts": [{"name": "some-port"}]})
     
     # Temporarily set schema validation settings to None to avoid actual external file loading issues
     # But since we just want to test the wrapper method, we can test that it returns the validation object
@@ -246,6 +246,7 @@ async def test_validate_data_products_invalid(sdk):
     spec = {
         "domain": "finance", 
         "name": "invalid-ledger",
+        "outputPorts": [{"name": "some-port"}],
         "customProperties": [
             {"property": "dataProductTier", "value": "inexistent"}
         ]

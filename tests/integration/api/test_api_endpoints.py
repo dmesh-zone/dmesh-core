@@ -189,7 +189,8 @@ class TestApiIntegration:
         spec = {
             "domain": "finance", 
             "name": "ledger", 
-            "version": "v1.0.0"
+            "version": "v1.0.0",
+            "outputPorts": [{"name": "some-port"}]
         }
         await api_client.post("/dmesh/dps", json=spec)
         
@@ -207,7 +208,7 @@ class TestApiIntegration:
         assert_that(item["name"]).is_equal_to("ledger")
         assert_that(item["valid"]).is_true()
         assert_that(item["error"]).is_none()
-
+ 
     async def test_validate_data_products_invalid(self, api_client):
         """Verify the /dps-validate endpoint correctly identifies invalid data products."""
         # Configure global settings for the test
@@ -225,6 +226,7 @@ class TestApiIntegration:
                 "domain": "finance", 
                 "name": "invalid-api-ledger", 
                 "version": "v1.0.0",
+                "outputPorts": [{"name": "some-port"}],
                 "customProperties": [
                     {"property": "dataProductTier", "value": "inexistent"}
                 ]

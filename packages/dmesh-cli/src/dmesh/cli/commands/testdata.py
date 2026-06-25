@@ -228,10 +228,12 @@ async def _generate_testdata(spec: str, lean: bool = False):
                     
                 return name, dp_id_str
                 
-        dp_tasks = [create_dp(name, info) for name, info in dps_info.items()]
+        dp_tasks = [create_dp(name, info) for name, info in dps_info.items() if not (lean and info["tier"] == "application")]
         results = await asyncio.gather(*dp_tasks)
-        for name, dp_id in results:
-            dp_id_map[name] = dp_id
+        for res in results:
+            if res is not None:
+                name, dp_id = res
+                dp_id_map[name] = dp_id
 
         async def create_edge(u, v, t):
             if lean:

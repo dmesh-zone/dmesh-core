@@ -4,6 +4,18 @@
   "description": "An open data product standard descriptor to enable defining data products.",
   "type": "object",
   "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "inputPorts"
+      ]
+    },
+    {
+      "required": [
+        "outputPorts"
+      ]
+    }
+  ],
   "properties": {
     "apiVersion": {
       "type": "string",
@@ -76,6 +88,7 @@
     "inputPorts": {
       "type": "array",
       "description": "List of objects describing an input port. You need at least one as a data product needs to get data somewhere.",
+      "minItems": 1,
       "items": {
         "$ref": "#/$defs/InputPort"
       }
@@ -83,6 +96,7 @@
     "outputPorts": {
       "type": "array",
       "description": "List of objects describing an output port. You need at least one, as a data product without output is useless.",
+      "minItems": 1,
       "items": {
         "$ref": "#/$defs/OutputPort"
       }

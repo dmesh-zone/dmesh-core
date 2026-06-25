@@ -3,3 +3,8 @@ customProperties:
     value: sourceAligned
   - property: dataSourceSuppressed
     value: True
+
+outputPorts:
+  - name: source_aligned_output
+
+
