@@ -60,7 +60,7 @@ class SetupOrchestrator:
         if topology not in ("databricks-rest-pxy", "filesystem"):
             print(api_config_str)
 
-        if not is_test:
+        if not is_test and topology != "filesystem":
             # Start infrastructure via docker-compose
             self._feedback.step("Starting infrastructure via docker-compose...")
             import subprocess
