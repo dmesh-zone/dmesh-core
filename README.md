@@ -1,8 +1,8 @@
 # dmesh-core
 
-[![Test Suite](https://github.com/dmesh-zone/dmesh-core/actions/workflows/tests.yml/badge.svg)](https://github.com/dmesh-zone/dmesh-core/actions/workflows/tests.yml)
-[![CodeQL](https://github.com/dmesh-zone/dmesh-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/dmesh-zone/dmesh-core/actions/workflows/codeql.yml)
-[![Snyk Security Scan](https://github.com/dmesh-zone/dmesh-core/actions/workflows/snyk.yml/badge.svg)](https://github.com/dmesh-zone/dmesh-core/actions/workflows/snyk.yml)
+[![Test Suite](https://github.com/dmesh-zone/dmesh-core/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/dmesh-zone/dmesh-core/actions/workflows/tests.yml)
+[![CodeQL](https://github.com/dmesh-zone/dmesh-core/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/dmesh-zone/dmesh-core/actions/workflows/codeql.yml)
+[![Snyk Security Scan](https://github.com/dmesh-zone/dmesh-core/actions/workflows/snyk.yml/badge.svg?branch=main)](https://github.com/dmesh-zone/dmesh-core/actions/workflows/snyk.yml)
 
 
 A modern, high-performance toolkit for managing **Open Data Mesh** specifications, focusing on Data Products and Data Contracts. This repository provides a unified `uv` workspace for the core SDK, REST API, and CLI components.
