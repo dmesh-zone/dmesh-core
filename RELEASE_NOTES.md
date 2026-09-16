@@ -4,6 +4,13 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.10.1] - 2026-09-16
+
+### 🛡️ Security & Bug Fixes
+- **Vulnerability Patching**: Upgraded `cryptography` to `50.0.1` and `pyasn1` to `0.6.4` to resolve High Severity vulnerabilities reported by Snyk (e.g. SNYK-PYTHON-CRYPTOGRAPHY-18516621, SNYK-PYTHON-PYASN1-17972379).
+
+---
+
 ## 🚀 [v0.10.0] - 2026-09-16
 
 ### ✨ Highlights
