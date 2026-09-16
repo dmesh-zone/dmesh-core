@@ -309,7 +309,15 @@ class AsyncSDK:
                             pass
                             
                 if not is_custom_property or not msg:
-                    msg = f"Message: {e.message} Path: {' -> '.join(str(p) for p in e.absolute_path)}"
+                    # Truncate the instance representation if it's too long
+                    if len(e.message) > 200 and "is not valid under any of the given schemas" in e.message:
+                        err_msg = "Object is not valid under any of the given schemas"
+                    else:
+                        err_msg = e.message
+                    msg = f"Message: {err_msg} Path: {' -> '.join(str(p) for p in e.absolute_path)}"
+                    if getattr(e, "context", None):
+                        context_msgs = "\n      ".join(f"- {sub_e.message} (Path: {' -> '.join(str(p) for p in sub_e.absolute_path)})" for sub_e in e.context)
+                        msg += f"\n   Underlying errors:\n      {context_msgs}"
                     
                 results.append(DataProductValidity(id=dp.id, name=dp_name, domain=dp_domain, valid=False, error=msg))
             except Exception as e:
