@@ -15,9 +15,13 @@ import referencing.exceptions
 def load_data(file_path):
     with open(file_path, 'r') as f:
         if file_path.endswith('.yaml') or file_path.endswith('.yml'):
-            return yaml.safe_load(f)
+            data = yaml.safe_load(f)
+            return {} if data is None else data
         elif file_path.endswith('.json'):
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
         else:
             raise ValueError("Unsupported file format. Please use .json, .yaml, or .yml")
 
@@ -46,6 +50,8 @@ class Validator:
         Raises jsonschema.exceptions.ValidationError if invalid.
         Returns the preprocessed data.
         """
+        if data is None:
+            data = {}
         from dmesh.sdk.custom_validator.preprocessor import preprocess
         processed_data = preprocess(data, schema_dir=self.custom_properties_dir)
         validate(instance=processed_data, schema=self.schema, registry=self.registry)
@@ -64,13 +70,7 @@ def main():
         validator = Validator(schema_path=args.schema, custom_properties_dir=args.custom_properties_dir)
         data = load_data(args.data_file)
         if data is None:
-            required_fields = validator.schema.get("required", [])
-            if required_fields:
-                req_str = ", ".join(f"'{r}'" for r in required_fields)
-                logger.error(f"❌ Validation failed! The file '{args.data_file}' is empty. It must contain an object with the required properties: {req_str}")
-            else:
-                logger.error(f"❌ Validation failed! The file '{args.data_file}' is empty. It must contain a valid JSON/YAML object.")
-            sys.exit(1)
+            data = {}
     except Exception as e:
         logger.error(f"Error loading files: {e}")
         sys.exit(1)

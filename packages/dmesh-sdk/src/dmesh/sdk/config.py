@@ -69,6 +69,7 @@ class ApiSettings(BaseModel):
     port: int = 8000
     debug: bool = False
     base_path: str = "dmesh"
+    environments: Dict[str, str] = Field(default_factory=dict)
 
 class SdkSettings(BaseModel):
     topology: str = "docker-postgres"
@@ -88,6 +89,7 @@ class SdkSettings(BaseModel):
     auto_data_product_id_in_data_contract: bool = True
     filesystem_persistency: bool = False
     data_products_filesystem_root: Optional[str] = None
+    data_products_filesystem_extra_path: Optional[str] = None
     custom_validation_data_product_schema: Optional[str] = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
     custom_validation_properties_path: Optional[str] = "examples/custom-validation/schemas/custom-properties"
 

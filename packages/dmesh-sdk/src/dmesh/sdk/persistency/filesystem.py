@@ -11,8 +11,9 @@ from dmesh.sdk.models import DataProduct, DataContract
 
 
 class AsyncFilesystemDataProductRepository:
-    def __init__(self, root_dir: str | Path):
+    def __init__(self, root_dir: str | Path, extra_path: Optional[str] = None):
         self.root_dir = Path(root_dir)
+        self.extra_path = extra_path
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
     async def save(self, product: DataProduct) -> None:
@@ -20,9 +21,10 @@ class AsyncFilesystemDataProductRepository:
         name = folder_name or product.specification.get("name") or str(product.id)
         
         dp_dir = self.root_dir / name
-        dp_dir.mkdir(parents=True, exist_ok=True)
+        spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+        spec_dir.mkdir(parents=True, exist_ok=True)
         
-        spec_path = dp_dir / "data_product_specification.yaml"
+        spec_path = spec_dir / "data_product_specification.yaml"
         with spec_path.open("w") as f:
             yaml.dump(product.specification, f, default_flow_style=False, sort_keys=False)
 
@@ -31,7 +33,8 @@ class AsyncFilesystemDataProductRepository:
         # Scan through all directories to find matching ID in the spec
         for dp_dir in self.root_dir.iterdir():
             if dp_dir.is_dir():
-                spec_path = dp_dir / "data_product_specification.yaml"
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                spec_path = spec_dir / "data_product_specification.yaml"
                 if spec_path.exists():
                     try:
                         with spec_path.open("r") as f:
@@ -50,7 +53,8 @@ class AsyncFilesystemDataProductRepository:
         results = []
         for dp_dir in self.root_dir.iterdir():
             if dp_dir.is_dir():
-                spec_path = dp_dir / "data_product_specification.yaml"
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                spec_path = spec_dir / "data_product_specification.yaml"
                 if spec_path.exists():
                     try:
                         with spec_path.open("r") as f:
@@ -101,8 +105,9 @@ class AsyncFilesystemDataProductRepository:
 
 
 class AsyncFilesystemDataContractRepository:
-    def __init__(self, root_dir: str | Path):
+    def __init__(self, root_dir: str | Path, extra_path: Optional[str] = None):
         self.root_dir = Path(root_dir)
+        self.extra_path = extra_path
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
     async def save(self, contract: DataContract) -> None:
@@ -112,9 +117,10 @@ class AsyncFilesystemDataContractRepository:
             raise ValueError("Data Contract specification must have a 'dataProduct' to be saved to filesystem.")
         
         dp_dir = self.root_dir / dp_name
-        dp_dir.mkdir(parents=True, exist_ok=True)
+        spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+        spec_dir.mkdir(parents=True, exist_ok=True)
         
-        spec_path = dp_dir / "data_contract_specification.yaml"
+        spec_path = spec_dir / "data_contract_specification.yaml"
         with spec_path.open("w") as f:
             yaml.dump(contract.specification, f, default_flow_style=False, sort_keys=False)
 
@@ -122,14 +128,15 @@ class AsyncFilesystemDataContractRepository:
         id_str = str(id)
         for dp_dir in self.root_dir.iterdir():
             if dp_dir.is_dir():
-                spec_path = dp_dir / "data_contract_specification.yaml"
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                spec_path = spec_dir / "data_contract_specification.yaml"
                 if spec_path.exists():
                     try:
                         with spec_path.open("r") as f:
                             spec = yaml.safe_load(f)
                             if spec and spec.get("id") == id_str:
                                 # We need data_product_id. Let's try to find it by loading DP
-                                dp_spec_path = dp_dir / "data_product_specification.yaml"
+                                dp_spec_path = spec_dir / "data_product_specification.yaml"
                                 dp_id = None
                                 if dp_spec_path.exists():
                                     with dp_spec_path.open("r") as f_dp:
@@ -151,7 +158,8 @@ class AsyncFilesystemDataContractRepository:
         results = []
         for dp_dir in self.root_dir.iterdir():
             if dp_dir.is_dir():
-                spec_path = dp_dir / "data_contract_specification.yaml"
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                spec_path = spec_dir / "data_contract_specification.yaml"
                 if spec_path.exists():
                     try:
                         with spec_path.open("r") as f:
@@ -160,7 +168,7 @@ class AsyncFilesystemDataContractRepository:
                                 continue
                             
                             # We need to filter based on criteria.
-                            dp_spec_path = dp_dir / "data_product_specification.yaml"
+                            dp_spec_path = spec_dir / "data_product_specification.yaml"
                             current_dp_id = None
                             if dp_spec_path.exists():
                                 with dp_spec_path.open("r") as f_dp:
@@ -188,7 +196,9 @@ class AsyncFilesystemDataContractRepository:
         if dc:
             dp_name = dc.specification.get("dataProduct")
             if dp_name:
-                dc_path = self.root_dir / dp_name / "data_contract_specification.yaml"
+                dp_dir = self.root_dir / dp_name
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                dc_path = spec_dir / "data_contract_specification.yaml"
                 if dc_path.exists():
                     os.remove(dc_path)
                     return True
@@ -197,6 +207,7 @@ class AsyncFilesystemDataContractRepository:
     async def truncate(self) -> None:
         for dp_dir in self.root_dir.iterdir():
             if dp_dir.is_dir():
-                spec_path = dp_dir / "data_contract_specification.yaml"
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                spec_path = spec_dir / "data_contract_specification.yaml"
                 if spec_path.exists():
                     os.remove(spec_path)

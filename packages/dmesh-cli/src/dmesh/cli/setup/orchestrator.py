@@ -3,6 +3,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 from dmesh.cli.setup.config_writer import ConfigWriter, PROJECT_CONFIG_PATH
 from dmesh.cli.setup.feedback import Feedback
 from dmesh.sdk import AsyncSDK
@@ -14,7 +15,7 @@ class SetupOrchestrator:
     def __init__(self, feedback: Feedback) -> None:
         self._feedback = feedback
 
-    async def run(self, flush: bool = False, rebuild: bool = False, topology: str = "docker-postgres") -> None:
+    async def run(self, flush: bool = False, rebuild: bool = False, topology: str = "docker-postgres", spec_extra_path: Optional[str] = None) -> None:
         """Execute the initialisation sequence."""
         self._feedback.step("Initializing local data mesh environment...")
         
@@ -94,8 +95,20 @@ class SetupOrchestrator:
                 rest_persistency_proxy_uses_databricks_m2m=use_databricks_m2m,
                 rest_persistency_proxy_url=rest_url,
                 topology=topology,
-                filesystem_persistency=(topology == "filesystem")
+                filesystem_persistency=(topology == "filesystem"),
+                data_products_filesystem_extra_path=spec_extra_path
             )
+            
+            if rebuild and topology != "filesystem":
+                self._feedback.step("Restarting infrastructure to apply configuration...")
+                import subprocess
+                try:
+                    subprocess.run(["docker-compose", "restart"], check=True, capture_output=True)
+                    self._feedback.success("Infrastructure restarted.")
+                except subprocess.CalledProcessError as e:
+                    self._feedback.error(f"Failed to restart infrastructure: {e.stderr.decode()}")
+                    raise Exception("Docker Compose restart failed") from e
+
 
         if is_test:
             # Use in-memory for unit tests

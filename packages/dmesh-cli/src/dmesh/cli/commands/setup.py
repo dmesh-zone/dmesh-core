@@ -1,4 +1,5 @@
 import typer
+from typing import Optional
 from dmesh.cli.setup.errors import (
     ConfigWriteError,
     ContainerStartError,
@@ -26,13 +27,14 @@ app = typer.Typer()
 def setup(
     flush: bool = typer.Option(False, "--flush", help="Delete all data products after initialisation."),
     rebuild: bool = typer.Option(False, "-r", "--rebuild/--no-rebuild", help="Rebuild docker-compose."),
-    topology: TopologyChoice = typer.Option(TopologyChoice.docker_postgres, "-t", "--topology", help="Setup topology to use.")
+    topology: TopologyChoice = typer.Option(TopologyChoice.docker_postgres, "-t", "--topology", help="Setup topology to use."),
+    spec_extra_path: Optional[str] = typer.Option(None, "--spec-extra-path", help="Intermediate path appended to filesystem root (e.g. foo/bar).")
 ) -> None:
     """Setup the data mesh environment."""
     feedback = ConsoleFeedback()
     import asyncio
     try:
-        asyncio.run(SetupOrchestrator(feedback).run(flush=flush, rebuild=rebuild, topology=topology.value))
+        asyncio.run(SetupOrchestrator(feedback).run(flush=flush, rebuild=rebuild, topology=topology.value, spec_extra_path=spec_extra_path))
     except DockerNotAvailableError as e:
         feedback.error(str(e))
         raise typer.Exit(code=1)

@@ -21,10 +21,10 @@ class InMemoryRepositoryFactory:
         return self._dc_repo
 
 class FilesystemRepositoryFactory:
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str, extra_path: Optional[str] = None):
         from dmesh.sdk.persistency.filesystem import AsyncFilesystemDataProductRepository, AsyncFilesystemDataContractRepository
-        self._dp_repo = AsyncFilesystemDataProductRepository(root_dir)
-        self._dc_repo = AsyncFilesystemDataContractRepository(root_dir)
+        self._dp_repo = AsyncFilesystemDataProductRepository(root_dir, extra_path)
+        self._dc_repo = AsyncFilesystemDataContractRepository(root_dir, extra_path)
 
     def get_data_product_repository(self) -> DataProductRepository:
         return self._dp_repo
@@ -78,7 +78,8 @@ class RepositoryFactory:
         if getattr(settings.sdk, "filesystem_persistency", False):
             logger.info("Using filesystem persistency")
             root_dir = getattr(settings.sdk, "data_products_filesystem_root", None) or "tmp/data_products_filesystem_root"
-            return FilesystemRepositoryFactory(root_dir)
+            extra_path = getattr(settings.sdk, "data_products_filesystem_extra_path", None)
+            return FilesystemRepositoryFactory(root_dir, extra_path)
 
         if getattr(settings.sdk, "rest_persistency_proxy", False):
             from dmesh.sdk.persistency.rest import HttpRepositoryFactory

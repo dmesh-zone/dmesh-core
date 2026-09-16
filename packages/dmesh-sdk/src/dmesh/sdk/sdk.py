@@ -438,7 +438,7 @@ class AsyncSDK:
             return
             
         # Create Data Source DP
-        source_dp_name = dp_spec["name"] + " data source"
+        source_dp_name = dp_spec["name"] + "_data_source"
         custom_properties = [
             {"property": "dataProductTier", "value": "dataSource"},
             {"property": "dataUsageAgreements", "value": [

@@ -11,15 +11,32 @@ class Feedback(Protocol):
     def error(self, message: str) -> None: ...
 
 
+from rich.console import Console
+
 class ConsoleFeedback:
+    def __init__(self) -> None:
+        self.console = Console()
+        self.current_status = None
+
     def step(self, message: str) -> None:
-        typer.echo(typer.style(message, fg=typer.colors.BLUE))
+        if self.current_status:
+            self.current_status.stop()
+        # 'dots' is a 6-frame braille spinner, similar to npm
+        self.current_status = self.console.status(f"[blue]{message}[/blue]", spinner="dots")
+        self.current_status.start()
 
     def success(self, message: str) -> None:
-        typer.echo(typer.style(message, fg=typer.colors.GREEN))
+        if self.current_status:
+            self.current_status.stop()
+            self.current_status = None
+        self.console.print(f"[green]{message}[/green]")
 
     def error(self, message: str) -> None:
-        typer.echo(typer.style(message, fg=typer.colors.RED))
+        if self.current_status:
+            self.current_status.stop()
+            self.current_status = None
+        self.console.print(f"[red]{message}[/red]")
+
 
 
 class CapturingFeedback:

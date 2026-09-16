@@ -24,11 +24,11 @@ async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(s
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
 
-    expected_data_source_dp_name = dp["name"] + " data source"
+    expected_data_source_dp_name = dp["name"] + "_data_source"
     dp_list = await sdk.list_data_products(domain=dp["domain"], name=expected_data_source_dp_name)
     assert len(dp_list) == 1
     data_source_dp = dp_list[0]
-    assert data_source_dp["name"] == "ledger data source"
+    assert data_source_dp["name"] == "ledger_data_source"
     
     custom_properties = {p["property"]: p["value"] for p in data_source_dp["customProperties"]}
     assert custom_properties["dataProductTier"] == "dataSource"
@@ -253,3 +253,41 @@ async def test_sdk_default_status(factory):
     
     dc = await sdk.put_data_contract({"schema": []}, dp_id=str(dp.id), include_metadata=True)
     assert dc.specification["status"] == "draft"
+
+@pytest.mark.asyncio
+async def test_sdk_filesystem_extra_path(tmp_path):
+    import os
+    from dmesh.sdk import AsyncSDK
+    from dmesh.sdk.config import get_settings
+    from dmesh.sdk.persistency.factory import RepositoryFactory
+    
+    settings = get_settings()
+    original_filesystem_persistency = settings.sdk.filesystem_persistency
+    original_root = settings.sdk.data_products_filesystem_root
+    original_extra = getattr(settings.sdk, "data_products_filesystem_extra_path", None)
+    
+    try:
+        settings.sdk.filesystem_persistency = True
+        settings.sdk.data_products_filesystem_root = str(tmp_path)
+        settings.sdk.data_products_filesystem_extra_path = "foo/bar"
+        
+        factory = RepositoryFactory().create_from_settings(settings)
+        sdk = AsyncSDK(factory, settings=settings)
+        
+        # Create DP
+        spec = {"domain": "finance", "name": "ledger"}
+        dp = await sdk.put_data_product(spec)
+        
+        # Verify file is created in tmp_path / "ledger" / "foo" / "bar"
+        expected_dir = tmp_path / "ledger" / "foo" / "bar"
+        assert expected_dir.exists()
+        assert (expected_dir / "data_product_specification.yaml").exists()
+        
+        # Verify sdk can list it
+        dp_list = await sdk.list_data_products(domain="finance")
+        assert len(dp_list) == 1
+        assert dp_list[0]["name"] == "ledger"
+    finally:
+        settings.sdk.filesystem_persistency = original_filesystem_persistency
+        settings.sdk.data_products_filesystem_root = original_root
+        settings.sdk.data_products_filesystem_extra_path = original_extra

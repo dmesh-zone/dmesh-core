@@ -256,16 +256,23 @@ async def test_validate_data_products_invalid(sdk):
     from dmesh.sdk.config import get_settings
     settings = sdk.settings or get_settings()
     
-    # Configure the SDK with the custom schema so that it validates the dataProductTier enum
-    settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
-    settings.sdk.custom_validation_properties_path = "examples/custom-validation/schemas/custom-properties"
+    original_schema = getattr(settings.sdk, "custom_validation_data_product_schema", None)
+    original_custom_props = getattr(settings.sdk, "custom_validation_properties_path", None)
     
-    results = await sdk.validate_data_products(domain="finance", name="invalid-ledger")
-    
-    assert len(results) == 1
-    assert results[0].domain == "finance"
-    assert results[0].name == "invalid-ledger"
-    assert results[0].valid is False
-    assert results[0].error is not None
-    assert "ERROR: Specification for data product invalid-ledger customProperty dataProductTier value has an invalid value" in results[0].error
-    assert "inexistent" in results[0].error
+    try:
+        # Configure the SDK with the custom schema so that it validates the dataProductTier enum
+        settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
+        settings.sdk.custom_validation_properties_path = "examples/custom-validation/schemas/custom-properties"
+        
+        results = await sdk.validate_data_products(domain="finance", name="invalid-ledger")
+        
+        assert len(results) == 1
+        assert results[0].domain == "finance"
+        assert results[0].name == "invalid-ledger"
+        assert results[0].valid is False
+        assert results[0].error is not None
+        assert "ERROR: Specification for data product invalid-ledger customProperty dataProductTier value has an invalid value" in results[0].error
+        assert "inexistent" in results[0].error
+    finally:
+        settings.sdk.custom_validation_data_product_schema = original_schema
+        settings.sdk.custom_validation_properties_path = original_custom_props

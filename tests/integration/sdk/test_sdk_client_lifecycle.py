@@ -57,7 +57,7 @@ async def test_sdk_client_example_usage(factory):
     DP1_TABLE1_NAME = "accounting_document_line_items"
     DP1_DATA_SOURCE_TECH = "sap"
     DP1_DOMAIN_DP_ID = "0001"
-    DATA_SOURCE_DATA_PRODUCT_NAME = f"{DP1_BUSINESS_NAME} data source"
+    DATA_SOURCE_DATA_PRODUCT_NAME = f"{DP1_BUSINESS_NAME}_data_source"
     DP2_BUSINESS_NAME = "Account Receivables Ledger"
     DP2_TECHNICAL_NAME = "account_receivables_ledger"
     DP2_CATALOG_NAME = "dmesh-finance"

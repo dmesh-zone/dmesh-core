@@ -48,6 +48,7 @@ services:
     volumes:
       - ./tmp:/app/tmp
       - ./examples:/app/examples
+      - ./config:/app/config
     command: ["uvicorn", "dmesh.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
     depends_on:
       db:

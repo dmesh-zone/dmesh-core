@@ -297,6 +297,10 @@ Once the server is running, you can explore and interact with the **interactive 
 
 All endpoints are consistently namespaced (default: `/dmesh/`) and support full aliasing (e.g., `/dmesh/dp`, `/dmesh/dps`, or `/dmesh/data-product` are all valid).
 
+### 🔍 Discovery APIs
+- `GET /dmesh/discover`: Discover all data products and their data contracts in the current environment.
+- `GET /dmesh/discover-multi-environment`: Discover data products and data contracts across multiple configured environments (e.g. Dev, QA, Prod). Target environments are configured via the `api.environments` dictionary in `base.toml` or via environment variables (e.g., `DMESH_API__ENVIRONMENTS__DEV="http://..."`).
+
 ---
 
 ## 🧪 Testing
@@ -397,6 +401,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `port` | `DMESH_API__PORT` | `8000` | API server port |
 | `debug` | `DMESH_API__DEBUG` | `false` | Enable API debug mode |
 | `base_path` | `DMESH_API__BASE_PATH` | `"dmesh"` | Base path for API routing |
+| `environments` | `DMESH_API__ENVIRONMENTS` | `{}` | Dictionary of target environments for multi-environment discovery |
 | **SDK (`sdk`)** | | | |
 | `in_memory_persistency` | `DMESH_SDK__IN_MEMORY_PERSISTENCY` | `false` | Enable in-memory persistency instead of PostgreSQL |
 | `rest_persistency_proxy` | `DMESH_SDK__REST_PERSISTENCY_PROXY` | `false` | Toggle to use the API as a backend instead of direct DB access |
@@ -414,6 +419,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | `auto_data_product_id_in_data_contract` | `DMESH_SDK__AUTO_DATA_PRODUCT_ID_IN_DATA_CONTRACT` | `true` | Automatically assign data product IDs to new data contracts |
 | `filesystem_persistency` | `DMESH_SDK__FILESYSTEM_PERSISTENCY` | `true` | Enable filesystem persistency instead of PostgreSQL |
 | `data_products_filesystem_root` | `DMESH_SDK__DATA_PRODUCTS_FILESYSTEM_ROOT` | `"tmp/data_products_filesystem_root"` | Root directory path for filesystem persistency |
+| `data_products_filesystem_extra_path` | `DMESH_SDK__DATA_PRODUCTS_FILESYSTEM_EXTRA_PATH` | `null` | Intermediate path appended between root and data product spec files |
 | `custom_validation_data_product_schema` | `DMESH_SDK__CUSTOM_VALIDATION_DATA_PRODUCT_SCHEMA` | `"examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"` | JSON schema used for data product validation |
 | `custom_validation_properties_path` | `DMESH_SDK__CUSTOM_VALIDATION_PROPERTIES_PATH` | `"examples/custom-validation/schemas/custom-properties"` | Path to the custom properties schema definitions |
 ---

@@ -4,18 +4,6 @@
   "description": "An open data product standard descriptor to enable defining data products.",
   "type": "object",
   "additionalProperties": false,
-  "anyOf": [
-    {
-      "required": [
-        "inputPorts"
-      ]
-    },
-    {
-      "required": [
-        "outputPorts"
-      ]
-    }
-  ],
   "properties": {
     "apiVersion": {
       "type": "string",
@@ -199,7 +187,10 @@
           "description": "Optional description."
         }
       },
-      "required": ["property", "value"]
+      "required": [
+        "property",
+        "value"
+      ]
     },
     "RootCustomProperty": {
       "type": "object",
@@ -226,23 +217,74 @@
           "description": "Optional description."
         }
       },
-      "required": ["property", "value"],
+      "required": [
+        "property",
+        "value"
+      ],
       "allOf": [
         {
-          "if": { "properties": { "property": { "const": "enterpriseDataProduct" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/enterpriseDataProduct.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "enterpriseDataProduct"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/enterpriseDataProduct.json"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "property": { "const": "dataProductTier" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/dataProductTier.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "dataProductTier"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/dataProductTier.json"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "property": { "const": "dataSourceSuppressed" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/dataSourceSuppressed.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "dataSourceSuppressed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/dataSourceSuppressed.json"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "property": { "const": "dataSourceTechnology" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/dataSourceTechnology.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "dataSourceTechnology"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/dataSourceTechnology.json"
+              }
+            }
+          }
         }
       ]
     },
@@ -274,11 +316,26 @@
           "description": "Optional description."
         }
       },
-      "required": ["property", "value"],
+      "required": [
+        "property",
+        "value"
+      ],
       "allOf": [
         {
-          "if": { "properties": { "property": { "const": "publishToS3" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/publishToS3.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "publishToS3"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/publishToS3.json"
+              }
+            }
+          }
         }
       ]
     },
@@ -307,23 +364,74 @@
           "description": "Optional description."
         }
       },
-      "required": ["property", "value"],
+      "required": [
+        "property",
+        "value"
+      ],
       "allOf": [
         {
-          "if": { "properties": { "property": { "const": "publishToS3" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/publishToS3.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "publishToS3"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/publishToS3.json"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "property": { "const": "portAdapterOdata" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/portAdapterOdata.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "portAdapterOdata"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/portAdapterOdata.json"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "property": { "const": "portAdapterIceberg" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/portAdapterIceberg.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "portAdapterIceberg"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/portAdapterIceberg.json"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "property": { "const": "filters" } } },
-          "then": { "properties": { "value": { "$ref": "custom-properties/filters.json" } } }
+          "if": {
+            "properties": {
+              "property": {
+                "const": "filters"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "custom-properties/filters.json"
+              }
+            }
+          }
         }
       ]
     },

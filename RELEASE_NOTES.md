@@ -4,6 +4,20 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.10.0] - 2026-09-16
+
+### ✨ Highlights
+This release introduces Multi-Environment Discovery capabilities and extends filesystem topology configuration options for more flexible persistence structures.
+
+### 🔍 Discovery & API
+- **Multi-Environment Discovery**: Added `GET /discover-multi-environment` API endpoint to aggregate data product and contract discoveries across various target environments (e.g., Dev, QA, Prod), configurable via `api.environments` settings.
+- **Robust Error Handling**: Standardized API error responses and implemented graceful fallback handling for cross-environment discovery failures.
+
+### 💾 Filesystem & Topology
+- **Nested Filesystem Paths**: Introduced the `sdk.data_products_filesystem_extra_path` setting (and `--spec-extra-path` CLI setup argument). This enables nesting data product specifications inside custom intermediate folders (e.g. `foo/bar`) under the main filesystem root.
+
+---
+
 ## 🚀 [v0.9.0] - 2026-06-15
 
 ### ✨ Highlights

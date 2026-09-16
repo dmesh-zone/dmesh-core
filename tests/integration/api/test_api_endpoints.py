@@ -250,3 +250,60 @@ class TestApiIntegration:
         finally:
             settings.sdk.custom_validation_data_product_schema = original_schema
             settings.sdk.custom_validation_properties_path = original_custom_props
+
+    async def test_discover_multi_environment(self, api_client):
+        """Verify the /discover-multi-environment endpoint handles multiple environments."""
+        from unittest.mock import patch
+        from dmesh.sdk.config import get_settings
+        
+        settings = get_settings()
+        original_environments = settings.api.environments
+        settings.api.environments = {
+            "Dev": "http://dev-env/dmesh/discover",
+            "QA": "http://qa-env/dmesh/discover"
+        }
+        
+        try:
+            import httpx
+            original_get = httpx.AsyncClient.get
+            
+            async def mock_get_impl(self, url, params=None, **kwargs):
+                class MockResponse:
+                    def __init__(self, status_code, json_data):
+                        self.status_code = status_code
+                        self._json_data = json_data
+                    def json(self):
+                        return self._json_data
+                
+                # If it's our mocked test URLs, intercept them
+                if "dev-env" in str(url):
+                    return MockResponse(200, [{"id": "1", "name": "dev-dp"}])
+                elif "qa-env" in str(url):
+                    return MockResponse(500, None)
+                
+                # Otherwise, it's the api_client making a request to the FastAPI app
+                return await original_get(self, url, params=params, **kwargs)
+
+            import httpx
+            with patch("httpx.AsyncClient.get", new=mock_get_impl):
+                resp = await api_client.get("/dmesh/discover-multi-environment")
+                
+                assert_that(resp.status_code).is_equal_to(200)
+                data = resp.json()
+                assert_that(data).is_type_of(list)
+                assert_that(len(data)).is_equal_to(2)
+                
+                # Check Dev
+                dev_env = next((item for item in data if item["env"] == "Dev"), None)
+                assert_that(dev_env).is_not_none()
+                assert_that(dev_env["data"]).is_equal_to([{"id": "1", "name": "dev-dp"}])
+                assert_that(dev_env).does_not_contain_key("errorMessage")
+                
+                # Check QA
+                qa_env = next((item for item in data if item["env"] == "QA"), None)
+                assert_that(qa_env).is_not_none()
+                assert_that(qa_env["data"]).is_equal_to([])
+                assert_that(qa_env["errorMessage"]).is_equal_to("HTTP code 500")
+                
+        finally:
+            settings.api.environments = original_environments
