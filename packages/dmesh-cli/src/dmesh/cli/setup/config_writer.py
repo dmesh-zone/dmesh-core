@@ -13,7 +13,7 @@ class ConfigWriter:
     def __init__(self, feedback: Feedback) -> None:
         self._feedback = feedback
 
-    def write_pg(self, host, port, user, password, dbname, rest_persistency_proxy: bool = False, rest_persistency_proxy_uses_databricks_m2m: bool = False, rest_persistency_proxy_url: str = "http://0.0.0.0:8000", topology: str = "docker-postgres", filesystem_persistency: bool = False, data_products_filesystem_root: str = "tmp/data_products_filesystem_root", data_products_filesystem_extra_path: Optional[str] = None) -> None:
+    def write_pg(self, host, port, user, password, dbname, rest_persistency_proxy: bool = False, rest_persistency_proxy_uses_databricks_m2m: bool = False, rest_persistency_proxy_url: str = "http://localhost:8000", topology: str = "docker-postgres", filesystem_persistency: bool = False, data_products_filesystem_root: str = "tmp/data_products_filesystem_root", data_products_filesystem_extra_path: Optional[str] = None) -> None:
         """Write Postgres and SDK config to config/base.toml."""
         self._feedback.step(f"Writing configuration to {PROJECT_CONFIG_PATH}...")
         try:

@@ -405,7 +405,7 @@ print(f"Connecting to {settings.db.host}:{settings.db.port}")
 | **SDK (`sdk`)** | | | |
 | `in_memory_persistency` | `DMESH_SDK__IN_MEMORY_PERSISTENCY` | `false` | Enable in-memory persistency instead of PostgreSQL |
 | `rest_persistency_proxy` | `DMESH_SDK__REST_PERSISTENCY_PROXY` | `false` | Toggle to use the API as a backend instead of direct DB access |
-| `rest_persistency_proxy_url` | `DMESH_SDK__REST_PERSISTENCY_PROXY_URL` | `"http://0.0.0.0:8000"` | Base URL of the API for SDK interactions |
+| `rest_persistency_proxy_url` | `DMESH_SDK__REST_PERSISTENCY_PROXY_URL` | `"http://localhost:8000"` | Base URL of the API for SDK interactions |
 | `rest_persistency_proxy_uses_databricks_m2m` | `DMESH_SDK__REST_PERSISTENCY_PROXY_USES_DATABRICKS_M2M` | `false` | Enable Databricks M2M token generation for the REST persistency proxy requests. Requires standard Databricks env vars (e.g., `DATABRICKS_HOST`, `DATABRICKS_CLIENT_ID`, `DATABRICKS_CLIENT_SECRET`). |
 | `rest_persistency_proxy_ssl_verify` | `DMESH_SDK__REST_PERSISTENCY_PROXY_SSL_VERIFY` | `false` | Enable SSL certificate verification for REST proxy requests |
 | `single_data_contract_per_product` | `DMESH_SDK__SINGLE_DATA_CONTRACT_PER_PRODUCT` | `true` | Restrict to one data contract per data product |

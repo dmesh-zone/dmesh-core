@@ -45,7 +45,7 @@ class SetupOrchestrator:
             if not rest_url:
                 raise ValueError("Missing DMESH_SDK__REST_PERSISTENCY_URL environment variable for databricks-rest-pxy topology")
         else:
-            rest_url = "http://0.0.0.0:8000"
+            rest_url = "http://localhost:8000"
 
         cli_config_str = f"CLI SDK config:\n - rest_persistency_proxy: {use_rest_proxy}\n - rest_persistency_proxy_uses_databricks_m2m: {use_databricks_m2m}\n - rest_persistency_proxy_url: {rest_url}"
         
@@ -125,7 +125,7 @@ class SetupOrchestrator:
                 self._feedback.step("Initializing REST Proxy repository...")
                 from dmesh.sdk.persistency.rest import HttpRepositoryFactory
                 # For local docker topologies that don't specify an env URL, we fallback to localhost for the CLI
-                cli_api_url = f"{rest_url.rstrip('/')}/dmesh" if rest_url != "http://0.0.0.0:8000" else "http://localhost:8000/dmesh"
+                cli_api_url = f"{rest_url.rstrip('/')}/dmesh"
                 factory = HttpRepositoryFactory(cli_api_url, use_m2m=use_databricks_m2m)
             else:
                 self._feedback.step("Initializing Postgres database...")

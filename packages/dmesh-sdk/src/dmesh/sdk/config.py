@@ -75,7 +75,7 @@ class SdkSettings(BaseModel):
     topology: str = "docker-postgres"
     in_memory_persistency: bool = False
     rest_persistency_proxy: bool = False
-    rest_persistency_proxy_url: str = "http://0.0.0.0:8000"
+    rest_persistency_proxy_url: str = "http://localhost:8000"
     rest_persistency_proxy_uses_databricks_m2m: bool = False
     rest_persistency_proxy_ssl_verify: bool = False
     single_data_contract_per_product: bool = True

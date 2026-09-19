@@ -85,7 +85,7 @@ class RepositoryFactory:
             from dmesh.sdk.persistency.rest import HttpRepositoryFactory
             logger.info("Using rest persistency")
             base_path = getattr(settings.api, "base_path", "dmesh").strip("/")
-            api_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000").rstrip("/")
+            api_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://localhost:8000").rstrip("/")
             use_m2m = getattr(settings.sdk, "rest_persistency_proxy_uses_databricks_m2m", False)
             ssl_verify = getattr(settings.sdk, "rest_persistency_proxy_ssl_verify", False)
             if base_path:

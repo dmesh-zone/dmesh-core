@@ -18,7 +18,7 @@ def get_service() -> AsyncSDK:
         typer.echo(f"📁 Using Filesystem Backend ({root_dir})")
     elif getattr(settings.sdk, "rest_persistency_proxy", False):
         import typer
-        proxy_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://0.0.0.0:8000")
+        proxy_url = getattr(settings.sdk, "rest_persistency_proxy_url", "http://localhost:8000")
         typer.echo(f"🔌 Using REST API Backend ({proxy_url})")
     else:
         import typer
