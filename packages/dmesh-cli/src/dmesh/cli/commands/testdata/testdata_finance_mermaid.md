@@ -14,6 +14,8 @@ classDiagram
         <<data-product>>
         dataProductBusinessName : SAP FI
         dataProductTier : sourceAligned
+        technology : databricks
+        dataSourceTechnology: sap
     }
     class accounting_document_line_items{
         <<data-contract-schema>>
@@ -26,6 +28,7 @@ classDiagram
         <<data-product>>
         dataProductBusinessName : Account Receivables Ledger
         dataProductTier : curated
+        technology : databricks
     }
     class customer_open_items {
         <<data-contract-schema>>
@@ -40,6 +43,7 @@ classDiagram
         <<data-product>>
         dataProductBusinessName : 360 Finance
         dataProductTier : consumerAligned
+        technology : databricks
     }
     class financial_overview_report{
         <<data-contract-schema>>
@@ -51,6 +55,7 @@ classDiagram
         <<data-product>>
         dataProductBusinessName : 360 Finance Application
         dataProductTier : application
+        technology : powerbi
     }
     sap_fi --> account_receivables_ledger : provides
     account_receivables_ledger --> 360_finance: provides

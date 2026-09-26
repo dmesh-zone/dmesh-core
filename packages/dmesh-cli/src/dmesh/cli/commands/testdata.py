@@ -174,8 +174,11 @@ async def _generate_testdata(spec: str, lean: bool = False):
                     "outputPorts": []
                 }
                 
+                if "dataProductBusinessName" in info["attributes"]:
+                    dp_spec["description"] = {"purpose": info["attributes"]["dataProductBusinessName"]}
+                    
                 for k, v in info["attributes"].items():
-                    if k != "dataProductTier":
+                    if k not in ("dataProductTier", "dataProductBusinessName"):
                         dp_spec["customProperties"].append({"property": k, "value": v})
                 
                 if not lean:
@@ -206,6 +209,26 @@ async def _generate_testdata(spec: str, lean: bool = False):
                         
                         typer.echo(f"  Creating Data Contract for schema: {schema_name}")
                         dc_spec = {
+                            "servers": [{
+                                "host": f"https://my-workspace.cloud.databricks.com/explore/data/{info['domain']}/{name}",
+                                "type": "databricks",
+                                "schema": name,
+                                "server": f"{info['domain']} workspace",
+                                "catalog": info['domain'],
+                                "environment": "dev"
+                            }],
+                            "roles": [
+                                {
+                                    "role": "ANALYST",
+                                    "access": "read",
+                                    "description": "Data Analyst role"
+                                },
+                                {
+                                    "role": "ENGINEER",
+                                    "access": "write",
+                                    "description": "Data Engineer role"
+                                }
+                            ],
                             "schema": [
                                 {
                                     "name": schema_name,
@@ -215,7 +238,8 @@ async def _generate_testdata(spec: str, lean: bool = False):
                                         {
                                             "name": p["name"],
                                             "physicalName": p["name"],
-                                            "logicalType": p["type"]
+                                            "logicalType": p["type"],
+                                            "physicalType": p["type"]
                                         } for p in s_info["properties"]
                                     ]
                                 }
