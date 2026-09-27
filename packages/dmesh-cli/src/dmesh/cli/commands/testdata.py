@@ -209,6 +209,7 @@ async def _generate_testdata(spec: str, lean: bool = False):
                         
                         typer.echo(f"  Creating Data Contract for schema: {schema_name}")
                         dc_spec = {
+                            "apiVersion": "v3.0.1",
                             "servers": [{
                                 "host": f"https://my-workspace.cloud.databricks.com/explore/data/{info['domain']}/{name}",
                                 "type": "databricks",
@@ -237,7 +238,6 @@ async def _generate_testdata(spec: str, lean: bool = False):
                                     "properties": [
                                         {
                                             "name": p["name"],
-                                            "physicalName": p["name"],
                                             "logicalType": p["type"],
                                             "physicalType": p["type"]
                                         } for p in s_info["properties"]
