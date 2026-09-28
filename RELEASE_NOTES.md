@@ -4,6 +4,24 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.10.2] - 2026-09-28
+
+### ✨ Highlights
+This release brings stability and compliance improvements for generating and identifying data products and contracts.
+
+### ⚙️ SDK & Core Logic
+- **Data Source Naming**: Auto-generated data source products now properly append `_data_source` to the `dp.name` instead of ` data source` to comply with snake_case naming convention
+- **REST Connectivity**: Modified the default `rest_persistency_proxy_url` configuration to use `localhost` instead of `0.0.0.0` to resolve local CLI connectivity issues.
+
+### 🖥️ CLI Enhancements & DX
+- **Testdata CLI Generator**: Overhauled the generated Data Contract spec payloads for compliance with the Architecture Fitness rules (`v3.0.1`):
+  - Injects fully populated `servers` and `roles` arrays into the data contracts.
+  - Dynamically populates `physicalType` from `logicalType` for properties.
+  - Automatically extracts and maps `description.purpose` from `dataProductBusinessName` in mermaid layouts.
+  - Fixes schema validation errors by properly restricting unevaluated `physicalName` properties on the properties object.
+
+---
+
 ## 🚀 [v0.10.1] - 2026-09-16
 
 ### 🛡️ Security & Bug Fixes
