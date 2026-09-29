@@ -16,9 +16,14 @@ class DottedIDGenerator:
         return uuid.uuid5(CUSTOM_NS, f"{domain}.{name}")
 
     def make_dc_id(self, spec: dict[str, Any]) -> uuid.UUID:
-        domain = spec.get("domain", "unknown")
-        data_product = spec.get("dataProduct", "unknown")
-        return uuid.uuid5(CUSTOM_NS, f"{domain}.{data_product}")
+        custom_props = spec.get("customProperties", [])
+        dp_id = "unknown"
+        if isinstance(custom_props, list):
+            for p in custom_props:
+                if isinstance(p, dict) and p.get("property") == "dataProductId":
+                    dp_id = str(p.get("value", "unknown"))
+                    break
+        return uuid.uuid5(CUSTOM_NS, f"{dp_id}")
 
     def make_dua_id(self, spec: dict[str, Any]) -> uuid.UUID:
         provider_id = spec.get("provider", {}).get("dataProductId", "unknown")
@@ -43,8 +48,8 @@ async def test_custom_id_generator_hook(factory):
     dc_spec = {}
     dc = await sdk.put_data_contract(dc_spec, dp_id=dp["id"])
     
-    # Verify custom ID (uuid5 derived from domain.dataProduct)
-    assert dc["id"] == str(uuid.uuid5(CUSTOM_NS, "finance.ledger"))
+    # Verify custom ID (uuid5 derived from dp_id)
+    assert dc["id"] == str(uuid.uuid5(CUSTOM_NS, f"{dp['id']}"))
 
 class CustomDPOnlyGenerator(DefaultIDGenerator):
     """Overrides only DP ID generation, uses default for DC."""

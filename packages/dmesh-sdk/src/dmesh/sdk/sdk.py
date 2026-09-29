@@ -160,11 +160,8 @@ class AsyncSDK:
         # Predict contract ID
         predicted_dc_id = None
         if self.single_data_contract_per_product:
-            # Use dataProduct key for name as expected by default ID generator for contracts
-            # Note: version is no longer part of DC ID calculation
             id_spec = {
-                "domain": spec.get("domain", ""),
-                "dataProduct": spec.get("name", ""),
+                "customProperties": [{"property": "dataProductId", "value": spec.get("id")}],
                 "_dc_index": 0
             }
             predicted_dc_id = str(self.id_generator.make_dc_id(id_spec))
@@ -381,9 +378,7 @@ class AsyncSDK:
             
         id_spec = {
             **merged_spec, 
-            "domain": dp_spec.get("domain", "") if dp_spec else "", 
-            "dataProduct": dp_spec.get("name", "") if dp_spec else "", 
-            "version": dp_spec.get("version", "v1.0.0") if dp_spec else "v1.0.0",
+            "customProperties": [{"property": "dataProductId", "value": dp_spec.get("id", "")}] if dp_spec else merged_spec.get("customProperties", []),
             "_dc_index": dc_index
         }
         dc_id = self.id_generator.make_dc_id(id_spec)
@@ -429,8 +424,8 @@ class AsyncSDK:
         if not self.auto_data_source_dp_creation_upon_source_aligned_dp_creation:
             return
             
-        tier = self.get_custom_property_value(dp_spec, "dataProductTier")
-        if tier != "sourceAligned":
+        dp_type = dp_spec.get("type")
+        if dp_type != "sourceAligned":
             return
             
         suppressed = self.get_custom_property_value(dp_spec, "dataSourceSupressed") or self.get_custom_property_value(dp_spec, "dataSourceSuppressed")
@@ -440,7 +435,6 @@ class AsyncSDK:
         # Create Data Source DP
         source_dp_name = dp_spec["name"] + "_data_source"
         custom_properties = [
-            {"property": "dataProductTier", "value": "dataSource"},
             {"property": "dataUsageAgreements", "value": [
                 {
                     "info": {
@@ -461,6 +455,7 @@ class AsyncSDK:
         source_dp_spec = {
             "domain": dp_spec["domain"],
             "name": source_dp_name,
+            "type": "dataSource",
             "customProperties": custom_properties
         }
         await self.put_data_product(source_dp_spec)
@@ -506,9 +501,7 @@ class AsyncSDK:
         # Generate ID based on spec (including parent context)
         id_spec = {
             **spec, 
-            "domain": dp.domain if isinstance(dp, DataProduct) else dp.get('domain', ''), 
-            "dataProduct": dp.name if isinstance(dp, DataProduct) else dp.get('name', ''), 
-            "version": dp.version if isinstance(dp, DataProduct) else dp.get('version', 'v1.0.0'),
+            "customProperties": [{"property": "dataProductId", "value": dp.id if isinstance(dp, DataProduct) else dp.get('id', '')}],
             "_dc_index": dc_index
         }
         dc_id = self.id_generator.make_dc_id(id_spec)
@@ -596,9 +589,7 @@ class AsyncSDK:
         if not actual_id and dp and self.single_data_contract_per_product:
             actual_id = self.id_generator.make_dc_id({
                 **spec, 
-                "domain": dp.domain if isinstance(dp, DataProduct) else dp.get('domain', ''), 
-                "dataProduct": dp.name if isinstance(dp, DataProduct) else dp.get('name', ''), 
-                "version": dp.version if isinstance(dp, DataProduct) else dp.get('version', 'v1.0.0'),
+                "customProperties": [{"property": "dataProductId", "value": dp.id if isinstance(dp, DataProduct) else dp.get('id', '')}],
                 "_dc_index": 0
             })
 

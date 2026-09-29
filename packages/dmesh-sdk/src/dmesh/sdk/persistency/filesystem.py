@@ -112,12 +112,31 @@ class AsyncFilesystemDataContractRepository:
 
     async def save(self, contract: DataContract) -> None:
         # Determine the directory based on the DP
-        dp_name = contract.specification.get("dataProduct")
-        if not dp_name:
-            raise ValueError("Data Contract specification must have a 'dataProduct' to be saved to filesystem.")
+        dp_id_str = str(contract.data_product_id) if contract.data_product_id else ""
+        if not dp_id_str or dp_id_str == str(UUID(int=0)):
+            raise ValueError("Data Contract must have a valid 'data_product_id' to be saved to filesystem.")
         
-        dp_dir = self.root_dir / dp_name
-        spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+        target_dp_dir = None
+        for dp_dir in self.root_dir.iterdir():
+            if dp_dir.is_dir():
+                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                dp_spec_path = spec_dir / "data_product_specification.yaml"
+                if dp_spec_path.exists():
+                    try:
+                        with dp_spec_path.open("r") as f_dp:
+                            dp_spec = yaml.safe_load(f_dp)
+                            if dp_spec:
+                                spec_id = dp_spec.get("id")
+                                if spec_id == dp_id_str or (not spec_id and dp_dir.name == dp_id_str):
+                                    target_dp_dir = dp_dir
+                                    break
+                    except Exception:
+                        pass
+                        
+        if not target_dp_dir:
+            raise ValueError(f"Parent Data Product with ID {dp_id_str} not found in filesystem.")
+            
+        spec_dir = target_dp_dir / self.extra_path if self.extra_path else target_dp_dir
         spec_dir.mkdir(parents=True, exist_ok=True)
         
         spec_path = spec_dir / "data_contract_specification.yaml"
@@ -170,6 +189,7 @@ class AsyncFilesystemDataContractRepository:
                             # We need to filter based on criteria.
                             dp_spec_path = spec_dir / "data_product_specification.yaml"
                             current_dp_id = None
+                            dp_spec = None
                             if dp_spec_path.exists():
                                 with dp_spec_path.open("r") as f_dp:
                                     dp_spec = yaml.safe_load(f_dp)
@@ -180,7 +200,7 @@ class AsyncFilesystemDataContractRepository:
                                 continue
                             if domain and spec.get("domain") != domain:
                                 continue
-                            if data_product and spec.get("dataProduct") != data_product:
+                            if data_product and dp_spec and dp_spec.get("name", dp_dir.name) != data_product:
                                 continue
                             if version and spec.get("version") != version:
                                 continue
@@ -193,15 +213,25 @@ class AsyncFilesystemDataContractRepository:
 
     async def delete(self, id: UUID) -> bool:
         dc = await self.get(id)
-        if dc:
-            dp_name = dc.specification.get("dataProduct")
-            if dp_name:
-                dp_dir = self.root_dir / dp_name
-                spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
-                dc_path = spec_dir / "data_contract_specification.yaml"
-                if dc_path.exists():
-                    os.remove(dc_path)
-                    return True
+        if dc and dc.data_product_id:
+            dp_id_str = str(dc.data_product_id)
+            for dp_dir in self.root_dir.iterdir():
+                if dp_dir.is_dir():
+                    spec_dir = dp_dir / self.extra_path if self.extra_path else dp_dir
+                    dp_spec_path = spec_dir / "data_product_specification.yaml"
+                    if dp_spec_path.exists():
+                        try:
+                            with dp_spec_path.open("r") as f_dp:
+                                dp_spec = yaml.safe_load(f_dp)
+                                if dp_spec:
+                                    spec_id = dp_spec.get("id")
+                                    if spec_id == dp_id_str or (not spec_id and dp_dir.name == dp_id_str):
+                                        dc_path = spec_dir / "data_contract_specification.yaml"
+                                        if dc_path.exists():
+                                            os.remove(dc_path)
+                                            return True
+                        except Exception:
+                            pass
         return False
 
     async def truncate(self) -> None:

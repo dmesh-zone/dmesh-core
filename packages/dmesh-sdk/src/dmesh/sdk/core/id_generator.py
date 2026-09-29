@@ -7,7 +7,7 @@ from typing import Any, Protocol, runtime_checkable
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # NAMESPACE_DNS
 
 DEFAULT_DP_SCHEME = "DataProduct/{domain}/{name}"
-DEFAULT_DC_SCHEME = "DataContract/{domain}/{name}/{dc_index}"
+DEFAULT_DC_SCHEME = "DataContract/{dp_id}/{dc_index}"
 DEFAULT_DUA_SCHEME = "DataUsageAgreement/{provider_id}/{consumer_id}/{start_date}"
 
 
@@ -41,7 +41,7 @@ class DefaultIDGenerator:
         """
         domain = spec.get("domain", "")
         name = spec.get("name", "")
-        version = spec.get("version", "v1.0.0")
+        version = spec.get("version", "v1.1.0")
         
         if not name:
             return uuid.uuid4()
@@ -56,23 +56,28 @@ class DefaultIDGenerator:
     def make_dc_id(self, spec: dict[str, Any]) -> uuid.UUID:
         """Generate a deterministic ID for a data contract.
 
-        Input is a dictionary containing parent information ('domain', 'dataProduct')
+        Input is a dictionary containing parent information via customProperties.dataProductId
         and an internal '_dc_index' representing the sequence of contracts for the product
         (0-based: first DC gets index 0).
         """
-        domain = spec.get("domain", "")
-        name = spec.get("dataProduct", "")
+        custom_props = spec.get("customProperties", [])
+        dp_id = ""
+        if isinstance(custom_props, list):
+            for p in custom_props:
+                if isinstance(p, dict) and p.get("property") == "dataProductId":
+                    dp_id = str(p.get("value", ""))
+                    break
+
         dc_index = spec.get("_dc_index", 0)
 
         scheme = self._scheme("DC_ID_SCHEME", DEFAULT_DC_SCHEME)
         try:
             key = scheme.format(
-                domain=domain,
-                name=name,
+                dp_id=dp_id,
                 dc_index=dc_index,
             )
         except KeyError:
-            key = f"DataContract/{domain}/{name}/{dc_index}"
+            key = f"DataContract/{dp_id}/{dc_index}"
         return uuid.uuid5(_NAMESPACE, key)
 
     def make_dua_id(self, spec: dict[str, Any]) -> uuid.UUID:

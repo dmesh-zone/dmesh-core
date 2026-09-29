@@ -12,25 +12,25 @@ classDiagram
     class sap_fi{
         <<data-product>>
         dataProductBusinessName : SAP FI
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     %% CURATED DATA PRODUCT
     class account_receivables_ledger{
         <<data-product>>
         dataProductBusinessName : Account Receivables Ledger
-        dataProductTier : curated
+        type : curated
     }
     %% CONSUMER ALIGNED DATA PRODUCT
     class 360_finance{
         <<data-product>>
         dataProductBusinessName : 360 Finance
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     %% APPLICATION DATA PRODUCT
     class 360_finance_application {
         <<data-product>>
         dataProductBusinessName : 360 Finance Application
-        dataProductTier : application
+        type : application
     }
     sap_fi --> account_receivables_ledger : provides
     account_receivables_ledger --> 360_finance: provides

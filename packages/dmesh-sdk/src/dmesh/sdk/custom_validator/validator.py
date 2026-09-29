@@ -37,7 +37,7 @@ def retrieve_from_filesystem(uri: str):
     raise referencing.exceptions.NoSuchResource(ref=uri)  # type: ignore
 
 class Validator:
-    def __init__(self, schema_path="examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json", custom_properties_dir="examples/custom-validation/schemas/custom-properties"):
+    def __init__(self, schema_path="examples/custom-validation/schemas/custom-odps-json-schema-v1.1.0.json", custom_properties_dir="examples/custom-validation/schemas/custom-properties"):
         self.schema_path = schema_path
         self.custom_properties_dir = custom_properties_dir
         self.schema = load_schema(schema_path)
@@ -61,7 +61,7 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(description="Validate JSON/YAML data against a JSON Schema.")
     parser.add_argument("data_file", help="Path to the JSON or YAML data file to validate.")
-    parser.add_argument("--schema", default="examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json", help="Path to the JSON schema file (default: examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json).")
+    parser.add_argument("--schema", default="examples/custom-validation/schemas/custom-odps-json-schema-v1.1.0.json", help="Path to the JSON schema file (default: examples/custom-validation/schemas/custom-odps-json-schema-v1.1.0.json).")
     parser.add_argument("--custom-properties-dir", default="examples/custom-validation/schemas/custom-properties", help="Path to the directory containing custom properties schemas.")
 
     args = parser.parse_args()

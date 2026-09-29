@@ -27,7 +27,7 @@ class TestApiIntegration:
         spec = {
             "domain": "finance", 
             "name": "ledger", 
-            "version": "v1.0.0"
+            "version": "v1.1.0"
         }
         create_resp = await api_client.post("/dmesh/dps", json=spec)
         
@@ -84,7 +84,7 @@ class TestApiIntegration:
         dc_data = dc_resp.json()
         dc_id = dc_data["id"]
         assert_that(dc_data["domain"]).is_equal_to("hr")
-        assert_that(dc_data["dataProduct"]).is_equal_to("staff")
+        assert_that([p for p in dc_data.get("customProperties", []) if p.get("property") == "dataProductId"]).is_not_empty()
         
         # 2. GET CONTRACT (WHEN)
         get_dc = await api_client.get(f"/dmesh/dcs/{dc_id}")
@@ -113,7 +113,7 @@ class TestApiIntegration:
         """Verify API handles invalid input correctly."""
         # GIVEN: Invalid specification (missing required fields)
         # We need something that definitely fails Bitol validation
-        bad_spec = {"apiVersion": "v1.0.0", "kind": "DataProduct", "invalid_field": "error"}
+        bad_spec = {"apiVersion": "v1.1.0", "kind": "DataProduct", "invalid_field": "error"}
         
         # WHEN
         resp = await api_client.post("/dmesh/dps", json=bad_spec)
@@ -176,7 +176,10 @@ class TestApiIntegration:
         items = spec_resp.json()
         assert_that(len(items)).is_equal_to(2)
         assert_that([i["name"] for i in items if i["kind"] == "DataProduct"]).contains("ledger")
-        assert_that([i["dataProduct"] for i in items if i["kind"] == "DataContract"]).contains("ledger")
+        
+        # DataContracts should refer to the DP ID of "ledger"
+        dp_id = next((i["id"] for i in items if i["kind"] == "DataProduct" and i["name"] == "ledger"), None)
+        assert_that([p["value"] for i in items if i["kind"] == "DataContract" for p in i.get("customProperties", []) if p["property"] == "dataProductId"]).contains(dp_id)
 
         # --- SCENARIO 4: Filter by non-existent domain ---
         none_resp = await api_client.get("/dmesh/discover?domain=marketing")
@@ -189,7 +192,7 @@ class TestApiIntegration:
         spec = {
             "domain": "finance", 
             "name": "ledger", 
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "outputPorts": [{"name": "some-port"}]
         }
         await api_client.post("/dmesh/dps", json=spec)
@@ -217,7 +220,7 @@ class TestApiIntegration:
         original_schema = getattr(settings.sdk, "custom_validation_data_product_schema", None)
         original_custom_props = getattr(settings.sdk, "custom_validation_properties_path", None)
         
-        settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
+        settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.1.0.json"
         settings.sdk.custom_validation_properties_path = "examples/custom-validation/schemas/custom-properties"
         
         try:
@@ -225,11 +228,9 @@ class TestApiIntegration:
             spec = {
                 "domain": "finance", 
                 "name": "invalid-api-ledger", 
-                "version": "v1.0.0",
+                "version": "v1.1.0",
                 "outputPorts": [{"name": "some-port"}],
-                "customProperties": [
-                    {"property": "dataProductTier", "value": "inexistent"}
-                ]
+                "type": "inexistent"
             }
             await api_client.post("/dmesh/dps", json=spec)
             
@@ -246,7 +247,7 @@ class TestApiIntegration:
             assert_that(item["domain"]).is_equal_to("finance")
             assert_that(item["name"]).is_equal_to("invalid-api-ledger")
             assert_that(item["valid"]).is_false()
-            assert_that(item["error"]).contains("ERROR: Specification for data product invalid-api-ledger customProperty dataProductTier value has an invalid value")
+            assert_that(item["error"]).contains("Message: 'inexistent' is not one of")
         finally:
             settings.sdk.custom_validation_data_product_schema = original_schema
             settings.sdk.custom_validation_properties_path = original_custom_props

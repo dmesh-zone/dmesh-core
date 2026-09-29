@@ -6,13 +6,13 @@ def test_get_custom_property_value():
     custom_props = [
         {"property": "p1", "value": "v1"},
         {"property": "dataProductId", "value": "uuid-123"},
-        {"property": "tier", "value": "sourceAligned"}
+        {"property": "dp_type", "value": "sourceAligned"}
     ]
     
     # Test existing property (positional)
     assert AsyncSDK.get_custom_property_value(custom_props, "p1") == "v1"
     assert AsyncSDK.get_custom_property_value(custom_props, "dataProductId") == "uuid-123"
-    assert AsyncSDK.get_custom_property_value(custom_props, "tier") == "sourceAligned"
+    assert AsyncSDK.get_custom_property_value(custom_props, "dp_type") == "sourceAligned"
     
     # Test with spec
     spec = {

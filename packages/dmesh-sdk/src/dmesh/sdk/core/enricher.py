@@ -17,9 +17,9 @@ def enrich_dp_spec(
     enriched = dict(spec)
     
     # Apply defaults if missing
-    enriched.setdefault("apiVersion", "v1.0.0")
+    enriched.setdefault("apiVersion", "v1.1.0")
     enriched.setdefault("kind", "DataProduct")
-    enriched.setdefault("version", "v1.0.0")
+    enriched.setdefault("version", "v1.1.0")
     enriched.setdefault("status", status_default)
     # Basic enrichment moved to SDK enrichment methods if needed
     
@@ -42,14 +42,13 @@ def enrich_dc_spec(
     Does not mutate the input dict.
     """
     enriched = dict(spec)
-    enriched.setdefault("apiVersion", "v3.1.0")
+    enriched.setdefault("apiVersion", "v3.2.0")
     enriched.setdefault("kind", "DataContract")
-    enriched.setdefault("version", "v1.0.0")
+    enriched.setdefault("version", "v1.1.0")
     enriched.setdefault("status", status_default)
 
     if dp_spec is not None:
-        if "dataProduct" not in enriched and dp_spec.get("name"):
-            enriched["dataProduct"] = dp_spec["name"]
+
         if "domain" not in enriched and dp_spec.get("domain"):
             enriched["domain"] = dp_spec["domain"]
 

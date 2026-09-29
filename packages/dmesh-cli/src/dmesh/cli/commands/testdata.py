@@ -33,7 +33,7 @@ def get_default_spec() -> str:
 def parse_mermaid_mesh(spec: str):
     # New parser following SCRATCH.md specification
     domains = set()
-    dps = {} # name -> { domain, tier, schemas: [], attributes: {} }
+    dps = {} # name -> { domain, dp_type, schemas: [], attributes: {} }
     schemas = {} # name -> { properties: [] }
     edges = [] # (from, to, type)
     
@@ -71,7 +71,7 @@ def parse_mermaid_mesh(spec: str):
         elif is_dp:
             dps[class_name] = {
                 "name": class_name,
-                "tier": attrs.get("dataProductTier", "sourceAligned"),
+                "dp_type": attrs.get("type", "sourceAligned"),
                 "domain": None,
                 "schemas": [],
                 "attributes": attrs
@@ -163,22 +163,36 @@ async def _generate_testdata(spec: str, lean: bool = False):
         
         async def create_dp(name, info):
             async with semaphore:
-                typer.echo(f"Creating Data Product: {info['domain']}.{name} ({info['tier']})")
+                typer.echo(f"Creating Data Product: {info['domain']}.{name} ({info['dp_type']})")
                 
-                dp_spec = {
+                from typing import Any
+                dp_spec: dict[str, Any] = {
                     "domain": info["domain"],
                     "name": name,
-                    "customProperties": [
-                        {"property": "dataProductTier", "value": info["tier"]}
-                    ],
+                    "version": "v1",
+                    "type": info["dp_type"],
+                    "customProperties": [],
                     "outputPorts": []
                 }
                 
-                if "dataProductBusinessName" in info["attributes"]:
-                    dp_spec["description"] = {"purpose": info["attributes"]["dataProductBusinessName"]}
-                    
+                KNOWN_ODPS_ATTRS = {
+                    "apiVersion", "kind", "id", "name", "deprecated", "synonyms", "version",
+                    "type", "status", "domain", "description", "tags", "identities", "terms",
+                    "customProperties", "outputPorts", "internalPorts", "inputPorts", "facilities"
+                }
+                
                 for k, v in info["attributes"].items():
-                    if k not in ("dataProductTier", "dataProductBusinessName"):
+                    keys = k.split(".")
+                    top_level_key = keys[0]
+                    
+                    if top_level_key in KNOWN_ODPS_ATTRS:
+                        current = dp_spec
+                        for key in keys[:-1]:
+                            if key not in current or not isinstance(current[key], dict):
+                                current[key] = {}
+                            current = current[key]
+                        current[keys[-1]] = v
+                    else:
                         dp_spec["customProperties"].append({"property": k, "value": v})
                 
                 if not lean:
@@ -209,7 +223,8 @@ async def _generate_testdata(spec: str, lean: bool = False):
                         
                         typer.echo(f"  Creating Data Contract for schema: {schema_name}")
                         dc_spec = {
-                            "apiVersion": "v3.0.1",
+                            "version": "v1",
+                            "apiVersion": "v3.2.0",
                             "servers": [{
                                 "host": f"https://my-workspace.cloud.databricks.com/explore/data/{info['domain']}/{name}",
                                 "type": "databricks",
@@ -252,7 +267,7 @@ async def _generate_testdata(spec: str, lean: bool = False):
                     
                 return name, dp_id_str
                 
-        dp_tasks = [create_dp(name, info) for name, info in dps_info.items() if not (lean and info["tier"] == "application")]
+        dp_tasks = [create_dp(name, info) for name, info in dps_info.items() if not (lean and info["dp_type"] == "application")]
         results = await asyncio.gather(*dp_tasks)
         for res in results:
             if res is not None:

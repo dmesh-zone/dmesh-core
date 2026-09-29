@@ -32,9 +32,9 @@ class PlatformXCustomIDGenerator(DefaultIDGenerator):
         domain = spec.get("domain", "unknown")
         name = spec.get("name", "unknown")
         
+        data_product_type = spec.get("type")
         custom_props = spec.get("customProperties", [])
-        data_product_tier = AsyncSDK.get_custom_property_value(custom_props, "dataProductTier")
-        if data_product_tier not in ["dataSource", "application"]: 
+        if data_product_type not in ["dataSource", "application"]: 
             domain_data_product_id = AsyncSDK.get_custom_property_value(custom_props, "domainDataProductId")
             # Expect domainDataProductId in custom properties
             if domain_data_product_id is None:
@@ -80,8 +80,8 @@ async def test_sdk_client_example_usage(factory):
             "schema": DP1_SCHEMA_NAME,
             "spec": { 
                 "outputPorts": [ { "name": DP1_TABLE1_NAME}],
+                "type": "sourceAligned",
                 "customProperties": [
-                    { "property": "dataProductTier", "value": "sourceAligned" },
                     { "property": "dataSourceTechnology", "value": DP1_DATA_SOURCE_TECH}
                 ]
             }
@@ -93,8 +93,8 @@ async def test_sdk_client_example_usage(factory):
             "schema": DP2_SCHEMA_NAME,
             "spec": { 
                 "outputPorts": [ { "name": DP2_TABLE1_NAME} ],
+                "type": "curated",
                 "customProperties": [
-                    { "property": "dataProductTier", "value": "curated" }
                 ]
             }
         }
@@ -109,8 +109,8 @@ async def test_sdk_client_example_usage(factory):
                 {
                     "domain": DP1_DOMAIN_DP_ID,
                     "name": DP1_TECHNICAL_NAME, 
+                    "type": "sourceAligned",
                     "customProperties": [
-                        { "property": "dataProductTier", "value": "sourceAligned" },
                         { "property": "domainDataProductId", "value": DP1_DOMAIN_DP_ID}
                     ]
                 }
@@ -130,8 +130,8 @@ async def test_sdk_client_example_usage(factory):
                     {
                         "domain": DP2_DOMAIN_DP_ID,
                         "name": DP2_TECHNICAL_NAME, 
+                        "type": "curated",
                         "customProperties": [
-                            { "property": "dataProductTier", "value": "curated" },
                             { "property": "domainDataProductId", "value": DP2_DOMAIN_DP_ID}
                         ]
                     }
@@ -314,10 +314,7 @@ async def test_sdk_client_example_usage(factory):
                 application_dp_spec = {
                     "name": service_account_to_application_info_map.get(membership["member"])["name"],
                     "domain": data_product["domain"],
-                    "customProperties": [{
-                        "property": "dataProductTier",
-                        "value": "application"
-                    }]
+                    "type": "application"
                 }
                 # Step 7-8: create application data product (to show data product consumers)
                 application_dp = await sdk.put_data_product(application_dp_spec)
@@ -351,31 +348,27 @@ async def test_sdk_client_example_usage(factory):
     
     # Maps for easy lookup
     dps_by_name = {dp["name"]: dp for dp in discover if dp.get("kind") == "DataProduct"}
-    dcs_by_product = {dc["dataProduct"]: dc for dc in discover if dc.get("kind") == "DataContract"}
+    dps_by_id = {dp["id"]: dp["name"] for dp in discover if dp.get("kind") == "DataProduct"}
+    dcs_by_product = {dps_by_id.get(sdk.get_custom_property_value(dc, "dataProductId")): dc for dc in discover if dc.get("kind") == "DataContract"}
     dua_by_consuming_dp_id = {dua["consumer"]["dataProductId"] : dua for dua in discover if "dataUsageAgreementSpecification" in dua}
     
-    def is_dp_tier(spec, tier):
-        # Extract custom properties from spec
-        custom_properties = spec.get("customProperties", [])
-        # get dataProductTier custom property
-        data_product_tier = [prop for prop in custom_properties if prop.get("property") == "dataProductTier"]
-        # verify the dataProductTier custom property
-        return len(data_product_tier) == 1 and data_product_tier[0]["value"] == tier
+    def is_dp_type(spec, dp_type):
+        return spec.get("type") == dp_type
 
     # Check 4 data products exist
     # Source Aligned data product 
     assert DP1_BUSINESS_NAME in dps_by_name # SAP FI
-    assert is_dp_tier(dps_by_name[DP1_BUSINESS_NAME], "sourceAligned") 
+    assert is_dp_type(dps_by_name[DP1_BUSINESS_NAME], "sourceAligned") 
     # dataSource data product (auto generated to visualise SADP source) 
     data_source_data_product_name = DATA_SOURCE_DATA_PRODUCT_NAME
     assert data_source_data_product_name  in dps_by_name # "SAP FI data source"
-    assert is_dp_tier(dps_by_name[data_source_data_product_name], "dataSource") 
+    assert is_dp_type(dps_by_name[data_source_data_product_name], "dataSource") 
     # Curated data product
     assert DP2_BUSINESS_NAME in dps_by_name # Accounts Receivables Ledger
-    assert is_dp_tier(dps_by_name[DP2_BUSINESS_NAME], "curated") 
+    assert is_dp_type(dps_by_name[DP2_BUSINESS_NAME], "curated") 
     # Application data product (created by client to visualise application consumers)
     assert APPLICATION_DATA_PRODUCT_NAME in dps_by_name # Finance 360
-    assert is_dp_tier(dps_by_name[APPLICATION_DATA_PRODUCT_NAME], "application") 
+    assert is_dp_type(dps_by_name[APPLICATION_DATA_PRODUCT_NAME], "application") 
 
     # Check 2 data contracts exist for sourceAligned and curated data products, and that these have schemas
     assert len(dcs_by_product) == 2

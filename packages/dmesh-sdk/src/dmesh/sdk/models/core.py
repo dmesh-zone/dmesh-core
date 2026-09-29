@@ -21,7 +21,7 @@ class DataProduct:
 
     @property
     def version(self) -> str:
-        return self.specification.get("version", "v1.0.0")
+        return self.specification.get("version", "v1.1.0")
 
 
 @dataclass

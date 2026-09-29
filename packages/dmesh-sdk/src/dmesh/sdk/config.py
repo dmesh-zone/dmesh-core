@@ -90,7 +90,7 @@ class SdkSettings(BaseModel):
     filesystem_persistency: bool = False
     data_products_filesystem_root: Optional[str] = None
     data_products_filesystem_extra_path: Optional[str] = None
-    custom_validation_data_product_schema: Optional[str] = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
+    custom_validation_data_product_schema: Optional[str] = "examples/custom-validation/schemas/custom-odps-json-schema-v1.1.0.json"
     custom_validation_properties_path: Optional[str] = "examples/custom-validation/schemas/custom-properties"
 
 class Settings(BaseSettings):

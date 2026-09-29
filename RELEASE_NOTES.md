@@ -4,6 +4,20 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.11.0] - 2026-09-29
+
+### ✨ Highlights
+This release updates the project to support the latest Open Data Product Standard (ODPS) and Open Data Contract Standard (ODCS) schema versions, along with naming convention alignments in the SDK and codebase.
+
+### ⚙️ SDK & Core Logic
+- **Schema Upgrades**: Upgraded the default SDK schemas to `odps-1.1.0.json` and `odcs-3.2.0.json`.
+- **Property Transition**: Fully deprecated the custom property `dataProductTier` across the SDK in favor of the newly introduced native `.type` property in ODPS 1.1.0 for Data Products. Auto-generation logic and metadata lookups have been updated accordingly.
+- **Naming Conventions**: Refactored internal codebase terminology by replacing usages of the `tier` nomenclature with `type` and `dp_type` across core SDK logic, testing methods, and lifecycle management scripts.
+
+### 🖥️ CLI Enhancements & DX
+- **Testdata CLI Generator**: Re-wired testdata mock generation scripts to inject and map data product architectural configurations via `.type` rather than falling back to `dataProductTier` custom properties.
+
+---
 ## 🚀 [v0.10.2] - 2026-09-28
 
 ### ✨ Highlights

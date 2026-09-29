@@ -26,11 +26,11 @@ async def test_dc_enrich_data_contract_spec_empty_spec(sdk, dc_repo):
     
     assert dc["id"] == str(sdk.id_generator.make_dc_id({**dc, "_dc_index": 0}))
     assert dc["kind"] == "DataContract"
-    assert dc["apiVersion"] == "v3.1.0"
+    assert dc["apiVersion"] == "v3.2.0"
     assert dc["status"] == sdk.data_contract_status_default
-    assert dc["version"] == "v1.0.0"
+    assert dc["version"] == "v1.1.0"
     assert dc["domain"] == "d"
-    assert dc["dataProduct"] == "n"
+    assert any(p.get("property") == "dataProductId" and p.get("value") == dp["id"] for p in dc.get("customProperties", []))
 
 @pytest.mark.asyncio
 async def test_create_dc_valid_minimum_input(sdk, dc_repo):
@@ -39,11 +39,11 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     
     assert dc["id"] == str(sdk.id_generator.make_dc_id({**dc, "_dc_index": 0}))
     assert dc["kind"] == "DataContract"
-    assert dc["apiVersion"] == "v3.1.0"
+    assert dc["apiVersion"] == "v3.2.0"
     assert dc["status"] == sdk.data_contract_status_default
-    assert dc["version"] == "v1.0.0"
+    assert dc["version"] == "v1.1.0"
     assert dc["domain"] == "d"
-    assert dc["dataProduct"] == "n"
+    assert any(p.get("property") == "dataProductId" and p.get("value") == dp["id"] for p in dc.get("customProperties", []))
     
     # Assert persistency state
     persisted = await dc_repo.get(UUID(dc["id"]))

@@ -28,10 +28,10 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
-    assert dp["apiVersion"] == "v1.0.0"
+    assert dp["apiVersion"] == "v1.1.0"
     assert dp["kind"] == "DataProduct"
     assert dp["status"] == sdk.data_product_status_default
-    assert dp["version"] == "v1.0.0"
+    assert dp["version"] == "v1.1.0"
     
     # Assert persistency state
     persisted = await dp_repo.get(UUID(dp["id"]))
@@ -42,7 +42,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
 
 @pytest.mark.asyncio
 async def test_create_dp_valid_more_input(sdk):
-    spec = {"apiVersion": "v1.0.0", "kind": "DataProduct", "status": "draft", "version": "v1.0.0"}
+    spec = {"apiVersion": "v1.1.0", "kind": "DataProduct", "status": "draft", "version": "v1.1.0"}
     dp = await sdk.put_data_product(spec, domain="finance", name="ledger")
     
     # Assert return value
@@ -57,10 +57,10 @@ async def test_create_dp_with_minimal_output_ports(sdk):
     
     # Assert return value
     assert dp["id"] == str(sdk.id_generator.make_dp_id(dp))
-    assert dp["apiVersion"] == "v1.0.0"
+    assert dp["apiVersion"] == "v1.1.0"
     assert dp["kind"] == "DataProduct"
     assert dp["status"] == sdk.data_product_status_default
-    assert dp["version"] == "v1.0.0"
+    assert dp["version"] == "v1.1.0"
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["outputPorts"][0]["name"] == "ledger"
@@ -133,8 +133,8 @@ async def test_enrich_dp_spec(sdk, dp_repo):
         "domain": "finance", 
         "name": "ledger", 
         "id": str(sdk.id_generator.make_dp_id(input_spec)), 
-        "apiVersion": "v1.0.0", 
-        "version": "v1.0.0", 
+        "apiVersion": "v1.1.0", 
+        "version": "v1.1.0", 
         "kind": "DataProduct", 
         "status": sdk.data_product_status_default
         }
@@ -143,8 +143,8 @@ async def test_enrich_dp_spec(sdk, dp_repo):
     assert enriched_spec["domain"] == "finance"
     assert enriched_spec["name"] == "ledger"
     assert enriched_spec["id"] == str(sdk.id_generator.make_dp_id(enriched_spec))
-    assert enriched_spec["apiVersion"] == "v1.0.0"
-    assert enriched_spec["version"] == "v1.0.0"
+    assert enriched_spec["apiVersion"] == "v1.1.0"
+    assert enriched_spec["version"] == "v1.1.0"
     assert enriched_spec["kind"] == "DataProduct"
     assert enriched_spec["status"] == sdk.data_product_status_default
 
@@ -154,10 +154,7 @@ async def test_patch_dp(sdk, dp_repo):
             "domain": "finance", 
             "name": "ledger", 
             "outputPorts": [{"name": "ledger"}, {"name": "transactions"}],
-            "customProperties": [{
-                "property":"dataProductTier",
-                "value": "sourceAligned"
-                }]
+            "type": "sourceAligned"
             }
     dp1 = await sdk.put_data_product(spec)
 
@@ -187,7 +184,7 @@ async def test_patch_dp(sdk, dp_repo):
     custom_props = dp3["customProperties"]
     props_dict = {p["property"]: p["value"] for p in custom_props}
     
-    assert props_dict.get("dataProductTier") == "sourceAligned"
+    assert dp3.get("type") == "sourceAligned"
     assert props_dict.get("dataUsageAgreements") == [data_usage_agreement]
 
 @pytest.mark.asyncio
@@ -247,9 +244,7 @@ async def test_validate_data_products_invalid(sdk):
         "domain": "finance", 
         "name": "invalid-ledger",
         "outputPorts": [{"name": "some-port"}],
-        "customProperties": [
-            {"property": "dataProductTier", "value": "inexistent"}
-        ]
+        "type": "inexistent"
     }
     await sdk.put_data_product(spec)
     
@@ -260,8 +255,8 @@ async def test_validate_data_products_invalid(sdk):
     original_custom_props = getattr(settings.sdk, "custom_validation_properties_path", None)
     
     try:
-        # Configure the SDK with the custom schema so that it validates the dataProductTier enum
-        settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.0.0.json"
+        # Configure the SDK with the custom schema so that it validates the type enum
+        settings.sdk.custom_validation_data_product_schema = "examples/custom-validation/schemas/custom-odps-json-schema-v1.1.0.json"
         settings.sdk.custom_validation_properties_path = "examples/custom-validation/schemas/custom-properties"
         
         results = await sdk.validate_data_products(domain="finance", name="invalid-ledger")
@@ -271,7 +266,7 @@ async def test_validate_data_products_invalid(sdk):
         assert results[0].name == "invalid-ledger"
         assert results[0].valid is False
         assert results[0].error is not None
-        assert "ERROR: Specification for data product invalid-ledger customProperty dataProductTier value has an invalid value" in results[0].error
+        assert "Message: 'inexistent' is not one of" in results[0].error
         assert "inexistent" in results[0].error
     finally:
         settings.sdk.custom_validation_data_product_schema = original_schema

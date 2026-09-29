@@ -127,7 +127,7 @@ classDiagram
     class domain_01_src{
         <<data-product>>
         dataProductBusinessName : Domain 01 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_01_src_schema{
         <<data-contract-schema>>
@@ -138,7 +138,7 @@ classDiagram
     class domain_02_src{
         <<data-product>>
         dataProductBusinessName : Domain 02 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_02_src_schema{
         <<data-contract-schema>>
@@ -149,7 +149,7 @@ classDiagram
     class domain_03_src{
         <<data-product>>
         dataProductBusinessName : Domain 03 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_03_src_schema{
         <<data-contract-schema>>
@@ -160,7 +160,7 @@ classDiagram
     class domain_04_src{
         <<data-product>>
         dataProductBusinessName : Domain 04 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_04_src_schema{
         <<data-contract-schema>>
@@ -171,7 +171,7 @@ classDiagram
     class domain_05_src{
         <<data-product>>
         dataProductBusinessName : Domain 05 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_05_src_schema{
         <<data-contract-schema>>
@@ -182,7 +182,7 @@ classDiagram
     class domain_06_src{
         <<data-product>>
         dataProductBusinessName : Domain 06 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_06_src_schema{
         <<data-contract-schema>>
@@ -193,7 +193,7 @@ classDiagram
     class domain_07_src{
         <<data-product>>
         dataProductBusinessName : Domain 07 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_07_src_schema{
         <<data-contract-schema>>
@@ -204,7 +204,7 @@ classDiagram
     class domain_08_src{
         <<data-product>>
         dataProductBusinessName : Domain 08 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_08_src_schema{
         <<data-contract-schema>>
@@ -215,7 +215,7 @@ classDiagram
     class domain_09_src{
         <<data-product>>
         dataProductBusinessName : Domain 09 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_09_src_schema{
         <<data-contract-schema>>
@@ -226,7 +226,7 @@ classDiagram
     class domain_10_src{
         <<data-product>>
         dataProductBusinessName : Domain 10 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_10_src_schema{
         <<data-contract-schema>>
@@ -237,7 +237,7 @@ classDiagram
     class domain_11_src{
         <<data-product>>
         dataProductBusinessName : Domain 11 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_11_src_schema{
         <<data-contract-schema>>
@@ -248,7 +248,7 @@ classDiagram
     class domain_12_src{
         <<data-product>>
         dataProductBusinessName : Domain 12 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_12_src_schema{
         <<data-contract-schema>>
@@ -259,7 +259,7 @@ classDiagram
     class domain_13_src{
         <<data-product>>
         dataProductBusinessName : Domain 13 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_13_src_schema{
         <<data-contract-schema>>
@@ -270,7 +270,7 @@ classDiagram
     class domain_14_src{
         <<data-product>>
         dataProductBusinessName : Domain 14 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_14_src_schema{
         <<data-contract-schema>>
@@ -281,7 +281,7 @@ classDiagram
     class domain_15_src{
         <<data-product>>
         dataProductBusinessName : Domain 15 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_15_src_schema{
         <<data-contract-schema>>
@@ -292,7 +292,7 @@ classDiagram
     class domain_16_src{
         <<data-product>>
         dataProductBusinessName : Domain 16 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_16_src_schema{
         <<data-contract-schema>>
@@ -303,7 +303,7 @@ classDiagram
     class domain_17_src{
         <<data-product>>
         dataProductBusinessName : Domain 17 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_17_src_schema{
         <<data-contract-schema>>
@@ -314,7 +314,7 @@ classDiagram
     class domain_18_src{
         <<data-product>>
         dataProductBusinessName : Domain 18 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_18_src_schema{
         <<data-contract-schema>>
@@ -325,7 +325,7 @@ classDiagram
     class domain_19_src{
         <<data-product>>
         dataProductBusinessName : Domain 19 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_19_src_schema{
         <<data-contract-schema>>
@@ -336,7 +336,7 @@ classDiagram
     class domain_20_src{
         <<data-product>>
         dataProductBusinessName : Domain 20 Source Aligned
-        dataProductTier : sourceAligned
+        type : sourceAligned
     }
     class domain_20_src_schema{
         <<data-contract-schema>>
@@ -348,7 +348,7 @@ classDiagram
     class domain_01_cur{
         <<data-product>>
         dataProductBusinessName : Domain 01 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_01_cur_schema{
         <<data-contract-schema>>
@@ -360,7 +360,7 @@ classDiagram
     class domain_02_cur{
         <<data-product>>
         dataProductBusinessName : Domain 02 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_02_cur_schema{
         <<data-contract-schema>>
@@ -372,7 +372,7 @@ classDiagram
     class domain_03_cur{
         <<data-product>>
         dataProductBusinessName : Domain 03 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_03_cur_schema{
         <<data-contract-schema>>
@@ -384,7 +384,7 @@ classDiagram
     class domain_04_cur{
         <<data-product>>
         dataProductBusinessName : Domain 04 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_04_cur_schema{
         <<data-contract-schema>>
@@ -396,7 +396,7 @@ classDiagram
     class domain_05_cur{
         <<data-product>>
         dataProductBusinessName : Domain 05 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_05_cur_schema{
         <<data-contract-schema>>
@@ -408,7 +408,7 @@ classDiagram
     class domain_06_cur{
         <<data-product>>
         dataProductBusinessName : Domain 06 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_06_cur_schema{
         <<data-contract-schema>>
@@ -420,7 +420,7 @@ classDiagram
     class domain_07_cur{
         <<data-product>>
         dataProductBusinessName : Domain 07 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_07_cur_schema{
         <<data-contract-schema>>
@@ -432,7 +432,7 @@ classDiagram
     class domain_08_cur{
         <<data-product>>
         dataProductBusinessName : Domain 08 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_08_cur_schema{
         <<data-contract-schema>>
@@ -444,7 +444,7 @@ classDiagram
     class domain_09_cur{
         <<data-product>>
         dataProductBusinessName : Domain 09 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_09_cur_schema{
         <<data-contract-schema>>
@@ -456,7 +456,7 @@ classDiagram
     class domain_10_cur{
         <<data-product>>
         dataProductBusinessName : Domain 10 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_10_cur_schema{
         <<data-contract-schema>>
@@ -468,7 +468,7 @@ classDiagram
     class domain_11_cur{
         <<data-product>>
         dataProductBusinessName : Domain 11 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_11_cur_schema{
         <<data-contract-schema>>
@@ -480,7 +480,7 @@ classDiagram
     class domain_12_cur{
         <<data-product>>
         dataProductBusinessName : Domain 12 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_12_cur_schema{
         <<data-contract-schema>>
@@ -492,7 +492,7 @@ classDiagram
     class domain_13_cur{
         <<data-product>>
         dataProductBusinessName : Domain 13 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_13_cur_schema{
         <<data-contract-schema>>
@@ -504,7 +504,7 @@ classDiagram
     class domain_14_cur{
         <<data-product>>
         dataProductBusinessName : Domain 14 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_14_cur_schema{
         <<data-contract-schema>>
@@ -516,7 +516,7 @@ classDiagram
     class domain_15_cur{
         <<data-product>>
         dataProductBusinessName : Domain 15 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_15_cur_schema{
         <<data-contract-schema>>
@@ -528,7 +528,7 @@ classDiagram
     class domain_16_cur{
         <<data-product>>
         dataProductBusinessName : Domain 16 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_16_cur_schema{
         <<data-contract-schema>>
@@ -540,7 +540,7 @@ classDiagram
     class domain_17_cur{
         <<data-product>>
         dataProductBusinessName : Domain 17 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_17_cur_schema{
         <<data-contract-schema>>
@@ -552,7 +552,7 @@ classDiagram
     class domain_18_cur{
         <<data-product>>
         dataProductBusinessName : Domain 18 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_18_cur_schema{
         <<data-contract-schema>>
@@ -564,7 +564,7 @@ classDiagram
     class domain_19_cur{
         <<data-product>>
         dataProductBusinessName : Domain 19 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_19_cur_schema{
         <<data-contract-schema>>
@@ -576,7 +576,7 @@ classDiagram
     class domain_20_cur{
         <<data-product>>
         dataProductBusinessName : Domain 20 Curated
-        dataProductTier : curated
+        type : curated
     }
     class domain_20_cur_schema{
         <<data-contract-schema>>
@@ -589,7 +589,7 @@ classDiagram
     class domain_01_con{
         <<data-product>>
         dataProductBusinessName : Domain 01 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_01_con_schema{
         <<data-contract-schema>>
@@ -600,7 +600,7 @@ classDiagram
     class domain_02_con{
         <<data-product>>
         dataProductBusinessName : Domain 02 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_02_con_schema{
         <<data-contract-schema>>
@@ -611,7 +611,7 @@ classDiagram
     class domain_03_con{
         <<data-product>>
         dataProductBusinessName : Domain 03 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_03_con_schema{
         <<data-contract-schema>>
@@ -622,7 +622,7 @@ classDiagram
     class domain_04_con{
         <<data-product>>
         dataProductBusinessName : Domain 04 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_04_con_schema{
         <<data-contract-schema>>
@@ -633,7 +633,7 @@ classDiagram
     class domain_05_con{
         <<data-product>>
         dataProductBusinessName : Domain 05 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_05_con_schema{
         <<data-contract-schema>>
@@ -644,7 +644,7 @@ classDiagram
     class domain_06_con{
         <<data-product>>
         dataProductBusinessName : Domain 06 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_06_con_schema{
         <<data-contract-schema>>
@@ -655,7 +655,7 @@ classDiagram
     class domain_07_con{
         <<data-product>>
         dataProductBusinessName : Domain 07 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_07_con_schema{
         <<data-contract-schema>>
@@ -666,7 +666,7 @@ classDiagram
     class domain_08_con{
         <<data-product>>
         dataProductBusinessName : Domain 08 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_08_con_schema{
         <<data-contract-schema>>
@@ -677,7 +677,7 @@ classDiagram
     class domain_09_con{
         <<data-product>>
         dataProductBusinessName : Domain 09 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_09_con_schema{
         <<data-contract-schema>>
@@ -688,7 +688,7 @@ classDiagram
     class domain_10_con{
         <<data-product>>
         dataProductBusinessName : Domain 10 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_10_con_schema{
         <<data-contract-schema>>
@@ -699,7 +699,7 @@ classDiagram
     class domain_11_con{
         <<data-product>>
         dataProductBusinessName : Domain 11 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_11_con_schema{
         <<data-contract-schema>>
@@ -710,7 +710,7 @@ classDiagram
     class domain_12_con{
         <<data-product>>
         dataProductBusinessName : Domain 12 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_12_con_schema{
         <<data-contract-schema>>
@@ -721,7 +721,7 @@ classDiagram
     class domain_13_con{
         <<data-product>>
         dataProductBusinessName : Domain 13 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_13_con_schema{
         <<data-contract-schema>>
@@ -732,7 +732,7 @@ classDiagram
     class domain_14_con{
         <<data-product>>
         dataProductBusinessName : Domain 14 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_14_con_schema{
         <<data-contract-schema>>
@@ -743,7 +743,7 @@ classDiagram
     class domain_15_con{
         <<data-product>>
         dataProductBusinessName : Domain 15 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_15_con_schema{
         <<data-contract-schema>>
@@ -754,7 +754,7 @@ classDiagram
     class domain_16_con{
         <<data-product>>
         dataProductBusinessName : Domain 16 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_16_con_schema{
         <<data-contract-schema>>
@@ -765,7 +765,7 @@ classDiagram
     class domain_17_con{
         <<data-product>>
         dataProductBusinessName : Domain 17 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_17_con_schema{
         <<data-contract-schema>>
@@ -776,7 +776,7 @@ classDiagram
     class domain_18_con{
         <<data-product>>
         dataProductBusinessName : Domain 18 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_18_con_schema{
         <<data-contract-schema>>
@@ -787,7 +787,7 @@ classDiagram
     class domain_19_con{
         <<data-product>>
         dataProductBusinessName : Domain 19 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_19_con_schema{
         <<data-contract-schema>>
@@ -798,7 +798,7 @@ classDiagram
     class domain_20_con{
         <<data-product>>
         dataProductBusinessName : Domain 20 Consumer Aligned
-        dataProductTier : consumerAligned
+        type : consumerAligned
     }
     class domain_20_con_schema{
         <<data-contract-schema>>

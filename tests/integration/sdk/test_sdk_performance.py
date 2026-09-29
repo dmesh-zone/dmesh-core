@@ -40,7 +40,7 @@ async def test_create_1000_data_contracts_performance(sdk):
     start_time = time.perf_counter()
     
     for i, dp_id in enumerate(dp_ids):
-        spec = {"version": "v1.0.0"}
+        spec = {"version": "v1.1.0"}
         await sdk.put_data_contract(spec, dp_id=dp_id)
         
     end_time = time.perf_counter()

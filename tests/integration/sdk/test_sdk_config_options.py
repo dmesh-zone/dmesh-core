@@ -11,8 +11,8 @@ from dmesh.sdk.persistency.postgres import PostgresSchema
 @pytest.mark.asyncio
 async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(sdk):
     spec = {"domain": "finance", "name": "ledger", 
+        "type": "sourceAligned",
         "customProperties": [
-            {"property": "dataProductTier", "value": "sourceAligned"},
             {"property": "dataSourceTechnology", "value": "sap"},
             {"property": "dataProductBusinessName", "value": "SAP FI"}
         ]
@@ -31,7 +31,7 @@ async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(s
     assert data_source_dp["name"] == "ledger_data_source"
     
     custom_properties = {p["property"]: p["value"] for p in data_source_dp["customProperties"]}
-    assert custom_properties["dataProductTier"] == "dataSource"
+    assert data_source_dp["type"] == "dataSource"
     assert custom_properties["dataProductBusinessName"] == "SAP FI data source"
     assert custom_properties["dataUsageAgreements"] == [{
         "info": {
@@ -45,8 +45,8 @@ async def test_sdk_auto_data_source_dp_created_upon_source_aligned_dp_creation(s
 @pytest.mark.asyncio
 async def test_sdk_auto_data_source_dp_not_created_if_auto_data_source_dp_creation_is_disabled(sdk):
     spec = {"domain": "finance", "name": "ledger", 
+        "type": "sourceAligned",
         "customProperties": [
-            {"property": "dataProductTier", "value": "sourceAligned"}
         ]
     }
     # Disable auto data source dp creation
@@ -60,8 +60,8 @@ async def test_sdk_auto_data_source_dp_not_created_if_auto_data_source_dp_creati
 @pytest.mark.asyncio
 async def test_sdk_auto_data_source_dp_not_created_if_not_source_aligned(sdk):
     spec = {"domain": "finance", "name": "ledger", 
+        "type": "curated",
         "customProperties": [
-            {"property": "dataProductTier", "value": "curated"}
         ]
     }
     assert sdk.auto_data_source_dp_creation_upon_source_aligned_dp_creation == True
@@ -77,8 +77,8 @@ async def test_sdk_auto_data_source_dp_not_created_if_suppressed(sdk):
     spec = {
         "domain": "finance", 
         "name": "ledger", 
+        "type": "sourceAligned",
         "customProperties": [
-            {"property": "dataProductTier", "value": "sourceAligned"},
             {"property": "dataSourceSupressed", "value": "true"}
         ]
     }
