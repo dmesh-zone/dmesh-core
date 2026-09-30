@@ -4,6 +4,12 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.11.1] - 2026-09-30
+
+### 🛡️ Security & Dependencies
+- **Security Patch**: Upgraded `anyio` dependency to `v4.14.2` to resolve a critical security vulnerability regarding improper certificate validation (SNYK-PYTHON-ANYIO-19958324).
+
+---
 ## 🚀 [v0.11.0] - 2026-09-29
 
 ### ✨ Highlights
