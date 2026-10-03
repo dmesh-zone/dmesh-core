@@ -4,6 +4,16 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.11.2] - 2026-10-03
+
+### 🐛 Bug Fixes
+- **Data Contract ID Generation Regression:** Fixed a critical issue in `put_data_contract` where the parent Data Product's `customProperties` (like `domainDataProductId`) were inadvertently being overwritten by the auto-injected `dataProductId` property during ID generation. The SDK now safely appends `dataProductId` to the existing properties, ensuring proper downstream propagation to ID generator hooks.
+
+### 🖥️ CLI Enhancements
+- **Output Alignment (`dmesh list dps`)**: Increased the `DP_NAME` column width to cleanly fit longer catalog names (e.g., `account_receivables_ledger`) and prevent subsequent columns from breaking alignment. Reordered columns to `DP_ID`, `DP_DOMAIN`, `DP_VERSION`, `DP_STATUS`, `DP_NAME`.
+- **Simplified Output (`dmesh list dcs`)**: Streamlined Data Contract listing output columns to display `DC_ID`, `DP_ID`, `DP_DOMAIN`, `DP_VERSION`, `DP_STATUS`, and `DP_NAME`.
+
+---
 ## 🚀 [v0.11.1] - 2026-09-30
 
 ### 🛡️ Security & Dependencies
