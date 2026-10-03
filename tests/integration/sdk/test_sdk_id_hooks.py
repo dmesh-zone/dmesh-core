@@ -20,9 +20,13 @@ class DottedIDGenerator:
         dp_id = "unknown"
         if isinstance(custom_props, list):
             for p in custom_props:
-                if isinstance(p, dict) and p.get("property") == "dataProductId":
-                    dp_id = str(p.get("value", "unknown"))
-                    break
+                if isinstance(p, dict):
+                    prop_name = p.get("property")
+                    if prop_name == "domainDataProductId":
+                        dp_id = str(p.get("value", "unknown"))
+                        break
+                    elif prop_name == "dataProductId" and dp_id == "unknown":
+                        dp_id = str(p.get("value", "unknown"))
         return uuid.uuid5(CUSTOM_NS, f"{dp_id}")
 
     def make_dua_id(self, spec: dict[str, Any]) -> uuid.UUID:
@@ -45,11 +49,15 @@ async def test_custom_id_generator_hook(factory):
     assert dp["id"] == str(uuid.uuid5(CUSTOM_NS, "finance.ledger"))
     
     # 3. Create Data Contract
-    dc_spec = {}
+    # We explicitly provide domainDataProductId to verify the generator uses it
+    # and the SDK preserves it.
+    dc_spec = {
+        "customProperties": [{"property": "domainDataProductId", "value": "ledger-v1"}]
+    }
     dc = await sdk.put_data_contract(dc_spec, dp_id=dp["id"])
     
-    # Verify custom ID (uuid5 derived from dp_id)
-    assert dc["id"] == str(uuid.uuid5(CUSTOM_NS, f"{dp['id']}"))
+    # Verify custom ID (uuid5 derived from domainDataProductId)
+    assert dc["id"] == str(uuid.uuid5(CUSTOM_NS, "ledger-v1"))
 
 class CustomDPOnlyGenerator(DefaultIDGenerator):
     """Overrides only DP ID generation, uses default for DC."""

@@ -21,31 +21,37 @@ async def _list_dps():
             x.get("version", "") if isinstance(x, dict) else x.version
         ))
 
-        col_w = {"domain": 20, "name": 30, "id": 36}
+        col_w = {"domain": 20, "name": 30, "id": 36, "version": 12, "status": 12}
         header = (
-            f"{'DOMAIN':<{col_w['domain']}}  "
-            f"{'NAME':<{col_w['name']}}  "
-            f"{'ID':<{col_w['id']}}"
+            f"{'DP_ID':<{col_w['id']}}  "
+            f"{'DP_DOMAIN':<{col_w['domain']}}  "
+            f"{'DP_VERSION':<{col_w['version']}}  "
+            f"{'DP_STATUS':<{col_w['status']}}  "
+            f"{'DP_NAME':<{col_w['name']}}"
         )
         typer.echo(header)
         typer.echo("-" * len(header))
 
         for item in sorted_items:
             if isinstance(item, dict):
-                i_domain = item.get("domain", "")
-                i_name = item.get("name", "")
-                i_id = item.get("id", "")
+                i_domain = item.get("domain", "unknown")
+                i_name = item.get("name", "unknown")
+                i_id = item.get("id", "unknown")
+                i_version = item.get("version", "v1.0.0")
+                i_status = item.get("status", "draft")
             else:
-                i_domain = item.domain
-                i_name = item.name
-                i_id = item.id
-                
-            i_domain_str = str(i_domain) if i_domain else "undefined"
+                i_domain = getattr(item, "domain", "unknown")
+                i_name = getattr(item, "name", "unknown")
+                i_id = getattr(item, "id", "unknown")
+                i_version = getattr(item, "version", "v1.0.0")
+                i_status = getattr(item, "status", "draft")
                 
             typer.echo(
-                f"{i_domain_str:<{col_w['domain']}}  "
-                f"{str(i_name):<{col_w['name']}}  "
-                f"{str(i_id):<{col_w['id']}}"
+                f"{str(i_id):<{col_w['id']}}  "
+                f"{str(i_domain):<{col_w['domain']}}  "
+                f"{str(i_version):<{col_w['version']}}  "
+                f"{str(i_status).upper():<{col_w['status']}}  "
+                f"{str(i_name):<{col_w['name']}}"
             )
 
 
@@ -91,14 +97,14 @@ async def _list_dcs(domain: Optional[str], dp_name: Optional[str]):
             typer.echo("No data contracts found.")
             return
 
-        col_w = {"dp_id": 36, "domain": 20, "name": 20, "version": 12, "status": 12, "dc_id": 36}
+        col_w = {"dc_id": 36, "dp_id": 36, "domain": 20, "version": 12, "status": 12, "name": 30}
         header = (
+            f"{'DC_ID':<{col_w['dc_id']}}  "
             f"{'DP_ID':<{col_w['dp_id']}}  "
             f"{'DP_DOMAIN':<{col_w['domain']}}  "
-            f"{'DP_NAME':<{col_w['name']}}  "
             f"{'DP_VERSION':<{col_w['version']}}  "
             f"{'DP_STATUS':<{col_w['status']}}  "
-            f"{'DC_ID':<{col_w['dc_id']}}"
+            f"{'DP_NAME':<{col_w['name']}}"
         )
         typer.echo(header)
         typer.echo("-" * len(header))
@@ -121,12 +127,12 @@ async def _list_dcs(domain: Optional[str], dp_name: Optional[str]):
                 dp_version = "v1.0.0"
                 
             typer.echo(
+                f"{str(dc_id):<{col_w['dc_id']}}  "
                 f"{str(dc_dp_id):<{col_w['dp_id']}}  "
                 f"{str(dp_domain):<{col_w['domain']}}  "
-                f"{str(dp_name):<{col_w['name']}}  "
                 f"{str(dp_version):<{col_w['version']}}  "
                 f"{'ACTIVE':<{col_w['status']}}  "
-                f"{str(dc_id):<{col_w['dc_id']}}"
+                f"{str(dp_name):<{col_w['name']}}"
             )
 
 

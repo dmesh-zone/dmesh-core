@@ -375,7 +375,7 @@ requires-dist = [
 
 [[package]]
 name = "dmesh-sdk"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/dmesh-sdk" }
 dependencies = [
     { name = "databricks-sdk" },

@@ -19,7 +19,7 @@ def enrich_dp_spec(
     # Apply defaults if missing
     enriched.setdefault("apiVersion", "v1.1.0")
     enriched.setdefault("kind", "DataProduct")
-    enriched.setdefault("version", "v1.1.0")
+    enriched.setdefault("version", "v1")
     enriched.setdefault("status", status_default)
     # Basic enrichment moved to SDK enrichment methods if needed
     
@@ -44,7 +44,7 @@ def enrich_dc_spec(
     enriched = dict(spec)
     enriched.setdefault("apiVersion", "v3.2.0")
     enriched.setdefault("kind", "DataContract")
-    enriched.setdefault("version", "v1.1.0")
+    enriched.setdefault("version", "v1")
     enriched.setdefault("status", status_default)
 
     if dp_spec is not None:

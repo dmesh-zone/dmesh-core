@@ -28,7 +28,7 @@ async def test_dc_enrich_data_contract_spec_empty_spec(sdk, dc_repo):
     assert dc["kind"] == "DataContract"
     assert dc["apiVersion"] == "v3.2.0"
     assert dc["status"] == sdk.data_contract_status_default
-    assert dc["version"] == "v1.1.0"
+    assert dc["version"] == "v1"
     assert dc["domain"] == "d"
     assert any(p.get("property") == "dataProductId" and p.get("value") == dp["id"] for p in dc.get("customProperties", []))
 
@@ -41,7 +41,7 @@ async def test_create_dc_valid_minimum_input(sdk, dc_repo):
     assert dc["kind"] == "DataContract"
     assert dc["apiVersion"] == "v3.2.0"
     assert dc["status"] == sdk.data_contract_status_default
-    assert dc["version"] == "v1.1.0"
+    assert dc["version"] == "v1"
     assert dc["domain"] == "d"
     assert any(p.get("property") == "dataProductId" and p.get("value") == dp["id"] for p in dc.get("customProperties", []))
     

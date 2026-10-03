@@ -376,9 +376,16 @@ class AsyncSDK:
             else:
                 dc_index = 0
             
+        # Preserve existing customProperties while appending dataProductId
+        existing_cp = merged_spec.get("customProperties", [])
+        if dp_spec:
+            dp_id = dp_spec.get("id", "")
+            if not any(p.get("property") == "dataProductId" for p in existing_cp):
+                existing_cp = existing_cp + [{"property": "dataProductId", "value": dp_id}]
+        
         id_spec = {
             **merged_spec, 
-            "customProperties": [{"property": "dataProductId", "value": dp_spec.get("id", "")}] if dp_spec else merged_spec.get("customProperties", []),
+            "customProperties": existing_cp,
             "_dc_index": dc_index
         }
         dc_id = self.id_generator.make_dc_id(id_spec)
@@ -499,9 +506,16 @@ class AsyncSDK:
             dc_index = len(existing_dcs)
             
         # Generate ID based on spec (including parent context)
+        dp_spec = dp.specification if isinstance(dp, DataProduct) else dp
+        dp_id = dp.id if isinstance(dp, DataProduct) else dp.get('id', '')
+        
+        existing_cp = spec.get("customProperties", [])
+        if not any(p.get("property") == "dataProductId" for p in existing_cp):
+            existing_cp = existing_cp + [{"property": "dataProductId", "value": dp_id}]
+            
         id_spec = {
             **spec, 
-            "customProperties": [{"property": "dataProductId", "value": dp.id if isinstance(dp, DataProduct) else dp.get('id', '')}],
+            "customProperties": existing_cp,
             "_dc_index": dc_index
         }
         dc_id = self.id_generator.make_dc_id(id_spec)

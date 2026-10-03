@@ -31,7 +31,7 @@ async def test_create_dp_valid_minimum_input(sdk, dp_repo):
     assert dp["apiVersion"] == "v1.1.0"
     assert dp["kind"] == "DataProduct"
     assert dp["status"] == sdk.data_product_status_default
-    assert dp["version"] == "v1.1.0"
+    assert dp["version"] == "v1"
     
     # Assert persistency state
     persisted = await dp_repo.get(UUID(dp["id"]))
@@ -60,7 +60,7 @@ async def test_create_dp_with_minimal_output_ports(sdk):
     assert dp["apiVersion"] == "v1.1.0"
     assert dp["kind"] == "DataProduct"
     assert dp["status"] == sdk.data_product_status_default
-    assert dp["version"] == "v1.1.0"
+    assert dp["version"] == "v1"
     assert dp["domain"] == "finance"
     assert dp["name"] == "ledger"
     assert dp["outputPorts"][0]["name"] == "ledger"
@@ -134,7 +134,7 @@ async def test_enrich_dp_spec(sdk, dp_repo):
         "name": "ledger", 
         "id": str(sdk.id_generator.make_dp_id(input_spec)), 
         "apiVersion": "v1.1.0", 
-        "version": "v1.1.0", 
+        "version": "v1", 
         "kind": "DataProduct", 
         "status": sdk.data_product_status_default
         }
@@ -144,7 +144,7 @@ async def test_enrich_dp_spec(sdk, dp_repo):
     assert enriched_spec["name"] == "ledger"
     assert enriched_spec["id"] == str(sdk.id_generator.make_dp_id(enriched_spec))
     assert enriched_spec["apiVersion"] == "v1.1.0"
-    assert enriched_spec["version"] == "v1.1.0"
+    assert enriched_spec["version"] == "v1"
     assert enriched_spec["kind"] == "DataProduct"
     assert enriched_spec["status"] == sdk.data_product_status_default
 
