@@ -4,6 +4,12 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 
 ---
 
+## 🚀 [v0.11.3] - 2026-10-06
+
+### 🛡️ Security & Dependencies
+- **Security Patch**: Upgraded `urllib3` dependency to `>=2.8.0` to resolve High Severity vulnerabilities reported by Snyk regarding Improper Certificate Validation (SNYK-PYTHON-URLLIB3-20302844) and Allocation of Resources Without Limits or Throttling (SNYK-PYTHON-URLLIB3-20302846).
+
+---
 ## 🚀 [v0.11.2] - 2026-10-03
 
 ### 🐛 Bug Fixes
