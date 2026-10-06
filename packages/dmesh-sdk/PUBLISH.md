@@ -1,10 +1,10 @@
 # Publishing Data Mesh SDK
 
-Instructions for building, testing locally, and publishing the `dmesh-sdk` package.
+Instructions for building, testing locally, and publishing the `dmesh-sdk` package using the automated `publish.sh` script.
 
 ## 0. Set the Version
 
-The version is defined in `packages/dmesh-sdk/pyproject.toml`. Ensure it is incremented before building.
+The SDK version is defined in `packages/dmesh-sdk/pyproject.toml`. Ensure it is incremented appropriately before publishing.
 
 ```toml
 [project]
@@ -12,95 +12,49 @@ name = "dmesh-sdk"
 version = "0.0.0"  # <--- Update this
 ```
 
-For the following commands, set an environment variable to avoid hardcoding:
+## 1. Configure Credentials
 
-**Windows (PowerShell):**
-```powershell
-$env:SDK_VERSION = "0.0.0"
-```
+The `publish.sh` script automatically reads environment variables from a `.env` file in the `packages/dmesh-sdk` directory. 
 
-**Linux / macOS:**
+Create a `.env` file with your PyPI and TestPyPI tokens:
+
 ```bash
-export SDK_VERSION="0.0.0"
+# packages/dmesh-sdk/.env
+DMESH_TESTPYPI_TOKEN="your-testpypi-token"
+DMESH_PYPI_TOKEN="your-pypi-token"
 ```
 
-## 1. Build the Package
+## 2. Using `publish.sh`
 
-From the package directory:
+Navigate to the `dmesh-sdk` package directory and run the `publish.sh` script with one of the following modes:
 
 ```bash
 cd packages/dmesh-sdk
-uv build
+./publish.sh {sim|test|prod}
 ```
 
-The build artifacts will be in `../../dist/` (relative to `packages/dmesh-sdk`).
+### Modes
 
-## 2. Local Verification
-
-### Create and Activate Test Environment
-
-**Windows (PowerShell):**
-```powershell
-uv venv .test_venv
-.test_venv\Scripts\activate
-```
-
-**Linux / macOS:**
-```bash
-uv venv .test_venv
-source .test_venv/bin/activate
-```
-
-### Install and Test
-
-**Windows (PowerShell):**
-```powershell
-uv pip install "../../dist/dmesh_sdk-${env:SDK_VERSION}-py3-none-any.whl"
-uv run --active python quickstart_memory.py
-```
-
-**Linux / macOS:**
-```bash
-uv pip install "../../dist/dmesh_sdk-${SDK_VERSION}-py3-none-any.whl"
-uv run --active python quickstart_memory.py
-```
-
-## 3. Publish to TestPyPI
-
-**Windows (PowerShell):**
-```powershell
-$env:DMESH_TESTPYPI_TOKEN = "your-testpypi-token"
-uv publish "../../dist/dmesh_sdk-${env:SDK_VERSION}*" --publish-url https://test.pypi.org/legacy/ --token $env:DMESH_TESTPYPI_TOKEN
-```
-
-**Linux / macOS:**
-```bash
-export DMESH_TESTPYPI_TOKEN="your-testpypi-token"
-uv publish "../../dist/dmesh_sdk-${SDK_VERSION}*" --publish-url https://test.pypi.org/legacy/ --token $DMESH_TESTPYPI_TOKEN
-```
-
-## 4. Verify Published Package
+#### `sim` (Simulation / Local Verification)
+Builds the package and runs a local verification script (`quickstart_memory.py`) in an isolated virtual environment (`.test_venv`) to ensure the built wheel functions correctly.
 
 ```bash
-# Windows (PowerShell)
-uv run --active --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --with "dmesh-sdk==${env:SDK_VERSION}" --no-project -- python -c "import dmesh.sdk; print('SDK loaded:', dmesh.sdk.AsyncSDK)"
-
-# Linux / macOS
-uv run --active --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --with "dmesh-sdk==${SDK_VERSION}" --no-project -- python -c "import dmesh.sdk; print('SDK loaded:', dmesh.sdk.AsyncSDK)"
+./publish.sh sim
 ```
 
-## 5. Official Release
+#### `test` (TestPyPI Release)
+Builds the package, publishes it to TestPyPI using `$DMESH_TESTPYPI_TOKEN`, and performs a verification check by downloading and loading the newly published package from TestPyPI.
 
-Once verified, publish to the main PyPI:
-
-**Windows (PowerShell):**
-```powershell
-$env:DMESH_PYPI_TOKEN = "your-pypi-token"
-uv publish "../../dist/dmesh_sdk-${env:SDK_VERSION}*" --token $env:DMESH_PYPI_TOKEN
-```
-
-**Linux / macOS:**
 ```bash
-export DMESH_PYPI_TOKEN="your-pypi-token"
-uv publish "../../dist/dmesh_sdk-${SDK_VERSION}*" --token $DMESH_PYPI_TOKEN
+./publish.sh test
 ```
+
+#### `prod` (Production PyPI Release)
+Builds the package and publishes it directly to the official PyPI registry using `$DMESH_PYPI_TOKEN`.
+
+```bash
+./publish.sh prod
+```
+
+> [!NOTE]
+> Ensure you have the `uv` package manager installed, as the script relies heavily on it for building, virtual environment management, and publishing.
