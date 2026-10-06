@@ -10,7 +10,7 @@ All notable changes to the **Data Mesh SDK & CLI** will be documented in this fi
 - **Security Patch**: Upgraded `urllib3` dependency to `>=2.8.0` to resolve High Severity vulnerabilities reported by Snyk regarding Improper Certificate Validation (SNYK-PYTHON-URLLIB3-20302844) and Allocation of Resources Without Limits or Throttling (SNYK-PYTHON-URLLIB3-20302846).
 
 ### 🐛 Bug Fixes
-- **Data Product Catalog Validation:** Fixed custom schema validation issuses
+- **Data Product Catalog Validation:** Fixed custom schema validation issues
 
 ---
 ## 🚀 [v0.11.2] - 2026-10-03
